@@ -1,6 +1,7 @@
--- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER
+-- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM
 -- ULTRA MODERN MENU WITH EFFECTS - FULL ROUNDED CORNERS
--- FIXED: ESP không bị dính, Aimbot hoạt động ổn định
+-- FIXED: Line luôn hiện, Auto shot bắn NGAY LẬP TỨC khi tâm chạm đầu
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -9,6 +10,10 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualInput = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+
+-- ============ CONFIG SYSTEM SETUP ==========
+local ConfigFolder = "KhanhGD_Configs"
 
 -- ============ DEVICE SPOOFER SETUP ==========
 local SetControlsRemote = nil
@@ -44,154 +49,17 @@ local playerName = LocalPlayer.Name
 local isKeyValidated = false
 local currentKey = ""
 
--- DANH SÁCH KEY HỢP LỆ (RÚT GỌN - BẠN CÓ THỂ THÊM KEY KHÁC)
 local validKeysList = {
     "ABCD1-EFGH2-IJKL3-MNOP4", "QRST5-UVWX6-YZAB7-CDEF8", "GHIJ9-KLMN0-OPQR1-STUV2",
     "WXYZ3-ABCD4-EFGH5-IJKL6", "MNOP7-QRST8-UVWX9-YZAB0", "KHANH-PC01-AAAAA-11111",
     "KHANH-PC02-BBBBB-22222", "KHANH-PC03-CCCCC-33333", "KHANH-PC04-DDDDD-44444",
     "KHANH-PC05-EEEEE-55555", "VIPPRO-9999-XXXXX-77777", "PREMIUM-8888-YYYYY-88888",
-    "ULTIMA-7777-ZZZZZ-99999", "HACKER-6666-WWWWW-00000", "MASTER-5555-VVVVV-11111",
-    "LEGEND-4444-UUUUU-22222", "ELITE-3333-TTTTT-33333", "PRO-2222-SSSSS-44444",
-    "GOD-1111-RRRRR-55555", "KING-0000-QQQQQ-66666", "KHANH-PC06-FFFFF-66666",
-    "KHANH-PC07-GGGGG-77777", "KHANH-PC08-HHHHH-88888", "KHANH-PC09-IIIII-99999",
-    "KHANH-PC10-JJJJJ-00000", "KHANH-PC11-KKKKK-11111", "KHANH-PC12-LLLLL-22222",
-    "KHANH-PC13-MMMMM-33333", "KHANH-PC14-NNNNN-44444", "KHANH-PC15-OOOOO-55555",
-    "KHANH-PC16-PPPPP-66666", "KHANH-PC17-QQQQQ-77777", "KHANH-PC18-RRRRR-88888",
-    "KHANH-PC19-SSSSS-99999", "KHANH-PC20-TTTTT-00000", "KHANH-PC21-UUUUU-11111",
-    "KHANH-PC22-VVVVV-22222", "KHANH-PC23-WWWWW-33333", "KHANH-PC24-XXXXX-44444",
-    "KHANH-PC25-YYYYY-55555", "KHANH-PC26-ZZZZZ-66666", "KHANH-PC27-AAAAA-77777",
-    "KHANH-PC28-BBBBB-88888", "KHANH-PC29-CCCCC-99999", "KHANH-PC30-DDDDD-00000",
-    "KHANH-PC31-EEEEE-11111", "KHANH-PC32-FFFFF-22222", "KHANH-PC33-GGGGG-33333",
-    "KHANH-PC34-HHHHH-44444", "KHANH-PC35-IIIII-55555", "KHANH-PC36-JJJJJ-66666",
-    "KHANH-PC37-KKKKK-77777", "KHANH-PC38-LLLLL-88888", "KHANH-PC39-MMMMM-99999",
-    "KHANH-PC40-NNNNN-00000", "KHANH-PC41-OOOOO-11111", "KHANH-PC42-PPPPP-22222",
-    "KHANH-PC43-QQQQQ-33333", "KHANH-PC44-RRRRR-44444", "KHANH-PC45-SSSSS-55555",
-    "KHANH-PC46-TTTTT-66666", "KHANH-PC47-UUUUU-77777", "KHANH-PC48-VVVVV-88888",
-    "KHANH-PC49-WWWWW-99999", "KHANH-PC50-XXXXX-00000", "VIPPRO-0001-AAAAA-11111",
-    "VIPPRO-0002-BBBBB-22222", "VIPPRO-0003-CCCCC-33333", "VIPPRO-0004-DDDDD-44444",
-    "VIPPRO-0005-EEEEE-55555", "VIPPRO-0006-FFFFF-66666", "VIPPRO-0007-GGGGG-77777",
-    "VIPPRO-0008-HHHHH-88888", "VIPPRO-0009-IIIII-99999", "VIPPRO-0010-JJJJJ-00000",
-    "VIPPRO-0011-KKKKK-11111", "VIPPRO-0012-LLLLL-22222", "VIPPRO-0013-MMMMM-33333",
-    "VIPPRO-0014-NNNNN-44444", "VIPPRO-0015-OOOOO-55555", "VIPPRO-0016-PPPPP-66666",
-    "VIPPRO-0017-QQQQQ-77777", "VIPPRO-0018-RRRRR-88888", "VIPPRO-0019-SSSSS-99999",
-    "VIPPRO-0020-TTTTT-00000", "VIPPRO-0021-UUUUU-11111", "VIPPRO-0022-VVVVV-22222",
-    "VIPPRO-0023-WWWWW-33333", "VIPPRO-0024-XXXXX-44444", "VIPPRO-0025-YYYYY-55555",
-    "VIPPRO-0026-ZZZZZ-66666", "VIPPRO-0027-AAAAA-77777", "VIPPRO-0028-BBBBB-88888",
-    "VIPPRO-0029-CCCCC-99999", "VIPPRO-0030-DDDDD-00000", "VIPPRO-0031-EEEEE-11111",
-    "VIPPRO-0032-FFFFF-22222", "VIPPRO-0033-GGGGG-33333", "VIPPRO-0034-HHHHH-44444",
-    "VIPPRO-0035-IIIII-55555", "VIPPRO-0036-JJJJJ-66666", "VIPPRO-0037-KKKKK-77777",
-    "VIPPRO-0038-LLLLL-88888", "VIPPRO-0039-MMMMM-99999", "VIPPRO-0040-NNNNN-00000",
-    "VIPPRO-0041-OOOOO-11111", "VIPPRO-0042-PPPPP-22222", "VIPPRO-0043-QQQQQ-33333",
-    "VIPPRO-0044-RRRRR-44444", "VIPPRO-0045-SSSSS-55555", "VIPPRO-0046-TTTTT-66666",
-    "VIPPRO-0047-UUUUU-77777", "VIPPRO-0048-VVVVV-88888", "VIPPRO-0049-WWWWW-99999",
-    "VIPPRO-0050-XXXXX-00000", "PREMIUM-001-AAAAAA-111111", "PREMIUM-002-BBBBBB-222222",
-    "PREMIUM-003-CCCCCC-333333", "PREMIUM-004-DDDDDD-444444", "PREMIUM-005-EEEEEE-555555",
-    "PREMIUM-006-FFFFFF-666666", "PREMIUM-007-GGGGGG-777777", "PREMIUM-008-HHHHHH-888888",
-    "PREMIUM-009-IIIIII-999999", "PREMIUM-010-JJJJJJ-000000", "PREMIUM-011-KKKKKK-111111",
-    "PREMIUM-012-LLLLLL-222222", "PREMIUM-013-MMMMMM-333333", "PREMIUM-014-NNNNNN-444444",
-    "PREMIUM-015-OOOOOO-555555", "PREMIUM-016-PPPPPP-666666", "PREMIUM-017-QQQQQQ-777777",
-    "PREMIUM-018-RRRRRR-888888", "PREMIUM-019-SSSSSS-999999", "PREMIUM-020-TTTTTT-000000",
-    "PREMIUM-021-UUUUUU-111111", "PREMIUM-022-VVVVVV-222222", "PREMIUM-023-WWWWWW-333333",
-    "PREMIUM-024-XXXXXX-444444", "PREMIUM-025-YYYYYY-555555", "PREMIUM-026-ZZZZZZ-666666",
-    "PREMIUM-027-AAAAAA-777777", "PREMIUM-028-BBBBBB-888888", "PREMIUM-029-CCCCCC-999999",
-    "PREMIUM-030-DDDDDD-000000", "PREMIUM-031-EEEEEE-111111", "PREMIUM-032-FFFFFF-222222",
-    "PREMIUM-033-GGGGGG-333333", "PREMIUM-034-HHHHHH-444444", "PREMIUM-035-IIIIII-555555",
-    "PREMIUM-036-JJJJJJ-666666", "PREMIUM-037-KKKKKK-777777", "PREMIUM-038-LLLLLL-888888",
-    "PREMIUM-039-MMMMMM-999999", "PREMIUM-040-NNNNNN-000000", "ULTIMA-001-AAAAAA-111111",
-    "ULTIMA-002-BBBBBB-222222", "ULTIMA-003-CCCCCC-333333", "ULTIMA-004-DDDDDD-444444",
-    "ULTIMA-005-EEEEEE-555555", "ULTIMA-006-FFFFFF-666666", "ULTIMA-007-GGGGGG-777777",
-    "ULTIMA-008-HHHHHH-888888", "ULTIMA-009-IIIIII-999999", "ULTIMA-010-JJJJJJ-000000",
-    "ULTIMA-011-KKKKKK-111111", "ULTIMA-012-LLLLLL-222222", "ULTIMA-013-MMMMMM-333333",
-    "ULTIMA-014-NNNNNN-444444", "ULTIMA-015-OOOOOO-555555", "ULTIMA-016-PPPPPP-666666",
-    "ULTIMA-017-QQQQQQ-777777", "ULTIMA-018-RRRRRR-888888", "ULTIMA-019-SSSSSS-999999",
-    "ULTIMA-020-TTTTTT-000000", "HACKER-001-AAAAAA-111111", "HACKER-002-BBBBBB-222222",
-    "HACKER-003-CCCCCC-333333", "HACKER-004-DDDDDD-444444", "HACKER-005-EEEEEE-555555",
-    "HACKER-006-FFFFFF-666666", "HACKER-007-GGGGGG-777777", "HACKER-008-HHHHHH-888888",
-    "HACKER-009-IIIIII-999999", "HACKER-010-JJJJJJ-000000", "MASTER-001-AAAAAA-111111",
-    "MASTER-002-BBBBBB-222222", "MASTER-003-CCCCCC-333333", "MASTER-004-DDDDDD-444444",
-    "MASTER-005-EEEEEE-555555", "MASTER-006-FFFFFF-666666", "MASTER-007-GGGGGG-777777",
-    "MASTER-008-HHHHHH-888888", "MASTER-009-IIIIII-999999", "MASTER-010-JJJJJJ-000000",
-    "LEGEND-001-AAAAAA-111111", "LEGEND-002-BBBBBB-222222", "LEGEND-003-CCCCCC-333333",
-    "LEGEND-004-DDDDDD-444444", "LEGEND-005-EEEEEE-555555", "LEGEND-006-FFFFFF-666666",
-    "LEGEND-007-GGGGGG-777777", "LEGEND-008-HHHHHH-888888", "LEGEND-009-IIIIII-999999",
-    "LEGEND-010-JJJJJJ-000000", "ELITE-001-AAAAA-11111", "ELITE-002-BBBBB-22222",
-    "ELITE-003-CCCCC-33333", "ELITE-004-DDDDD-44444", "ELITE-005-EEEEE-55555",
-    "ELITE-006-FFFFF-66666", "ELITE-007-GGGGG-77777", "ELITE-008-HHHHH-88888",
-    "ELITE-009-IIIII-99999", "ELITE-010-JJJJJ-00000", "PRO-0001-AAAAA-11111",
-    "PRO-0002-BBBBB-22222", "PRO-0003-CCCCC-33333", "PRO-0004-DDDDD-44444",
-    "PRO-0005-EEEEE-55555", "PRO-0006-FFFFF-66666", "PRO-0007-GGGGG-77777",
-    "PRO-0008-HHHHH-88888", "PRO-0009-IIIII-99999", "PRO-0010-JJJJJ-00000",
-    "GOD-001-AAAAA-11111", "GOD-002-BBBBB-22222", "GOD-003-CCCCC-33333",
-    "GOD-004-DDDDD-44444", "GOD-005-EEEEE-55555", "GOD-006-FFFFF-66666",
-    "GOD-007-GGGGG-77777", "GOD-008-HHHHH-88888", "GOD-009-IIIII-99999",
-    "GOD-010-JJJJJ-00000", "KING-001-AAAAA-11111", "KING-002-BBBBB-22222",
-    "KING-003-CCCCC-33333", "KING-004-DDDDD-44444", "KING-005-EEEEE-55555",
-    "KING-006-FFFFF-66666", "KING-007-GGGGG-77777", "KING-008-HHHHH-88888",
-    "KING-009-IIIII-99999", "KING-010-JJJJJ-00000", "RANDOM-A1B2-C3D4-E5F6-G7H8",
-    "RANDOM-I9J0-K1L2-M3N4-O5P6", "RANDOM-Q7R8-S9T0-U1V2-W3X4", "RANDOM-Y5Z6-A7B8-C9D0-E1F2",
-    "RANDOM-G3H4-I5J6-K7L8-M9N0", "RANDOM-O1P2-Q3R4-S5T6-U7V8", "RANDOM-W9X0-Y1Z2-A3B4-C5D6",
-    "RANDOM-E7F8-G9H0-I1J2-K3L4", "RANDOM-M5N6-O7P8-Q9R0-S1T2", "RANDOM-U3V4-W5X6-Y7Z8-A9B0",
-    "SECRET-001-XXXXX-11111", "SECRET-002-YYYYY-22222", "SECRET-003-ZZZZZ-33333",
-    "SECRET-004-AAAAA-44444", "SECRET-005-BBBBB-55555", "SECRET-006-CCCCC-66666",
-    "SECRET-007-DDDDD-77777", "SECRET-008-EEEEE-88888", "SECRET-009-FFFFF-99999",
-    "SECRET-010-GGGGG-00000", "GOLD-001-HHHHH-11111", "GOLD-002-IIIII-22222",
-    "GOLD-003-JJJJJ-33333", "GOLD-004-KKKKK-44444", "GOLD-005-LLLLL-55555",
-    "GOLD-006-MMMMM-66666", "GOLD-007-NNNNN-77777", "GOLD-008-OOOOO-88888",
-    "GOLD-009-PPPPP-99999", "GOLD-010-QQQQQ-00000", "SILVER-001-RRRRR-11111",
-    "SILVER-002-SSSSS-22222", "SILVER-003-TTTTT-33333", "SILVER-004-UUUUU-44444",
-    "SILVER-005-VVVVV-55555", "SILVER-006-WWWWW-66666", "SILVER-007-XXXXX-77777",
-    "SILVER-008-YYYYY-88888", "SILVER-009-ZZZZZ-99999", "SILVER-010-AAAAA-00000",
-    "DIAMOND-01-BBBBB-11111", "DIAMOND-02-CCCCC-22222", "DIAMOND-03-DDDDD-33333",
-    "DIAMOND-04-EEEEE-44444", "DIAMOND-05-FFFFF-55555", "DIAMOND-06-GGGGG-66666",
-    "DIAMOND-07-HHHHH-77777", "DIAMOND-08-IIIII-88888", "DIAMOND-09-JJJJJ-99999",
-    "DIAMOND-10-KKKKK-00000", "PLATINUM-01-LLLLL-11111", "PLATINUM-02-MMMMM-22222",
-    "PLATINUM-03-NNNNN-33333", "PLATINUM-04-OOOOO-44444", "PLATINUM-05-PPPPP-55555",
-    "PLATINUM-06-QQQQQ-66666", "PLATINUM-07-RRRRR-77777", "PLATINUM-08-SSSSS-88888",
-    "PLATINUM-09-TTTTT-99999", "PLATINUM-10-UUUUU-00000", "TITANIUM-01-VVVVV-11111",
-    "TITANIUM-02-WWWWW-22222", "TITANIUM-03-XXXXX-33333", "TITANIUM-04-YYYYY-44444",
-    "TITANIUM-05-ZZZZZ-55555", "TITANIUM-06-AAAAA-66666", "TITANIUM-07-BBBBB-77777",
-    "TITANIUM-08-CCCCC-88888", "TITANIUM-09-DDDDD-99999", "TITANIUM-10-EEEEE-00000",
-    "KHANH-SP01-AAAAA-99999", "KHANH-SP02-BBBBB-88888", "KHANH-SP03-CCCCC-77777",
-    "KHANH-SP04-DDDDD-66666", "KHANH-SP05-EEEEE-55555", "KHANH-SP06-FFFFF-44444",
-    "KHANH-SP07-GGGGG-33333", "KHANH-SP08-HHHHH-22222", "KHANH-SP09-IIIII-11111",
-    "KHANH-SP10-JJJJJ-00000", "VIPPRO-1000-XXXXX-12345", "VIPPRO-2000-YYYYY-23456",
-    "VIPPRO-3000-ZZZZZ-34567", "VIPPRO-4000-AAAAA-45678", "VIPPRO-5000-BBBBB-56789",
-    "VIPPRO-6000-CCCCC-67890", "VIPPRO-7000-DDDDD-78901", "VIPPRO-8000-EEEEE-89012",
-    "VIPPRO-9000-FFFFF-90123", "VIPPRO-9999-GGGGG-01234", "PREMIUM-100-HHHHH-123456",
-    "PREMIUM-200-IIIII-234567", "PREMIUM-300-JJJJJ-345678", "PREMIUM-400-KKKKK-456789",
-    "PREMIUM-500-LLLLL-567890", "PREMIUM-600-MMMMM-678901", "PREMIUM-700-NNNNN-789012",
-    "PREMIUM-800-OOOOO-890123", "PREMIUM-900-PPPPP-901234", "PREMIUM-999-QQQQQ-012345",
-    "ULTIMA-100-RRRRR-123456", "ULTIMA-200-SSSSS-234567", "ULTIMA-300-TTTTT-345678",
-    "ULTIMA-400-UUUUU-456789", "ULTIMA-500-VVVVV-567890", "ULTIMA-600-WWWWW-678901",
-    "ULTIMA-700-XXXXX-789012", "ULTIMA-800-YYYYY-890123", "ULTIMA-900-ZZZZZ-901234",
-    "ULTIMA-999-AAAAA-012345", "MASTER-100-BBBBB-123456", "MASTER-200-CCCCC-234567",
-    "MASTER-300-DDDDD-345678", "MASTER-400-EEEEE-456789", "MASTER-500-FFFFF-567890",
-    "MASTER-600-GGGGG-678901", "MASTER-700-HHHHH-789012", "MASTER-800-IIIII-890123",
-    "MASTER-900-JJJJJ-901234", "MASTER-999-KKKKK-012345", "LEGEND-100-LLLLL-123456",
-    "LEGEND-200-MMMMM-234567", "LEGEND-300-NNNNN-345678", "LEGEND-400-OOOOO-456789",
-    "LEGEND-500-PPPPP-567890", "LEGEND-600-QQQQQ-678901", "LEGEND-700-RRRRR-789012",
-    "LEGEND-800-SSSSS-890123", "LEGEND-900-TTTTT-901234", "LEGEND-999-UUUUU-012345",
-    "ELITE-100-VVVVV-12345", "ELITE-200-WWWWW-23456", "ELITE-300-XXXXX-34567",
-    "ELITE-400-YYYYY-45678", "ELITE-500-ZZZZZ-56789", "ELITE-600-AAAAA-67890",
-    "ELITE-700-BBBBB-78901", "ELITE-800-CCCCC-89012", "ELITE-900-DDDDD-90123",
-    "ELITE-999-EEEEE-01234", "PRO-0100-FFFFF-12345", "PRO-0200-GGGGG-23456",
-    "PRO-0300-HHHHH-34567", "PRO-0400-IIIII-45678", "PRO-0500-JJJJJ-56789",
-    "PRO-0600-KKKKK-67890", "PRO-0700-LLLLL-78901", "PRO-0800-MMMMM-89012",
-    "PRO-0900-NNNNN-90123", "PRO-0999-OOOOO-01234", "GOD-100-PPPPP-12345",
-    "GOD-200-QQQQQ-23456", "GOD-300-RRRRR-34567", "GOD-400-SSSSS-45678",
-    "GOD-500-TTTTT-56789", "GOD-600-UUUUU-67890", "GOD-700-VVVVV-78901",
-    "GOD-800-WWWWW-89012", "GOD-900-XXXXX-90123", "GOD-999-YYYYY-01234",
-    "KING-100-ZZZZZ-12345", "KING-200-AAAAA-23456", "KING-300-BBBBB-34567",
-    "KING-400-CCCCC-45678", "KING-500-DDDDD-56789", "KING-600-EEEEE-67890",
-    "KING-700-FFFFF-78901", "KING-800-GGGGG-89012", "KING-900-HHHHH-90123",
-    "KING-999-IIIII-01234"
 }
 local validKeys = {}
 for _, key in ipairs(validKeysList) do
     validKeys[string.upper(key)] = true
 end
 
--- Key storage
 local keyStorageFolder = "KeySystem_Storage"
 local function saveUsedKey(key)
     local storage = LocalPlayer:FindFirstChild(keyStorageFolder)
@@ -237,7 +105,6 @@ local function onKeyValidated(key)
     saveUsedKey(key)
 end
 
--- Hàm copy link
 local function copyToClipboard(text)
     local success = false
     if setclipboard then
@@ -561,7 +428,16 @@ local settings = {
         maxDistance = 200,
         boxColor = Color3.fromRGB(255, 70, 70),
         skeletonColor = Color3.fromRGB(0, 200, 255),
-        npcColor = Color3.fromRGB(255, 200, 50)
+        npcColor = Color3.fromRGB(255, 200, 50),
+        boxColorR = 255,
+        boxColorG = 70,
+        boxColorB = 70,
+        skeletonColorR = 0,
+        skeletonColorG = 200,
+        skeletonColorB = 255,
+        npcColorR = 255,
+        npcColorG = 200,
+        npcColorB = 50
     },
     aimbot = {
         enabled = true,
@@ -570,17 +446,179 @@ local settings = {
         maxDistance = 150,
         lockTarget = true,
         showFOV = true,
+        showLine = true,
         fovColor = Color3.fromRGB(0, 200, 255),
+        lineColor = Color3.fromRGB(255, 0, 0),
         aimPart = "Head",
         aimMode = "Both",
-        autoShot = true
+        autoShot = true,
+        fovColorR = 0,
+        fovColorG = 200,
+        fovColorB = 255,
+        lineColorR = 255,
+        lineColorG = 0,
+        lineColorB = 0
     },
     teleport = {
         enabled = true
     }
 }
 
--- FIX: Dọn dẹp drawing cũ trước khi tạo mới
+-- ============ CONFIG SYSTEM FUNCTIONS ==========
+local function ensureConfigFolder()
+    local success = pcall(function()
+        if not isfolder then return false end
+        if not isfolder(ConfigFolder) then
+            makefolder(ConfigFolder)
+        end
+        return true
+    end)
+    return success
+end
+
+local function saveConfig(configName)
+    if not configName or configName == "" then
+        configName = "default"
+    end
+    configName = string.gsub(configName, "[^%w%_%-]", "_")
+    
+    settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR, settings.esp.boxColorG, settings.esp.boxColorB)
+    settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR, settings.esp.skeletonColorG, settings.esp.skeletonColorB)
+    settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR, settings.esp.npcColorG, settings.esp.npcColorB)
+    settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR, settings.aimbot.fovColorG, settings.aimbot.fovColorB)
+    settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR, settings.aimbot.lineColorG, settings.aimbot.lineColorB)
+    
+    local configData = {
+        name = configName,
+        savedAt = os.date("%Y-%m-%d %H:%M:%S"),
+        settings = settings
+    }
+    
+    local jsonData = HttpService:JSONEncode(configData)
+    local success = pcall(function()
+        if writefile then
+            writefile(ConfigFolder .. "/" .. configName .. ".json", jsonData)
+            return true
+        end
+        return false
+    end)
+    
+    if success then
+        return true, "✅ Saved: " .. configName
+    end
+    return false, "❌ Cannot save"
+end
+
+local function loadConfig(configName)
+    if not configName or configName == "" then return false, "Invalid name" end
+    
+    local success, data = pcall(function()
+        if readfile and isfile then
+            local filePath = ConfigFolder .. "/" .. configName .. ".json"
+            if isfile(filePath) then
+                return readfile(filePath)
+            end
+        end
+        return nil
+    end)
+    
+    if success and data then
+        local loaded = HttpService:JSONDecode(data)
+        if loaded and loaded.settings then
+            for category, values in pairs(loaded.settings) do
+                if settings[category] then
+                    for k, v in pairs(values) do
+                        if settings[category][k] ~= nil then
+                            settings[category][k] = v
+                        end
+                    end
+                end
+            end
+            settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, settings.esp.boxColorG or 70, settings.esp.boxColorB or 70)
+            settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, settings.esp.skeletonColorG or 200, settings.esp.skeletonColorB or 255)
+            settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50)
+            settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255)
+            settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0)
+            return true, "✅ Loaded: " .. configName
+        end
+    end
+    return false, "❌ Config not found"
+end
+
+local function getConfigList()
+    local configs = {}
+    pcall(function()
+        if listfiles then
+            local files = listfiles(ConfigFolder)
+            for _, file in pairs(files) do
+                local name = string.match(file, "([^/\\]+)%.json$")
+                if name then
+                    table.insert(configs, name)
+                end
+            end
+        end
+    end)
+    return configs
+end
+
+local function deleteConfig(configName)
+    if not configName or configName == "" then return false end
+    local success = pcall(function()
+        if delfile then
+            delfile(ConfigFolder .. "/" .. configName .. ".json")
+            return true
+        end
+        return false
+    end)
+    return success
+end
+
+local function saveAutoLoadConfig(configName)
+    if not configName or configName == "" then return false end
+    local success = pcall(function()
+        if writefile then
+            writefile(ConfigFolder .. "/auto_load_config.txt", configName)
+            return true
+        end
+        return false
+    end)
+    return success
+end
+
+local function getAutoLoadConfig()
+    local autoLoadName = nil
+    pcall(function()
+        if readfile and isfile then
+            local autoLoadPath = ConfigFolder .. "/auto_load_config.txt"
+            if isfile(autoLoadPath) then
+                autoLoadName = readfile(autoLoadPath)
+            end
+        end
+    end)
+    return autoLoadName
+end
+
+local function clearAutoLoadConfig()
+    pcall(function()
+        if delfile then
+            delfile(ConfigFolder .. "/auto_load_config.txt")
+        end
+    end)
+end
+
+local function autoLoadConfigOnStart()
+    ensureConfigFolder()
+    local autoLoadName = getAutoLoadConfig()
+    if autoLoadName and autoLoadName ~= "" then
+        local success, msg = loadConfig(autoLoadName)
+        if success then
+            return true, "🔧 Auto loaded: " .. autoLoadName
+        end
+    end
+    return false, "No auto-load config set"
+end
+
+-- Dọn dẹp drawing cũ
 pcall(function()
     for _, data in pairs(espBoxes or {}) do
         if data.box then
@@ -592,9 +630,9 @@ pcall(function()
         for _, line in pairs(skel) do line:Remove() end
     end
     if aimbotFOV then aimbotFOV:Remove() end
+    if aimLine then aimLine:Remove() end
 end)
 
--- Xóa menu cũ
 pcall(function() 
     local old = LocalPlayer.PlayerGui:FindFirstChild("AuroraMenu")
     if old then old:Destroy() end 
@@ -639,18 +677,18 @@ aimbotFOV.Filled = false
 aimbotFOV.Visible = settings.aimbot.showFOV
 aimbotFOV.Transparency = 0.4
 
+-- LINE TỪ TÂM ĐẾN ĐẦU ĐỊCH (LUÔN HIỆN)
+local aimLine = Drawing.new("Line")
+aimLine.Thickness = 2
+aimLine.Color = settings.aimbot.lineColor
+aimLine.Visible = false
+aimLine.Transparency = 0.8
+
 local function updateFOVPos()
     aimbotFOV.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 end
 updateFOVPos()
 Camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateFOVPos)
-
-RunService.RenderStepped:Connect(function()
-    aimbotFOV.Radius = settings.aimbot.fovRadius
-    aimbotFOV.Color = settings.aimbot.fovColor
-    aimbotFOV.Visible = settings.aimbot.showFOV
-    aimbotFOV.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-end)
 
 -- LẤY DANH SÁCH MỤC TIÊU
 local function getAllTargets()
@@ -757,20 +795,25 @@ local function drawSkeleton(skelLines, parts, color)
     end
 end
 
--- AUTO SHOT
+-- BẮN (NHANH, KHÔNG DELAY)
+local lastShotTime = 0
+local SHOT_DELAY = 0.03 -- Giảm còn 30ms để bắn nhanh hơn
+
 local function shoot()
-    if mouse1click then mouse1click()
+    local currentTime = tick()
+    if currentTime - lastShotTime < SHOT_DELAY then return end
+    lastShotTime = currentTime
+    
+    if mouse1click then
+        mouse1click()
     else
         VirtualInput:SendMouseButtonEvent(Enum.UserInputType.MouseButton1, Enum.UserInputState.Begin, nil, false)
-        task.wait(0.01)
+        task.wait(0.005)
         VirtualInput:SendMouseButtonEvent(Enum.UserInputType.MouseButton1, Enum.UserInputState.End, nil, false)
     end
 end
 
--- AIMBOT - FIX: Thêm nhiều cách di chuyển chuột
-local isAiming = false
-local lockedTarget = nil
-
+-- TÌM TARGET TỐT NHẤT TRONG FOV
 local function getBestTarget()
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local bestTarget = nil
@@ -789,59 +832,172 @@ local function getBestTarget()
     return bestTarget
 end
 
+-- DI CHUYỂN CHUỘT ĐẾN TARGET
 local function moveToTarget(targetData)
     if not targetData or not targetData.part then return false end
     local targetPos, onScreen = Camera:WorldToViewportPoint(targetData.part.Position)
     if not onScreen then return false end
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local delta = Vector2.new(targetPos.X, targetPos.Y) - centerScreen
-    if delta.Magnitude < 0.5 then return true end
+    -- GIẢM NGƯỠNG TỪ 3 XUỐNG 2 PIXEL ĐỂ BẮN NHANH HƠN
+    if delta.Magnitude < 2 then return true end
     local moveX = delta.X / settings.aimbot.smoothness
     local moveY = delta.Y / settings.aimbot.smoothness
-    moveX = math.clamp(moveX, -30, 30)
-    moveY = math.clamp(moveY, -30, 30)
+    moveX = math.clamp(moveX, -20, 20)
+    moveY = math.clamp(moveY, -20, 20)
     if mousemoverel then
         mousemoverel(moveX, moveY)
-        return delta.Magnitude < 15
     elseif syn and syn.mouse_move then
         syn.mouse_move(moveX, moveY)
-        return delta.Magnitude < 15
     else
         local mouse = LocalPlayer:GetMouse()
-        local newX = mouse.X + moveX
-        local newY = mouse.Y + moveY
-        VirtualInput:SendMouseMoveEvent(newX, newY)
-        return delta.Magnitude < 15
+        VirtualInput:SendMouseMoveEvent(mouse.X + moveX, mouse.Y + moveY)
     end
-    return false
+    return delta.Magnitude < 2
+end
+
+local isAiming = false
+local lockedTarget = nil
+local isTargetLocked = false
+
+local function isTargetAlive(targetData)
+    if not targetData or not targetData.character then return false end
+    local hum = targetData.character:FindFirstChildOfClass("Humanoid")
+    return hum and hum.Health and hum.Health > 0
 end
 
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 and settings.aimbot.enabled then isAiming = true end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 and settings.aimbot.enabled then 
+        isAiming = true 
+        isTargetLocked = false
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input, gp)
     if gp then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then isAiming = false; lockedTarget = nil end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then 
+        isAiming = false
+        lockedTarget = nil
+        isTargetLocked = false
+    end
 end)
 
+-- ============ RENDER STEP CHÍNH (LINE LUÔN HIỆN + AUTO SHOT NHANH) ==========
 RunService.RenderStepped:Connect(function()
-    if not (settings.aimbot.enabled and isAiming) then return end
+    local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local bestTarget = getBestTarget()
+    
+    -- LINE LUÔN HIỆN (KHI CÓ TARGET TRONG FOV)
+    if settings.aimbot.showLine and bestTarget and bestTarget.part then
+        local targetPos, onScreen = Camera:WorldToViewportPoint(bestTarget.part.Position)
+        if onScreen then
+            aimLine.From = centerScreen
+            aimLine.To = Vector2.new(targetPos.X, targetPos.Y)
+            aimLine.Color = settings.aimbot.lineColor
+            aimLine.Thickness = 2
+            aimLine.Transparency = 0.8
+            aimLine.Visible = true
+        else
+            aimLine.Visible = false
+        end
+    else
+        aimLine.Visible = false
+    end
+    
+    -- AIMBOT + AUTO SHOT (CHỈ KHI GIỮ CHUỘT PHẢI)
+    if not (settings.aimbot.enabled and isAiming) then 
+        lockedTarget = nil
+        isTargetLocked = false
+        return 
+    end
+    
+    if lockedTarget and not isTargetAlive(lockedTarget) then
+        lockedTarget = nil
+        isTargetLocked = false
+    end
+    
     local targetData = nil
-    if settings.aimbot.lockTarget and lockedTarget then targetData = lockedTarget
-    else targetData = getBestTarget(); if settings.aimbot.lockTarget then lockedTarget = targetData end end
+    if settings.aimbot.lockTarget and lockedTarget then 
+        targetData = lockedTarget 
+    else 
+        targetData = bestTarget
+        if settings.aimbot.lockTarget and targetData then 
+            lockedTarget = targetData
+        end
+    end
+    
     if targetData and targetData.part then
-        local isOnTarget = moveToTarget(targetData)
+        -- Kiểm tra xem tâm đã chạm đầu chưa
+        local targetPos, onScreen = Camera:WorldToViewportPoint(targetData.part.Position)
+        local isOnTarget = false
+        if onScreen then
+            local delta = (Vector2.new(targetPos.X, targetPos.Y) - centerScreen).Magnitude
+            isOnTarget = delta < 2 -- Tâm đã chạm đầu
+        end
+        
+        -- Di chuyển chuột đến target
+        moveToTarget(targetData)
+        
+        -- AUTO SHOT: BẮN NGAY LẬP TỨC KHI TÂM CHẠM ĐẦU VÀ THẤY NGƯỜI
         if settings.aimbot.autoShot and isOnTarget then
-            if canSeeTarget(targetData.part) then shoot() end
+            if canSeeTarget(targetData.part) then
+                shoot()
+            end
         end
     end
 end)
 
--- ESP + SKELETON
+-- UPDATE FOV CIRCLE
+RunService.RenderStepped:Connect(function()
+    if settings.aimbot.enabled and isAiming then
+        local pulseValue = (math.sin(tick() * 10) + 1) / 2
+        aimbotFOV.Transparency = 0.2 + (pulseValue * 0.3)
+        aimbotFOV.Thickness = 2 + (pulseValue * 2)
+    else
+        aimbotFOV.Transparency = 0.4
+        aimbotFOV.Thickness = 2
+    end
+    
+    aimbotFOV.Radius = settings.aimbot.fovRadius
+    aimbotFOV.Color = settings.aimbot.fovColor
+    aimbotFOV.Visible = settings.aimbot.showFOV
+    aimbotFOV.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+end)
+
+-- ESP + SKELETON (giữ nguyên từ code cũ)
 local espBoxes = {}
 local espSkeletons = {}
+
+local function fullCleanupESP()
+    for target, data in pairs(espBoxes) do
+        if data and data.box then
+            for _, line in pairs(data.box) do
+                pcall(function() 
+                    if line and line.Remove then line:Remove() 
+                    elseif line then line.Visible = false end
+                end)
+            end
+        end
+        if data and data.text then
+            pcall(function() data.text:Remove() end)
+        end
+    end
+    
+    for target, skel in pairs(espSkeletons) do
+        if skel then
+            for _, line in pairs(skel) do
+                pcall(function() 
+                    if line and line.Remove then line:Remove()
+                    elseif line then line.Visible = false end
+                end)
+            end
+        end
+    end
+    
+    table.clear(espBoxes)
+    table.clear(espSkeletons)
+end
 
 local function addESP(target, isNPC)
     if espBoxes[target] then return end
@@ -863,7 +1019,6 @@ local function addESP(target, isNPC)
     espSkeletons[target] = {}
 end
 
--- FIX: Xóa sạch drawing khi remove
 local function removeESP(target)
     if espBoxes[target] then
         for _, line in pairs(espBoxes[target].box) do 
@@ -880,7 +1035,6 @@ local function removeESP(target)
     end
 end
 
--- FIX: Cleanup khi tắt ESP
 local function cleanupAllESP()
     for target, data in pairs(espBoxes) do
         if data.box then
@@ -932,11 +1086,19 @@ if workspace:FindFirstChild("ShootingRangeEntities") then
     workspace.ShootingRangeEntities.ChildRemoved:Connect(function(npc) removeESP(npc) end)
 end
 
+local lastRenderTime = 0
+local RENDER_INTERVAL = 1/30
+
 RunService.RenderStepped:Connect(function()
+    local currentTime = tick()
+    if currentTime - lastRenderTime < RENDER_INTERVAL then
+        return
+    end
+    lastRenderTime = currentTime
+    
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local myPos = myRoot and myRoot.Position or nil
     
-    -- FIX: Nếu ESP tắt thì ẩn hết
     if not settings.esp.enabled then
         cleanupAllESP()
         return
@@ -1084,7 +1246,7 @@ local function refreshLocalPlayerUI()
     end
 end
 
--- MENU CHÍNH (RÚT GỌN NHƯNG ĐẦY ĐỦ CHỨC NĂNG)
+-- ============ MENU CHÍNH (RÚT GỌN) ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuroraMenu"
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -1100,8 +1262,8 @@ overlay.Visible = false
 overlay.Parent = screenGui
 
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 520, 0, 620)
-menu.Position = UDim2.new(0.5, -260, 0.5, -310)
+menu.Size = UDim2.new(0, 580, 0, 800)
+menu.Position = UDim2.new(0.5, -290, 0.5, -400)
 menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 menu.BackgroundTransparency = 0.08
 menu.BorderSizePixel = 0
@@ -1196,7 +1358,7 @@ local subTitle = Instance.new("TextLabel")
 subTitle.Size = UDim2.new(1, -100, 0, 20)
 subTitle.Position = UDim2.new(0, 22, 0, 52)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "ESP • SKELETON • AIMBOT • VALUE • DEVICE • TELEPORT"
+subTitle.Text = "ESP • SKELETON • AIMBOT • LINE AIM (ALWAYS) • AUTO SHOT • VALUE • DEVICE • TP • CONFIG"
 subTitle.TextColor3 = Color3.fromRGB(150, 200, 255)
 subTitle.TextSize = 11
 subTitle.Font = Enum.Font.Gotham
@@ -1240,8 +1402,8 @@ tabBar.BorderSizePixel = 0
 tabBar.Parent = menu
 
 local tabs = {}
-local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 BONE", "⚡ VALUE", "🎮 DEVICE", "🌀 TP"}
-local tabWidth = 520 / #tabNames
+local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 BONE", "⚡ VALUE", "🎮 DEVICE", "🌀 TP", "⚙️ CONFIG"}
+local tabWidth = 580 / #tabNames
 
 for i, name in ipairs(tabNames) do
     local btn = Instance.new("TextButton")
@@ -1250,7 +1412,7 @@ for i, name in ipairs(tabNames) do
     btn.BackgroundTransparency = 1
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(160, 160, 200)
-    btn.TextSize = 12
+    btn.TextSize = 11
     btn.Font = Enum.Font.GothamSemibold
     btn.AutoButtonColor = false
     btn.Parent = tabBar
@@ -1301,7 +1463,7 @@ local aimbotPanel = Instance.new("ScrollingFrame")
 aimbotPanel.Size = UDim2.new(1, 0, 1, 0)
 aimbotPanel.BackgroundTransparency = 1
 aimbotPanel.BorderSizePixel = 0
-aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 650)
+aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 850)
 aimbotPanel.ScrollBarThickness = 4
 aimbotPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 aimbotPanel.Parent = contentArea
@@ -1310,7 +1472,7 @@ local espPanel = Instance.new("ScrollingFrame")
 espPanel.Size = UDim2.new(1, 0, 1, 0)
 espPanel.BackgroundTransparency = 1
 espPanel.BorderSizePixel = 0
-espPanel.CanvasSize = UDim2.new(0, 0, 0, 550)
+espPanel.CanvasSize = UDim2.new(0, 0, 0, 950)
 espPanel.ScrollBarThickness = 4
 espPanel.Parent = contentArea
 espPanel.Visible = false
@@ -1337,7 +1499,7 @@ local devicePanel = Instance.new("ScrollingFrame")
 devicePanel.Size = UDim2.new(1, 0, 1, 0)
 devicePanel.BackgroundTransparency = 1
 devicePanel.BorderSizePixel = 0
-devicePanel.CanvasSize = UDim2.new(0, 0, 0, 300)
+devicePanel.CanvasSize = UDim2.new(0, 0, 0, 400)
 devicePanel.ScrollBarThickness = 4
 devicePanel.Parent = contentArea
 devicePanel.Visible = false
@@ -1350,6 +1512,16 @@ tpPanel.CanvasSize = UDim2.new(0, 0, 0, 200)
 tpPanel.ScrollBarThickness = 4
 tpPanel.Parent = contentArea
 tpPanel.Visible = false
+
+local configPanel = Instance.new("ScrollingFrame")
+configPanel.Size = UDim2.new(1, 0, 1, 0)
+configPanel.BackgroundTransparency = 1
+configPanel.BorderSizePixel = 0
+configPanel.CanvasSize = UDim2.new(0, 0, 0, 700)
+configPanel.ScrollBarThickness = 4
+configPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+configPanel.Parent = contentArea
+configPanel.Visible = false
 
 -- Helper Functions
 local function createModernToggle(parent, y, name, getValue, setValue)
@@ -1482,6 +1654,132 @@ local function createModernSlider(parent, y, name, minVal, maxVal, defaultValue,
     return frame
 end
 
+-- COLOR PICKER
+local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, setB, updateColor)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -10, 0, 130)
+    frame.Position = UDim2.new(0, 5, 0, y)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    frame.BackgroundTransparency = 0.4
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, -10, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, 8)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(230, 230, 255)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local preview = Instance.new("Frame")
+    preview.Size = UDim2.new(0, 50, 0, 50)
+    preview.Position = UDim2.new(1, -60, 0, 8)
+    preview.BackgroundColor3 = Color3.fromRGB(getR(), getG(), getB())
+    preview.BorderSizePixel = 0
+    preview.Parent = frame
+    local previewCorner = Instance.new("UICorner")
+    previewCorner.CornerRadius = UDim.new(0, 8)
+    previewCorner.Parent = preview
+    
+    local function createSlider(parent, x, y, w, h, labelText, minVal, maxVal, getVal, setVal, color)
+        local sliderFrame = Instance.new("Frame")
+        sliderFrame.Size = UDim2.new(0, w, 0, h)
+        sliderFrame.Position = UDim2.new(0, x, 0, y)
+        sliderFrame.BackgroundTransparency = 1
+        sliderFrame.Parent = parent
+        
+        local sliderLabel = Instance.new("TextLabel")
+        sliderLabel.Size = UDim2.new(0, 30, 0, 20)
+        sliderLabel.Position = UDim2.new(0, 0, 0, 0)
+        sliderLabel.BackgroundTransparency = 1
+        sliderLabel.Text = labelText
+        sliderLabel.TextColor3 = color
+        sliderLabel.TextSize = 12
+        sliderLabel.Font = Enum.Font.GothamBold
+        sliderLabel.Parent = sliderFrame
+        
+        local valueText = Instance.new("TextLabel")
+        valueText.Size = UDim2.new(0, 40, 0, 20)
+        valueText.Position = UDim2.new(1, -40, 0, 0)
+        valueText.BackgroundTransparency = 1
+        valueText.Text = tostring(getVal())
+        valueText.TextColor3 = color
+        valueText.TextSize = 11
+        valueText.Font = Enum.Font.Gotham
+        valueText.TextXAlignment = Enum.TextXAlignment.Right
+        valueText.Parent = sliderFrame
+        
+        local sliderBg = Instance.new("Frame")
+        sliderBg.Size = UDim2.new(1, -80, 0, 6)
+        sliderBg.Position = UDim2.new(0, 35, 0, 18)
+        sliderBg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+        sliderBg.BorderSizePixel = 0
+        sliderBg.Parent = sliderFrame
+        local sliderBgCorner = Instance.new("UICorner")
+        sliderBgCorner.CornerRadius = UDim.new(0, 3)
+        sliderBgCorner.Parent = sliderBg
+        
+        local sliderFill = Instance.new("Frame")
+        sliderFill.Size = UDim2.new((getVal() - minVal) / (maxVal - minVal), 0, 1, 0)
+        sliderFill.BackgroundColor3 = color
+        sliderFill.BorderSizePixel = 0
+        sliderFill.Parent = sliderBg
+        local fillCorner = Instance.new("UICorner")
+        fillCorner.CornerRadius = UDim.new(0, 3)
+        fillCorner.Parent = sliderFill
+        
+        local handle = Instance.new("TextButton")
+        handle.Size = UDim2.new(0, 16, 0, 16)
+        handle.Position = UDim2.new((getVal() - minVal) / (maxVal - minVal), -8, 0.5, -8)
+        handle.BackgroundColor3 = color
+        handle.BorderSizePixel = 0
+        handle.Text = ""
+        handle.Parent = sliderBg
+        local handleCorner = Instance.new("UICorner")
+        handleCorner.CornerRadius = UDim.new(0, 8)
+        handleCorner.Parent = handle
+        
+        local dragging = false
+        handle.MouseButton1Down:Connect(function() dragging = true end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local mousePos = LocalPlayer:GetMouse()
+                local sPos = sliderBg.AbsolutePosition.X
+                local sWid = sliderBg.AbsoluteSize.X
+                local percent = math.clamp((mousePos.X - sPos) / sWid, 0, 1)
+                local value = math.floor(minVal + (maxVal - minVal) * percent)
+                setVal(value)
+                valueText.Text = tostring(value)
+                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                handle.Position = UDim2.new(percent, -8, 0.5, -8)
+                preview.BackgroundColor3 = Color3.fromRGB(getR(), getG(), getB())
+                updateColor()
+            end
+        end)
+        
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        end)
+        
+        return sliderFrame
+    end
+    
+    createSlider(frame, 10, 45, 200, 40, "R", 0, 255, getR, setR, Color3.fromRGB(255, 80, 80))
+    createSlider(frame, 10, 75, 200, 40, "G", 0, 255, getG, setG, Color3.fromRGB(80, 255, 80))
+    createSlider(frame, 10, 105, 200, 40, "B", 0, 255, getB, setB, Color3.fromRGB(80, 80, 255))
+    
+    return frame
+end
+
 local function createDeviceButton(parent, y, name, deviceValue, color)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0.9, 0, 0, 45)
@@ -1537,11 +1835,14 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
--- Build UI
+-- ============ BUILD UI ==========
+
+-- AIMBOT PANEL
 local y = 10
 createModernToggle(aimbotPanel, y, "⚡ ENABLE AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
 y = y + 60
 
+-- AIM MODE
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(1, -10, 0, 52)
 frame.Position = UDim2.new(0, 5, 0, y)
@@ -1629,7 +1930,34 @@ y = y + 80
 createModernToggle(aimbotPanel, y, "🔫 AUTO SHOT", function() return settings.aimbot.autoShot end, function(v) settings.aimbot.autoShot = v end)
 y = y + 60
 createModernToggle(aimbotPanel, y, "👁️ SHOW FOV", function() return settings.aimbot.showFOV end, function(v) settings.aimbot.showFOV = v end)
+y = y + 60
+createModernToggle(aimbotPanel, y, "📏 SHOW AIM LINE (ALWAYS)", function() return settings.aimbot.showLine end, function(v) settings.aimbot.showLine = v end)
+y = y + 60
 
+-- FOV Color Picker
+createColorPicker(aimbotPanel, y, "🎨 FOV COLOR", 
+    function() return settings.aimbot.fovColorR or 0 end,
+    function() return settings.aimbot.fovColorG or 200 end,
+    function() return settings.aimbot.fovColorB or 255 end,
+    function(v) settings.aimbot.fovColorR = v; settings.aimbot.fovColor = Color3.fromRGB(v, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255) end,
+    function(v) settings.aimbot.fovColorG = v; settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, v, settings.aimbot.fovColorB or 255) end,
+    function(v) settings.aimbot.fovColorB = v; settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, v) end,
+    function() end
+)
+
+y = y + 140
+-- LINE Color Picker
+createColorPicker(aimbotPanel, y, "🎨 LINE COLOR",
+    function() return settings.aimbot.lineColorR or 255 end,
+    function() return settings.aimbot.lineColorG or 0 end,
+    function() return settings.aimbot.lineColorB or 0 end,
+    function(v) settings.aimbot.lineColorR = v; settings.aimbot.lineColor = Color3.fromRGB(v, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0) end,
+    function(v) settings.aimbot.lineColorG = v; settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, v, settings.aimbot.lineColorB or 0) end,
+    function(v) settings.aimbot.lineColorB = v; settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, v) end,
+    function() end
+)
+
+-- ESP PANEL (rút gọn)
 y = 10
 createModernToggle(espPanel, y, "✨ ENABLE ESP", function() return settings.esp.enabled end, function(v) settings.esp.enabled = v end)
 y = y + 60
@@ -1642,10 +1970,45 @@ y = y + 60
 createModernToggle(espPanel, y, "📐 SHOW DISTANCE", function() return settings.esp.distance end, function(v) settings.esp.distance = v end)
 y = y + 60
 createModernToggle(espPanel, y, "💚 SHOW HEALTH", function() return settings.esp.health end, function(v) settings.esp.health = v end)
+y = y + 60
 
+createColorPicker(espPanel, y, "🎨 BOX COLOR",
+    function() return settings.esp.boxColorR or 255 end,
+    function() return settings.esp.boxColorG or 70 end,
+    function() return settings.esp.boxColorB or 70 end,
+    function(v) settings.esp.boxColorR = v; settings.esp.boxColor = Color3.fromRGB(v, settings.esp.boxColorG or 70, settings.esp.boxColorB or 70) end,
+    function(v) settings.esp.boxColorG = v; settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, v, settings.esp.boxColorB or 70) end,
+    function(v) settings.esp.boxColorB = v; settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, settings.esp.boxColorG or 70, v) end,
+    function() end
+)
+
+y = y + 140
+createColorPicker(espPanel, y, "🎨 SKELETON COLOR",
+    function() return settings.esp.skeletonColorR or 0 end,
+    function() return settings.esp.skeletonColorG or 200 end,
+    function() return settings.esp.skeletonColorB or 255 end,
+    function(v) settings.esp.skeletonColorR = v; settings.esp.skeletonColor = Color3.fromRGB(v, settings.esp.skeletonColorG or 200, settings.esp.skeletonColorB or 255) end,
+    function(v) settings.esp.skeletonColorG = v; settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, v, settings.esp.skeletonColorB or 255) end,
+    function(v) settings.esp.skeletonColorB = v; settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, settings.esp.skeletonColorG or 200, v) end,
+    function() end
+)
+
+y = y + 140
+createColorPicker(espPanel, y, "🎨 NPC COLOR",
+    function() return settings.esp.npcColorR or 255 end,
+    function() return settings.esp.npcColorG or 200 end,
+    function() return settings.esp.npcColorB or 50 end,
+    function(v) settings.esp.npcColorR = v; settings.esp.npcColor = Color3.fromRGB(v, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50) end,
+    function(v) settings.esp.npcColorG = v; settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, v, settings.esp.npcColorB or 50) end,
+    function(v) settings.esp.npcColorB = v; settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, v) end,
+    function() end
+)
+
+-- SKELETON PANEL
 y = 10
 createModernToggle(skeletonPanel, y, "🦴 ENABLE SKELETON", function() return settings.esp.skeleton end, function(v) settings.esp.skeleton = v end)
 
+-- VALUE PANEL
 y = 10
 local currentFrame = Instance.new("Frame")
 currentFrame.Size = UDim2.new(1, -10, 0, 60)
@@ -1753,7 +2116,7 @@ applyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Device Panel
+-- DEVICE PANEL
 y = 10
 local deviceTitle = Instance.new("TextLabel")
 deviceTitle.Size = UDim2.new(1, -20, 0, 40)
@@ -1787,7 +2150,7 @@ infoText.Font = Enum.Font.Gotham
 infoText.TextXAlignment = Enum.TextXAlignment.Center
 infoText.Parent = devicePanel
 
--- TP Panel
+-- TP PANEL
 y = 10
 createModernToggle(tpPanel, y, "🌀 ENABLE TELEPORT", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
 y = y + 70
@@ -1811,18 +2174,428 @@ guideLabel.TextSize = 12
 guideLabel.TextXAlignment = Enum.TextXAlignment.Center
 guideLabel.Parent = guideCard
 
+-- ============ CONFIG PANEL (RÚT GỌN) ==========
+local function refreshConfigList()
+    for _, child in pairs(configPanel:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    local yPos = 10
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Position = UDim2.new(0, 5, 0, yPos)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    titleFrame.BackgroundTransparency = 0.4
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = configPanel
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleFrame
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "⚙️ CONFIG MANAGEMENT"
+    titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = titleFrame
+    
+    yPos = yPos + 70
+    
+    local autoLoadFrame = Instance.new("Frame")
+    autoLoadFrame.Size = UDim2.new(1, -10, 0, 100)
+    autoLoadFrame.Position = UDim2.new(0, 5, 0, yPos)
+    autoLoadFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    autoLoadFrame.BackgroundTransparency = 0.4
+    autoLoadFrame.BorderSizePixel = 0
+    autoLoadFrame.Parent = configPanel
+    local autoLoadCorner = Instance.new("UICorner")
+    autoLoadCorner.CornerRadius = UDim.new(0, 12)
+    autoLoadCorner.Parent = autoLoadFrame
+    
+    local autoLoadLabel = Instance.new("TextLabel")
+    autoLoadLabel.Size = UDim2.new(1, -20, 0, 25)
+    autoLoadLabel.Position = UDim2.new(0, 10, 0, 8)
+    autoLoadLabel.BackgroundTransparency = 1
+    autoLoadLabel.Text = "🔄 AUTO LOAD CONFIG"
+    autoLoadLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    autoLoadLabel.TextSize = 13
+    autoLoadLabel.Font = Enum.Font.GothamBold
+    autoLoadLabel.TextXAlignment = Enum.TextXAlignment.Left
+    autoLoadLabel.Parent = autoLoadFrame
+    
+    local currentAutoLoad = getAutoLoadConfig()
+    local autoLoadStatus = Instance.new("TextLabel")
+    autoLoadStatus.Size = UDim2.new(1, -20, 0, 25)
+    autoLoadStatus.Position = UDim2.new(0, 10, 0, 35)
+    autoLoadStatus.BackgroundTransparency = 1
+    autoLoadStatus.Text = currentAutoLoad and "📌 Current auto-load: " .. currentAutoLoad or "📌 No config set for auto-load"
+    autoLoadStatus.TextColor3 = currentAutoLoad and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 200, 100)
+    autoLoadStatus.TextSize = 12
+    autoLoadStatus.Font = Enum.Font.Gotham
+    autoLoadStatus.TextXAlignment = Enum.TextXAlignment.Left
+    autoLoadStatus.Parent = autoLoadFrame
+    
+    local clearAutoLoadBtn = Instance.new("TextButton")
+    clearAutoLoadBtn.Size = UDim2.new(0, 100, 0, 32)
+    clearAutoLoadBtn.Position = UDim2.new(1, -110, 0, 55)
+    clearAutoLoadBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+    clearAutoLoadBtn.Text = "🗑️ CLEAR"
+    clearAutoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearAutoLoadBtn.TextSize = 11
+    clearAutoLoadBtn.Font = Enum.Font.GothamBold
+    clearAutoLoadBtn.Parent = autoLoadFrame
+    local clearCorner = Instance.new("UICorner")
+    clearCorner.CornerRadius = UDim.new(0, 8)
+    clearCorner.Parent = clearAutoLoadBtn
+    
+    clearAutoLoadBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        clearAutoLoadConfig()
+        autoLoadStatus.Text = "📌 No config set for auto-load"
+        autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+        refreshConfigList()
+        local notif = Drawing.new("Text")
+        notif.Text = "✅ Auto-load cleared!"
+        notif.Size = 14
+        notif.Color = Color3.fromRGB(0, 255, 0)
+        notif.Center = true
+        notif.Outline = true
+        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+        notif.Visible = true
+        task.wait(1.5)
+        notif.Visible = false
+        notif:Remove()
+    end)
+    
+    yPos = yPos + 110
+    
+    local createFrame = Instance.new("Frame")
+    createFrame.Size = UDim2.new(1, -10, 0, 100)
+    createFrame.Position = UDim2.new(0, 5, 0, yPos)
+    createFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    createFrame.BackgroundTransparency = 0.4
+    createFrame.BorderSizePixel = 0
+    createFrame.Parent = configPanel
+    local createCorner = Instance.new("UICorner")
+    createCorner.CornerRadius = UDim.new(0, 12)
+    createCorner.Parent = createFrame
+    local createLabel = Instance.new("TextLabel")
+    createLabel.Size = UDim2.new(1, -20, 0, 25)
+    createLabel.Position = UDim2.new(0, 10, 0, 8)
+    createLabel.BackgroundTransparency = 1
+    createLabel.Text = "📝 CREATE NEW CONFIG"
+    createLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
+    createLabel.TextSize = 13
+    createLabel.Font = Enum.Font.GothamBold
+    createLabel.TextXAlignment = Enum.TextXAlignment.Left
+    createLabel.Parent = createFrame
+    local configNameInput = Instance.new("TextBox")
+    configNameInput.Size = UDim2.new(0.6, -10, 0, 38)
+    configNameInput.Position = UDim2.new(0, 10, 0, 40)
+    configNameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+    configNameInput.PlaceholderText = "Enter config name..."
+    configNameInput.Text = ""
+    configNameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    configNameInput.TextSize = 13
+    configNameInput.Font = Enum.Font.Gotham
+    configNameInput.Parent = createFrame
+    local nameCorner = Instance.new("UICorner")
+    nameCorner.CornerRadius = UDim.new(0, 8)
+    nameCorner.Parent = configNameInput
+    local createConfigBtn = Instance.new("TextButton")
+    createConfigBtn.Size = UDim2.new(0.35, -10, 0, 38)
+    createConfigBtn.Position = UDim2.new(0.65, 0, 0, 40)
+    createConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    createConfigBtn.Text = "💾 CREATE & SAVE"
+    createConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    createConfigBtn.TextSize = 11
+    createConfigBtn.Font = Enum.Font.GothamBold
+    createConfigBtn.Parent = createFrame
+    local createCorner2 = Instance.new("UICorner")
+    createCorner2.CornerRadius = UDim.new(0, 8)
+    createCorner2.Parent = createConfigBtn
+    
+    yPos = yPos + 110
+    
+    local listFrame = Instance.new("Frame")
+    listFrame.Size = UDim2.new(1, -10, 0, 250)
+    listFrame.Position = UDim2.new(0, 5, 0, yPos)
+    listFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    listFrame.BackgroundTransparency = 0.4
+    listFrame.BorderSizePixel = 0
+    listFrame.Parent = configPanel
+    local listCorner = Instance.new("UICorner")
+    listCorner.CornerRadius = UDim.new(0, 12)
+    listCorner.Parent = listFrame
+    local listLabel = Instance.new("TextLabel")
+    listLabel.Size = UDim2.new(0.6, -10, 0, 25)
+    listLabel.Position = UDim2.new(0, 10, 0, 8)
+    listLabel.BackgroundTransparency = 1
+    listLabel.Text = "📋 SAVED CONFIGS"
+    listLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
+    listLabel.TextSize = 13
+    listLabel.Font = Enum.Font.GothamBold
+    listLabel.TextXAlignment = Enum.TextXAlignment.Left
+    listLabel.Parent = listFrame
+    
+    local refreshBtn = Instance.new("TextButton")
+    refreshBtn.Size = UDim2.new(0, 80, 0, 28)
+    refreshBtn.Position = UDim2.new(1, -90, 0, 6)
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+    refreshBtn.Text = "🔄 REFRESH"
+    refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshBtn.TextSize = 11
+    refreshBtn.Font = Enum.Font.GothamBold
+    refreshBtn.Parent = listFrame
+    local refreshCorner = Instance.new("UICorner")
+    refreshCorner.CornerRadius = UDim.new(0, 6)
+    refreshCorner.Parent = refreshBtn
+    
+    local configListScrolling = Instance.new("ScrollingFrame")
+    configListScrolling.Size = UDim2.new(1, -10, 1, -45)
+    configListScrolling.Position = UDim2.new(0, 5, 0, 40)
+    configListScrolling.BackgroundTransparency = 1
+    configListScrolling.BorderSizePixel = 0
+    configListScrolling.CanvasSize = UDim2.new(0, 0, 0, 200)
+    configListScrolling.ScrollBarThickness = 4
+    configListScrolling.Parent = listFrame
+    
+    local function updateConfigList()
+        for _, child in pairs(configListScrolling:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
+            end
+        end
+        
+        local configs = getConfigList()
+        local scrollY = 0
+        local autoLoadName = getAutoLoadConfig()
+        
+        for _, cfgName in pairs(configs) do
+            local cfgFrame = Instance.new("Frame")
+            cfgFrame.Size = UDim2.new(1, -10, 0, 55)
+            cfgFrame.Position = UDim2.new(0, 5, 0, scrollY)
+            cfgFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+            cfgFrame.BackgroundTransparency = 0.3
+            cfgFrame.BorderSizePixel = 0
+            cfgFrame.Parent = configListScrolling
+            local cfgCorner = Instance.new("UICorner")
+            cfgCorner.CornerRadius = UDim.new(0, 8)
+            cfgCorner.Parent = cfgFrame
+            
+            local cfgNameLabel = Instance.new("TextLabel")
+            cfgNameLabel.Size = UDim2.new(0.4, -10, 0, 25)
+            cfgNameLabel.Position = UDim2.new(0, 10, 0, 8)
+            cfgNameLabel.BackgroundTransparency = 1
+            cfgNameLabel.Text = cfgName
+            cfgNameLabel.TextColor3 = (autoLoadName == cfgName) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 200, 255)
+            cfgNameLabel.TextSize = 12
+            cfgNameLabel.Font = Enum.Font.GothamBold
+            cfgNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            cfgNameLabel.Parent = cfgFrame
+            
+            if autoLoadName == cfgName then
+                local autoBadge = Instance.new("TextLabel")
+                autoBadge.Size = UDim2.new(0, 60, 0, 18)
+                autoBadge.Position = UDim2.new(0.4, 10, 0, 10)
+                autoBadge.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+                autoBadge.Text = "AUTO"
+                autoBadge.TextColor3 = Color3.fromRGB(255, 255, 255)
+                autoBadge.TextSize = 10
+                autoBadge.Font = Enum.Font.GothamBold
+                autoBadge.Parent = cfgFrame
+                local badgeCorner = Instance.new("UICorner")
+                badgeCorner.CornerRadius = UDim.new(0, 4)
+                badgeCorner.Parent = autoBadge
+            end
+            
+            local loadCfgBtn = Instance.new("TextButton")
+            loadCfgBtn.Size = UDim2.new(0, 70, 0, 32)
+            loadCfgBtn.Position = UDim2.new(0.5, -95, 0, 12)
+            loadCfgBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+            loadCfgBtn.Text = "📂 LOAD"
+            loadCfgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            loadCfgBtn.TextSize = 11
+            loadCfgBtn.Font = Enum.Font.GothamBold
+            loadCfgBtn.Parent = cfgFrame
+            local loadCorner = Instance.new("UICorner")
+            loadCorner.CornerRadius = UDim.new(0, 6)
+            loadCorner.Parent = loadCfgBtn
+            
+            local autoLoadBtn = Instance.new("TextButton")
+            autoLoadBtn.Size = UDim2.new(0, 85, 0, 32)
+            autoLoadBtn.Position = UDim2.new(0.5, -15, 0, 12)
+            autoLoadBtn.BackgroundColor3 = (autoLoadName == cfgName) and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(60, 60, 85)
+            autoLoadBtn.Text = (autoLoadName == cfgName) and "✅ AUTO" or "⭐ SET AUTO"
+            autoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            autoLoadBtn.TextSize = 10
+            autoLoadBtn.Font = Enum.Font.GothamBold
+            autoLoadBtn.Parent = cfgFrame
+            local autoCorner = Instance.new("UICorner")
+            autoCorner.CornerRadius = UDim.new(0, 6)
+            autoCorner.Parent = autoLoadBtn
+            
+            local delCfgBtn = Instance.new("TextButton")
+            delCfgBtn.Size = UDim2.new(0, 55, 0, 32)
+            delCfgBtn.Position = UDim2.new(1, -65, 0, 12)
+            delCfgBtn.BackgroundColor3 = Color3.fromRGB(100, 40, 40)
+            delCfgBtn.Text = "🗑️"
+            delCfgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            delCfgBtn.TextSize = 12
+            delCfgBtn.Font = Enum.Font.GothamBold
+            delCfgBtn.Parent = cfgFrame
+            local delCorner = Instance.new("UICorner")
+            delCorner.CornerRadius = UDim.new(0, 6)
+            delCorner.Parent = delCfgBtn
+            
+            loadCfgBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                local success, msg = loadConfig(cfgName)
+                if success then
+                    refreshWinStreakDisplay()
+                end
+                local notif = Drawing.new("Text")
+                notif.Text = msg
+                notif.Size = 14
+                notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+                notif.Center = true
+                notif.Outline = true
+                notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+                notif.Visible = true
+                task.wait(1.5)
+                notif.Visible = false
+                notif:Remove()
+            end)
+            
+            autoLoadBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                local success = saveAutoLoadConfig(cfgName)
+                if success then
+                    autoLoadStatus.Text = "📌 Current auto-load: " .. cfgName
+                    autoLoadStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
+                    updateConfigList()
+                    local notif = Drawing.new("Text")
+                    notif.Text = "✅ Auto-load set to: " .. cfgName
+                    notif.Size = 14
+                    notif.Color = Color3.fromRGB(0, 255, 0)
+                    notif.Center = true
+                    notif.Outline = true
+                    notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+                    notif.Visible = true
+                    task.wait(1.5)
+                    notif.Visible = false
+                    notif:Remove()
+                else
+                    local notif = Drawing.new("Text")
+                    notif.Text = "❌ Cannot set auto-load"
+                    notif.Size = 14
+                    notif.Color = Color3.fromRGB(255, 0, 0)
+                    notif.Center = true
+                    notif.Outline = true
+                    notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+                    notif.Visible = true
+                    task.wait(1.5)
+                    notif.Visible = false
+                    notif:Remove()
+                end
+            end)
+            
+            delCfgBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                local success = deleteConfig(cfgName)
+                if success then
+                    if autoLoadName == cfgName then
+                        clearAutoLoadConfig()
+                        autoLoadStatus.Text = "📌 No config set for auto-load"
+                        autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+                    end
+                    updateConfigList()
+                end
+            end)
+            
+            scrollY = scrollY + 65
+        end
+        
+        configListScrolling.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 200))
+    end
+    
+    refreshBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        updateConfigList()
+    end)
+    
+    createConfigBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        local configName = configNameInput.Text
+        if configName == "" then
+            configName = "config_" .. os.time()
+        end
+        
+        ensureConfigFolder()
+        local success, msg = saveConfig(configName)
+        
+        local notif = Drawing.new("Text")
+        notif.Text = msg
+        notif.Size = 14
+        notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        notif.Center = true
+        notif.Outline = true
+        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+        notif.Visible = true
+        
+        if success then
+            configNameInput.Text = ""
+            updateConfigList()
+        end
+        
+        task.wait(1.5)
+        notif.Visible = false
+        notif:Remove()
+    end)
+    
+    updateConfigList()
+end
+
+refreshConfigList()
+
+local function doAutoLoadOnStart()
+    ensureConfigFolder()
+    local success, msg = autoLoadConfigOnStart()
+    if success then
+        refreshWinStreakDisplay()
+        local notif = Drawing.new("Text")
+        notif.Text = "🔧 " .. msg
+        notif.Size = 14
+        notif.Color = Color3.fromRGB(0, 255, 0)
+        notif.Center = true
+        notif.Outline = true
+        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 80)
+        notif.Visible = true
+        task.wait(2)
+        notif.Visible = false
+        notif:Remove()
+    end
+end
+
+doAutoLoadOnStart()
+
 -- Tab switching
+local panels = {aimbotPanel, espPanel, skeletonPanel, setValuePanel, devicePanel, tpPanel, configPanel}
 local function switchTab(tabIndex, panel, btn)
     TweenService:Create(contentArea, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
     task.wait(0.1)
-    aimbotPanel.Visible = false
-    espPanel.Visible = false
-    skeletonPanel.Visible = false
-    setValuePanel.Visible = false
-    devicePanel.Visible = false
-    tpPanel.Visible = false
+    for _, p in pairs(panels) do
+        if p then p.Visible = false end
+    end
     panel.Visible = true
     if tabIndex == 4 then refreshWinStreakDisplay() end
+    if tabIndex == 7 then refreshConfigList() end
     for i, b in ipairs(tabs) do
         TweenService:Create(b, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 160, 200), Font = Enum.Font.GothamSemibold}):Play()
     end
@@ -1832,7 +2605,6 @@ local function switchTab(tabIndex, panel, btn)
 end
 
 for i, btn in ipairs(tabs) do
-    local panels = {aimbotPanel, espPanel, skeletonPanel, setValuePanel, devicePanel, tpPanel}
     btn.MouseButton1Click:Connect(function()
         playClickSound()
         switchTab(i, panels[i], btn)
@@ -1849,16 +2621,15 @@ local function openMenu()
     menu.Size = UDim2.new(0, 0, 0, 0)
     menu.Position = UDim2.new(0.5, 0, 0.5, 0)
     TweenService:Create(menu, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 520, 0, 620),
-        Position = UDim2.new(0.5, -260, 0.5, -310)
+        Size = UDim2.new(0, 580, 0, 800),
+        Position = UDim2.new(0.5, -290, 0.5, -400)
     }):Play()
     TweenService:Create(blur, TweenInfo.new(0.3), {Size = 12}):Play()
 end
 
 local function closeMenu()
-    -- FIX: Tắt ESP khi đóng menu để tránh bị dính
     cleanupAllESP()
-    
+    aimLine.Visible = false
     TweenService:Create(menu, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
         Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1909,7 +2680,7 @@ end)
 -- Particle animation
 task.spawn(function()
     while true do
-        if menuVisible then
+        if menuVisible and particle then
             TweenService:Create(particle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true), {Position = UDim2.new(1, 2, 0.5, -2)}):Play()
         end
         task.wait(0.5)
@@ -1923,7 +2694,7 @@ successNotif.Size = 18
 successNotif.Color = Color3.fromRGB(0, 255, 0)
 successNotif.Center = true
 successNotif.Outline = true
-successNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 50)
+successNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 60)
 successNotif.Visible = true
 
 local subNotif = Drawing.new("Text")
@@ -1932,19 +2703,19 @@ subNotif.Size = 12
 subNotif.Color = Color3.fromRGB(0, 200, 255)
 subNotif.Center = true
 subNotif.Outline = true
-subNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 30)
+subNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 40)
 subNotif.Visible = true
 
 local deviceNotif = Drawing.new("Text")
-deviceNotif.Text = "🎮 Device Spoofer Ready!"
+deviceNotif.Text = "🎮 Device Spoofer | 🔫 Aimbot | 📏 LINE ALWAYS ON | ⚡ AUTO SHOT (NO DELAY)"
 deviceNotif.Size = 12
 deviceNotif.Color = Color3.fromRGB(200, 200, 100)
 deviceNotif.Center = true
 deviceNotif.Outline = true
-deviceNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 10)
+deviceNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 20)
 deviceNotif.Visible = true
 
-task.wait(2.5)
+task.wait(3)
 successNotif.Visible = false
 subNotif.Visible = false
 deviceNotif.Visible = false
@@ -1953,7 +2724,7 @@ subNotif:Remove()
 deviceNotif:Remove()
 
 print("========================================")
-print("     ✦ KHANHGD CHEAT v3.0 ✦")
+print("     ✦ KHANHGD CHEAT v8.0 ✦")
 print("========================================")
 print("  VERIFIED KEY: " .. currentKey)
 print("  PLAYER: " .. playerName)
@@ -1962,11 +2733,20 @@ print("  RIGHT SHIFT = MENU")
 print("  HOLD RIGHT CLICK = AIMBOT")
 print("  X = TELEPORT")
 print("========================================")
-print("  🎮 DEVICE SPOOFER READY")
+print("  📏 LINE LUÔN HIỆN (CÓ THỂ TẮT/BẬT)")
+print("  ⚡ AUTO SHOT BẮN NGAY KHI TÂM CHẠM ĐẦU")
+print("  🎨 ĐỔI MÀU LINE TRONG TAB AIM")
+print("  🔫 KHÔNG BẮN XUYÊN TƯỜNG")
+print("========================================")
+local autoCfg = getAutoLoadConfig()
+if autoCfg then
+    print("  🔄 AUTO LOAD: " .. autoCfg)
+else
+    print("  🔄 AUTO LOAD: Not set")
+end
 print("========================================")
 end
 
--- Nếu key đã được xác thực từ đầu, chạy menu luôn
 if isKeyValidated then
     loadMainMenu()
 end
