@@ -1,4 +1,4 @@
--- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM
+-- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB (AVATAR THẬT)
 -- ULTRA MODERN MENU WITH EFFECTS - FULL ROUNDED CORNERS
 -- FIXED: Line luôn hiện, Auto shot bắn NGAY LẬP TỨC khi tâm chạm đầu
 
@@ -11,6 +11,365 @@ local VirtualInput = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+
+-- ============ TEAM SYSTEM (KHÔNG AIM) ==========
+local teamPlayers = {}
+
+local function isTeammate(player)
+    return teamPlayers[player.Name] == true
+end
+
+local function addTeammate(player)
+    teamPlayers[player.Name] = true
+end
+
+local function removeTeammate(player)
+    teamPlayers[player.Name] = nil
+end
+
+local function clearAllTeammates()
+    teamPlayers = {}
+end
+
+-- ============ LẤY THÔNG TIN NGƯỜI CHƠI ==========
+local function getPlayerHealth()
+    local character = LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            return math.floor(humanoid.Health), math.floor(humanoid.MaxHealth)
+        end
+    end
+    return 0, 100
+end
+
+local function getPlayerKills()
+    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+    if leaderstats then
+        local kills = leaderstats:FindFirstChild("Kills")
+        if kills then return kills.Value end
+    end
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local kills = customStats:FindFirstChild("Kills")
+        if kills then return kills.Value end
+    end
+    return 0
+end
+
+local function getPlayerDeaths()
+    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+    if leaderstats then
+        local deaths = leaderstats:FindFirstChild("Deaths")
+        if deaths then return deaths.Value end
+    end
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local deaths = customStats:FindFirstChild("Deaths")
+        if deaths then return deaths.Value end
+    end
+    return 0
+end
+
+local function getPlayerELO()
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local elo = customStats:FindFirstChild("Current ELO")
+        if elo then return elo.Value end
+        local rank = customStats:FindFirstChild("Rank")
+        if rank then return rank.Value end
+    end
+    return 0
+end
+
+local function getPlayerLevel()
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local level = customStats:FindFirstChild("Level")
+        if level then return level.Value end
+    end
+    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+    if leaderstats then
+        local level = leaderstats:FindFirstChild("Level")
+        if level then return level.Value end
+    end
+    return 0
+end
+
+local function getPlayerWinStreak()
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local winStreak = customStats:FindFirstChild("Win Streak")
+        if winStreak then return winStreak.Value end
+    end
+    return 0
+end
+
+local function getPlayerPosition()
+    local character = LocalPlayer.Character
+    if character then
+        local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
+        if rootPart then
+            local pos = rootPart.Position
+            return string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z)
+        end
+    end
+    return "0, 0, 0"
+end
+
+local function getPlayerRegion()
+    return "N/A"
+end
+
+-- ============ ANTI AFK PERSISTENT ==========
+local AntiAFK = {}
+AntiAFK.__index = AntiAFK
+
+_G.__ANTI_AFK_INSTANCE__ = nil
+
+local function killOldInstance()
+    if _G.__ANTI_AFK_INSTANCE__ then
+        pcall(function()
+            if _G.__ANTI_AFK_INSTANCE__.connections then
+                for _, conn in pairs(_G.__ANTI_AFK_INSTANCE__.connections) do
+                    conn:Disconnect()
+                end
+            end
+            if _G.__ANTI_AFK_INSTANCE__.thread then
+                pcall(function() coroutine.close(_G.__ANTI_AFK_INSTANCE__.thread) end)
+            end
+            if _G.__ANTI_AFK_INSTANCE__.gui then
+                _G.__ANTI_AFK_INSTANCE__.gui:Destroy()
+            end
+        end)
+        _G.__ANTI_AFK_INSTANCE__ = nil
+    end
+end
+
+local function createAntiAFKInstance()
+    local self = setmetatable({}, AntiAFK)
+    
+    self.Services = {
+        Players = game:GetService("Players"),
+        UserInput = game:GetService("UserInputService"),
+        RunService = game:GetService("RunService"),
+        VirtualUser = game:GetService("VirtualUser"),
+        CoreGui = game:GetService("CoreGui")
+    }
+    
+    self.LocalPlayer = self.Services.Players.LocalPlayer
+    self.connections = {}
+    self.isRunning = true
+    self.interval = 45
+    self.lastRun = 0
+    
+    self.methods = {
+        simulateInput = function()
+            pcall(function()
+                local VirtualInputGamepad = game:GetService("VirtualInputGamepad")
+                if VirtualInputGamepad then
+                    VirtualInputGamepad:SendMouseMove(Vector2.new(math.random(80, 120), math.random(80, 120)))
+                    task.wait(0.05)
+                    VirtualInputGamepad:SendMouseMove(Vector2.new(math.random(105, 115), math.random(105, 115)))
+                end
+            end)
+        end,
+        smallMove = function()
+            local char = self.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                local humanoid = char.Humanoid
+                local rootPart = char:FindFirstChild("HumanoidRootPart")
+                if rootPart then
+                    local originalPos = rootPart.Position
+                    humanoid:MoveTo(originalPos + Vector3.new(math.random(-2, 2), 0, math.random(-2, 2)))
+                    task.wait(0.2)
+                    humanoid:MoveTo(originalPos)
+                end
+            end
+        end,
+        cameraWiggle = function()
+            pcall(function()
+                local camera = workspace.CurrentCamera
+                local originalCF = camera.CFrame
+                camera.CFrame = CFrame.new(originalCF.Position, originalCF.Position + Vector3.new(math.random(-5, 5), math.random(-2, 2), math.random(-5, 5)))
+                task.wait(0.1)
+                camera.CFrame = originalCF
+            end)
+        end,
+        virtualUser = function()
+            pcall(function()
+                local vu = self.Services.VirtualUser
+                vu:CaptureController()
+                vu:ClickButton1(Vector2.new())
+                vu:ClickButton2(Vector2.new())
+            end)
+        end,
+        contextAction = function()
+            pcall(function()
+                local ContextAction = game:GetService("ContextActionService")
+                ContextAction:Fire("_click", Enum.UserInputType.MouseButton1, {X = 0, Y = 0})
+            end)
+        end,
+        silentChat = function()
+            pcall(function()
+                local StarterGui = game:GetService("StarterGui")
+                StarterGui:SetCore("ChatMakeSystemMessage", {Text = " ", Color = Color3.fromRGB(255, 255, 255)})
+            end)
+        end,
+        smallJump = function()
+            local char = self.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                local humanoid = char.Humanoid
+                if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+                    humanoid.Jump = true
+                    task.wait(0.05)
+                    humanoid.Jump = false
+                end
+            end
+        end,
+        fakeRemote = function()
+            pcall(function()
+                local rs = game:GetService("ReplicatedStorage")
+                for _, remote in ipairs(rs:GetDescendants()) do
+                    if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
+                        pcall(function() remote:FireServer("ping") end)
+                        break
+                    end
+                end
+            end)
+        end,
+        rotateCamera = function()
+            pcall(function()
+                local camera = workspace.CurrentCamera
+                local cf = camera.CFrame
+                camera.CFrame = cf * CFrame.Angles(0, math.rad(1), 0)
+                task.wait(0.05)
+                camera.CFrame = cf
+            end)
+        end,
+        pressW = function()
+            pcall(function()
+                VirtualInput:SendKeyEvent(true, "W", false, game)
+                task.wait(0.1)
+                VirtualInput:SendKeyEvent(false, "W", false, game)
+            end)
+        end,
+        pressA = function()
+            pcall(function()
+                VirtualInput:SendKeyEvent(true, "A", false, game)
+                task.wait(0.1)
+                VirtualInput:SendKeyEvent(false, "A", false, game)
+            end)
+        end,
+        pressD = function()
+            pcall(function()
+                VirtualInput:SendKeyEvent(true, "D", false, game)
+                task.wait(0.1)
+                VirtualInput:SendKeyEvent(false, "D", false, game)
+            end)
+        end
+    }
+    
+    function self:runAntiAFK()
+        if not self.isRunning then return end
+        local now = tick()
+        if now - self.lastRun < self.interval then return end
+        self.lastRun = now
+        
+        local methodsList = {"virtualUser", "simulateInput", "smallMove", "cameraWiggle", "contextAction", "silentChat", "smallJump", "fakeRemote", "rotateCamera", "pressW", "pressA", "pressD"}
+        local selected = methodsList[math.random(1, #methodsList)]
+        pcall(function() self.methods[selected]() end)
+    end
+    
+    function self:startLoop()
+        self.thread = coroutine.create(function()
+            while self.isRunning do
+                self:runAntiAFK()
+                task.wait(1)
+            end
+        end)
+        coroutine.resume(self.thread)
+    end
+    
+    function self:setupHeartbeat()
+        local conn = self.Services.RunService.Heartbeat:Connect(function()
+            if self.isRunning then self:runAntiAFK() end
+        end)
+        table.insert(self.connections, conn)
+    end
+    
+    function self:setupRenderStepped()
+        local conn = self.Services.RunService.RenderStepped:Connect(function()
+            if self.isRunning and tick() % (self.interval * 2) < 1 then self:runAntiAFK() end
+        end)
+        table.insert(self.connections, conn)
+    end
+    
+    function self:setupStepped()
+        local conn = self.Services.RunService.Stepped:Connect(function()
+            if self.isRunning and tick() % self.interval < 0.5 then self:runAntiAFK() end
+        end)
+        table.insert(self.connections, conn)
+    end
+    
+    function self:setupCharacterHandler()
+        local conn = self.LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(2)
+            self.lastRun = tick() - self.interval + 5
+        end)
+        table.insert(self.connections, conn)
+    end
+    
+    function self:setupPlayerHandler()
+        local conn = self.Services.Players.PlayerAdded:Connect(function() task.wait(1) end)
+        table.insert(self.connections, conn)
+    end
+    
+    function self:createMiniGui()
+        pcall(function()
+            self.gui = Instance.new("ScreenGui")
+            self.gui.Name = "__AntiAFK__"
+            self.gui.ResetOnSpawn = false
+            self.gui.IgnoreGuiInset = true
+            self.gui.Parent = self.Services.CoreGui
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(0, 0, 0, 0)
+            frame.Visible = false
+            frame.Parent = self.gui
+        end)
+    end
+    
+    function self:init()
+        self:setupHeartbeat()
+        self:setupRenderStepped()
+        self:setupStepped()
+        self:setupCharacterHandler()
+        self:setupPlayerHandler()
+        self:startLoop()
+        self:createMiniGui()
+        _G.__ANTI_AFK_INSTANCE__ = self
+    end
+    
+    return self
+end
+
+local function bootstrapAntiAFK()
+    killOldInstance()
+    local instance = createAntiAFKInstance()
+    instance:init()
+    return instance
+end
+
+local antiAFKInstance = bootstrapAntiAFK()
+
+_G.AntiAFKControl = {
+    stop = function() if _G.__ANTI_AFK_INSTANCE__ then _G.__ANTI_AFK_INSTANCE__.isRunning = false end end,
+    start = function() if _G.__ANTI_AFK_INSTANCE__ then _G.__ANTI_AFK_INSTANCE__.isRunning = true else bootstrapAntiAFK() end end,
+    setInterval = function(sec) if _G.__ANTI_AFK_INSTANCE__ then _G.__ANTI_AFK_INSTANCE__.interval = sec end end,
+    status = function() return _G.__ANTI_AFK_INSTANCE__ and _G.__ANTI_AFK_INSTANCE__.isRunning or false end,
+    kill = function() killOldInstance() end,
+    getInterval = function() return _G.__ANTI_AFK_INSTANCE__ and _G.__ANTI_AFK_INSTANCE__.interval or 45 end
+}
 
 -- ============ CONFIG SYSTEM SETUP ==========
 local ConfigFolder = "KhanhGD_Configs"
@@ -54,6 +413,141 @@ local validKeysList = {
     "WXYZ3-ABCD4-EFGH5-IJKL6", "MNOP7-QRST8-UVWX9-YZAB0", "KHANH-PC01-AAAAA-11111",
     "KHANH-PC02-BBBBB-22222", "KHANH-PC03-CCCCC-33333", "KHANH-PC04-DDDDD-44444",
     "KHANH-PC05-EEEEE-55555", "VIPPRO-9999-XXXXX-77777", "PREMIUM-8888-YYYYY-88888",
+    "ULTIMA-7777-ZZZZZ-99999", "HACKER-6666-WWWWW-00000", "MASTER-5555-VVVVV-11111",
+    "LEGEND-4444-UUUUU-22222", "ELITE-3333-TTTTT-33333", "PRO-2222-SSSSS-44444",
+    "GOD-1111-RRRRR-55555", "KING-0000-QQQQQ-66666", "KHANH-PC06-FFFFF-66666",
+    "KHANH-PC07-GGGGG-77777", "KHANH-PC08-HHHHH-88888", "KHANH-PC09-IIIII-99999",
+    "KHANH-PC10-JJJJJ-00000", "KHANH-PC11-KKKKK-11111", "KHANH-PC12-LLLLL-22222",
+    "KHANH-PC13-MMMMM-33333", "KHANH-PC14-NNNNN-44444", "KHANH-PC15-OOOOO-55555",
+    "KHANH-PC16-PPPPP-66666", "KHANH-PC17-QQQQQ-77777", "KHANH-PC18-RRRRR-88888",
+    "KHANH-PC19-SSSSS-99999", "KHANH-PC20-TTTTT-00000", "KHANH-PC21-UUUUU-11111",
+    "KHANH-PC22-VVVVV-22222", "KHANH-PC23-WWWWW-33333", "KHANH-PC24-XXXXX-44444",
+    "KHANH-PC25-YYYYY-55555", "KHANH-PC26-ZZZZZ-66666", "KHANH-PC27-AAAAA-77777",
+    "KHANH-PC28-BBBBB-88888", "KHANH-PC29-CCCCC-99999", "KHANH-PC30-DDDDD-00000",
+    "KHANH-PC31-EEEEE-11111", "KHANH-PC32-FFFFF-22222", "KHANH-PC33-GGGGG-33333",
+    "KHANH-PC34-HHHHH-44444", "KHANH-PC35-IIIII-55555", "KHANH-PC36-JJJJJ-66666",
+    "KHANH-PC37-KKKKK-77777", "KHANH-PC38-LLLLL-88888", "KHANH-PC39-MMMMM-99999",
+    "KHANH-PC40-NNNNN-00000", "KHANH-PC41-OOOOO-11111", "KHANH-PC42-PPPPP-22222",
+    "KHANH-PC43-QQQQQ-33333", "KHANH-PC44-RRRRR-44444", "KHANH-PC45-SSSSS-55555",
+    "KHANH-PC46-TTTTT-66666", "KHANH-PC47-UUUUU-77777", "KHANH-PC48-VVVVV-88888",
+    "KHANH-PC49-WWWWW-99999", "KHANH-PC50-XXXXX-00000", "VIPPRO-0001-AAAAA-11111",
+    "VIPPRO-0002-BBBBB-22222", "VIPPRO-0003-CCCCC-33333", "VIPPRO-0004-DDDDD-44444",
+    "VIPPRO-0005-EEEEE-55555", "VIPPRO-0006-FFFFF-66666", "VIPPRO-0007-GGGGG-77777",
+    "VIPPRO-0008-HHHHH-88888", "VIPPRO-0009-IIIII-99999", "VIPPRO-0010-JJJJJ-00000",
+    "VIPPRO-0011-KKKKK-11111", "VIPPRO-0012-LLLLL-22222", "VIPPRO-0013-MMMMM-33333",
+    "VIPPRO-0014-NNNNN-44444", "VIPPRO-0015-OOOOO-55555", "VIPPRO-0016-PPPPP-66666",
+    "VIPPRO-0017-QQQQQ-77777", "VIPPRO-0018-RRRRR-88888", "VIPPRO-0019-SSSSS-99999",
+    "VIPPRO-0020-TTTTT-00000", "VIPPRO-0021-UUUUU-11111", "VIPPRO-0022-VVVVV-22222",
+    "VIPPRO-0023-WWWWW-33333", "VIPPRO-0024-XXXXX-44444", "VIPPRO-0025-YYYYY-55555",
+    "VIPPRO-0026-ZZZZZ-66666", "VIPPRO-0027-AAAAA-77777", "VIPPRO-0028-BBBBB-88888",
+    "VIPPRO-0029-CCCCC-99999", "VIPPRO-0030-DDDDD-00000", "VIPPRO-0031-EEEEE-11111",
+    "VIPPRO-0032-FFFFF-22222", "VIPPRO-0033-GGGGG-33333", "VIPPRO-0034-HHHHH-44444",
+    "VIPPRO-0035-IIIII-55555", "VIPPRO-0036-JJJJJ-66666", "VIPPRO-0037-KKKKK-77777",
+    "VIPPRO-0038-LLLLL-88888", "VIPPRO-0039-MMMMM-99999", "VIPPRO-0040-NNNNN-00000",
+    "VIPPRO-0041-OOOOO-11111", "VIPPRO-0042-PPPPP-22222", "VIPPRO-0043-QQQQQ-33333",
+    "VIPPRO-0044-RRRRR-44444", "VIPPRO-0045-SSSSS-55555", "VIPPRO-0046-TTTTT-66666",
+    "VIPPRO-0047-UUUUU-77777", "VIPPRO-0048-VVVVV-88888", "VIPPRO-0049-WWWWW-99999",
+    "VIPPRO-0050-XXXXX-00000", "PREMIUM-001-AAAAAA-111111", "PREMIUM-002-BBBBBB-222222",
+    "PREMIUM-003-CCCCCC-333333", "PREMIUM-004-DDDDDD-444444", "PREMIUM-005-EEEEEE-555555",
+    "PREMIUM-006-FFFFFF-666666", "PREMIUM-007-GGGGGG-777777", "PREMIUM-008-HHHHHH-888888",
+    "PREMIUM-009-IIIIII-999999", "PREMIUM-010-JJJJJJ-000000", "PREMIUM-011-KKKKKK-111111",
+    "PREMIUM-012-LLLLLL-222222", "PREMIUM-013-MMMMMM-333333", "PREMIUM-014-NNNNNN-444444",
+    "PREMIUM-015-OOOOOO-555555", "PREMIUM-016-PPPPPP-666666", "PREMIUM-017-QQQQQQ-777777",
+    "PREMIUM-018-RRRRRR-888888", "PREMIUM-019-SSSSSS-999999", "PREMIUM-020-TTTTTT-000000",
+    "PREMIUM-021-UUUUUU-111111", "PREMIUM-022-VVVVVV-222222", "PREMIUM-023-WWWWWW-333333",
+    "PREMIUM-024-XXXXXX-444444", "PREMIUM-025-YYYYYY-555555", "PREMIUM-026-ZZZZZZ-666666",
+    "PREMIUM-027-AAAAAA-777777", "PREMIUM-028-BBBBBB-888888", "PREMIUM-029-CCCCCC-999999",
+    "PREMIUM-030-DDDDDD-000000", "PREMIUM-031-EEEEEE-111111", "PREMIUM-032-FFFFFF-222222",
+    "PREMIUM-033-GGGGGG-333333", "PREMIUM-034-HHHHHH-444444", "PREMIUM-035-IIIIII-555555",
+    "PREMIUM-036-JJJJJJ-666666", "PREMIUM-037-KKKKKK-777777", "PREMIUM-038-LLLLLL-888888",
+    "PREMIUM-039-MMMMMM-999999", "PREMIUM-040-NNNNNN-000000", "ULTIMA-001-AAAAAA-111111",
+    "ULTIMA-002-BBBBBB-222222", "ULTIMA-003-CCCCCC-333333", "ULTIMA-004-DDDDDD-444444",
+    "ULTIMA-005-EEEEEE-555555", "ULTIMA-006-FFFFFF-666666", "ULTIMA-007-GGGGGG-777777",
+    "ULTIMA-008-HHHHHH-888888", "ULTIMA-009-IIIIII-999999", "ULTIMA-010-JJJJJJ-000000",
+    "ULTIMA-011-KKKKKK-111111", "ULTIMA-012-LLLLLL-222222", "ULTIMA-013-MMMMMM-333333",
+    "ULTIMA-014-NNNNNN-444444", "ULTIMA-015-OOOOOO-555555", "ULTIMA-016-PPPPPP-666666",
+    "ULTIMA-017-QQQQQQ-777777", "ULTIMA-018-RRRRRR-888888", "ULTIMA-019-SSSSSS-999999",
+    "ULTIMA-020-TTTTTT-000000", "HACKER-001-AAAAAA-111111", "HACKER-002-BBBBBB-222222",
+    "HACKER-003-CCCCCC-333333", "HACKER-004-DDDDDD-444444", "HACKER-005-EEEEEE-555555",
+    "HACKER-006-FFFFFF-666666", "HACKER-007-GGGGGG-777777", "HACKER-008-HHHHHH-888888",
+    "HACKER-009-IIIIII-999999", "HACKER-010-JJJJJJ-000000", "MASTER-001-AAAAAA-111111",
+    "MASTER-002-BBBBBB-222222", "MASTER-003-CCCCCC-333333", "MASTER-004-DDDDDD-444444",
+    "MASTER-005-EEEEEE-555555", "MASTER-006-FFFFFF-666666", "MASTER-007-GGGGGG-777777",
+    "MASTER-008-HHHHHH-888888", "MASTER-009-IIIIII-999999", "MASTER-010-JJJJJJ-000000",
+    "LEGEND-001-AAAAAA-111111", "LEGEND-002-BBBBBB-222222", "LEGEND-003-CCCCCC-333333",
+    "LEGEND-004-DDDDDD-444444", "LEGEND-005-EEEEEE-555555", "LEGEND-006-FFFFFF-666666",
+    "LEGEND-007-GGGGGG-777777", "LEGEND-008-HHHHHH-888888", "LEGEND-009-IIIIII-999999",
+    "LEGEND-010-JJJJJJ-000000", "ELITE-001-AAAAA-11111", "ELITE-002-BBBBB-22222",
+    "ELITE-003-CCCCC-33333", "ELITE-004-DDDDD-44444", "ELITE-005-EEEEE-55555",
+    "ELITE-006-FFFFF-66666", "ELITE-007-GGGGG-77777", "ELITE-008-HHHHH-88888",
+    "ELITE-009-IIIII-99999", "ELITE-010-JJJJJ-00000", "PRO-0001-AAAAA-11111",
+    "PRO-0002-BBBBB-22222", "PRO-0003-CCCCC-33333", "PRO-0004-DDDDD-44444",
+    "PRO-0005-EEEEE-55555", "PRO-0006-FFFFF-66666", "PRO-0007-GGGGG-77777",
+    "PRO-0008-HHHHH-88888", "PRO-0009-IIIII-99999", "PRO-0010-JJJJJ-00000",
+    "GOD-001-AAAAA-11111", "GOD-002-BBBBB-22222", "GOD-003-CCCCC-33333",
+    "GOD-004-DDDDD-44444", "GOD-005-EEEEE-55555", "GOD-006-FFFFF-66666",
+    "GOD-007-GGGGG-77777", "GOD-008-HHHHH-88888", "GOD-009-IIIII-99999",
+    "GOD-010-JJJJJ-00000", "KING-001-AAAAA-11111", "KING-002-BBBBB-22222",
+    "KING-003-CCCCC-33333", "KING-004-DDDDD-44444", "KING-005-EEEEE-55555",
+    "KING-006-FFFFF-66666", "KING-007-GGGGG-77777", "KING-008-HHHHH-88888",
+    "KING-009-IIIII-99999", "KING-010-JJJJJ-00000", "RANDOM-A1B2-C3D4-E5F6-G7H8",
+    "RANDOM-I9J0-K1L2-M3N4-O5P6", "RANDOM-Q7R8-S9T0-U1V2-W3X4", "RANDOM-Y5Z6-A7B8-C9D0-E1F2",
+    "RANDOM-G3H4-I5J6-K7L8-M9N0", "RANDOM-O1P2-Q3R4-S5T6-U7V8", "RANDOM-W9X0-Y1Z2-A3B4-C5D6",
+    "RANDOM-E7F8-G9H0-I1J2-K3L4", "RANDOM-M5N6-O7P8-Q9R0-S1T2", "RANDOM-U3V4-W5X6-Y7Z8-A9B0",
+    "SECRET-001-XXXXX-11111", "SECRET-002-YYYYY-22222", "SECRET-003-ZZZZZ-33333",
+    "SECRET-004-AAAAA-44444", "SECRET-005-BBBBB-55555", "SECRET-006-CCCCC-66666",
+    "SECRET-007-DDDDD-77777", "SECRET-008-EEEEE-88888", "SECRET-009-FFFFF-99999",
+    "SECRET-010-GGGGG-00000", "GOLD-001-HHHHH-11111", "GOLD-002-IIIII-22222",
+    "GOLD-003-JJJJJ-33333", "GOLD-004-KKKKK-44444", "GOLD-005-LLLLL-55555",
+    "GOLD-006-MMMMM-66666", "GOLD-007-NNNNN-77777", "GOLD-008-OOOOO-88888",
+    "GOLD-009-PPPPP-99999", "GOLD-010-QQQQQ-00000", "SILVER-001-RRRRR-11111",
+    "SILVER-002-SSSSS-22222", "SILVER-003-TTTTT-33333", "SILVER-004-UUUUU-44444",
+    "SILVER-005-VVVVV-55555", "SILVER-006-WWWWW-66666", "SILVER-007-XXXXX-77777",
+    "SILVER-008-YYYYY-88888", "SILVER-009-ZZZZZ-99999", "SILVER-010-AAAAA-00000",
+    "DIAMOND-01-BBBBB-11111", "DIAMOND-02-CCCCC-22222", "DIAMOND-03-DDDDD-33333",
+    "DIAMOND-04-EEEEE-44444", "DIAMOND-05-FFFFF-55555", "DIAMOND-06-GGGGG-66666",
+    "DIAMOND-07-HHHHH-77777", "DIAMOND-08-IIIII-88888", "DIAMOND-09-JJJJJ-99999",
+    "DIAMOND-10-KKKKK-00000", "PLATINUM-01-LLLLL-11111", "PLATINUM-02-MMMMM-22222",
+    "PLATINUM-03-NNNNN-33333", "PLATINUM-04-OOOOO-44444", "PLATINUM-05-PPPPP-55555",
+    "PLATINUM-06-QQQQQ-66666", "PLATINUM-07-RRRRR-77777", "PLATINUM-08-SSSSS-88888",
+    "PLATINUM-09-TTTTT-99999", "PLATINUM-10-UUUUU-00000", "TITANIUM-01-VVVVV-11111",
+    "TITANIUM-02-WWWWW-22222", "TITANIUM-03-XXXXX-33333", "TITANIUM-04-YYYYY-44444",
+    "TITANIUM-05-ZZZZZ-55555", "TITANIUM-06-AAAAA-66666", "TITANIUM-07-BBBBB-77777",
+    "TITANIUM-08-CCCCC-88888", "TITANIUM-09-DDDDD-99999", "TITANIUM-10-EEEEE-00000",
+    "KHANH-SP01-AAAAA-99999", "KHANH-SP02-BBBBB-88888", "KHANH-SP03-CCCCC-77777",
+    "KHANH-SP04-DDDDD-66666", "KHANH-SP05-EEEEE-55555", "KHANH-SP06-FFFFF-44444",
+    "KHANH-SP07-GGGGG-33333", "KHANH-SP08-HHHHH-22222", "KHANH-SP09-IIIII-11111",
+    "KHANH-SP10-JJJJJ-00000", "VIPPRO-1000-XXXXX-12345", "VIPPRO-2000-YYYYY-23456",
+    "VIPPRO-3000-ZZZZZ-34567", "VIPPRO-4000-AAAAA-45678", "VIPPRO-5000-BBBBB-56789",
+    "VIPPRO-6000-CCCCC-67890", "VIPPRO-7000-DDDDD-78901", "VIPPRO-8000-EEEEE-89012",
+    "VIPPRO-9000-FFFFF-90123", "VIPPRO-9999-GGGGG-01234", "PREMIUM-100-HHHHH-123456",
+    "PREMIUM-200-IIIII-234567", "PREMIUM-300-JJJJJ-345678", "PREMIUM-400-KKKKK-456789",
+    "PREMIUM-500-LLLLL-567890", "PREMIUM-600-MMMMM-678901", "PREMIUM-700-NNNNN-789012",
+    "PREMIUM-800-OOOOO-890123", "PREMIUM-900-PPPPP-901234", "PREMIUM-999-QQQQQ-012345",
+    "ULTIMA-100-RRRRR-123456", "ULTIMA-200-SSSSS-234567", "ULTIMA-300-TTTTT-345678",
+    "ULTIMA-400-UUUUU-456789", "ULTIMA-500-VVVVV-567890", "ULTIMA-600-WWWWW-678901",
+    "ULTIMA-700-XXXXX-789012", "ULTIMA-800-YYYYY-890123", "ULTIMA-900-ZZZZZ-901234",
+    "ULTIMA-999-AAAAA-012345", "MASTER-100-BBBBB-123456", "MASTER-200-CCCCC-234567",
+    "MASTER-300-DDDDD-345678", "MASTER-400-EEEEE-456789", "MASTER-500-FFFFF-567890",
+    "MASTER-600-GGGGG-678901", "MASTER-700-HHHHH-789012", "MASTER-800-IIIII-890123",
+    "MASTER-900-JJJJJ-901234", "MASTER-999-KKKKK-012345", "LEGEND-100-LLLLL-123456",
+    "LEGEND-200-MMMMM-234567", "LEGEND-300-NNNNN-345678", "LEGEND-400-OOOOO-456789",
+    "LEGEND-500-PPPPP-567890", "LEGEND-600-QQQQQ-678901", "LEGEND-700-RRRRR-789012",
+    "LEGEND-800-SSSSS-890123", "LEGEND-900-TTTTT-901234", "LEGEND-999-UUUUU-012345",
+    "ELITE-100-VVVVV-12345", "ELITE-200-WWWWW-23456", "ELITE-300-XXXXX-34567",
+    "ELITE-400-YYYYY-45678", "ELITE-500-ZZZZZ-56789", "ELITE-600-AAAAA-67890",
+    "ELITE-700-BBBBB-78901", "ELITE-800-CCCCC-89012", "ELITE-900-DDDDD-90123",
+    "ELITE-999-EEEEE-01234", "PRO-0100-FFFFF-12345", "PRO-0200-GGGGG-23456",
+    "PRO-0300-HHHHH-34567", "PRO-0400-IIIII-45678", "PRO-0500-JJJJJ-56789",
+    "PRO-0600-KKKKK-67890", "PRO-0700-LLLLL-78901", "PRO-0800-MMMMM-89012",
+    "PRO-0900-NNNNN-90123", "PRO-0999-OOOOO-01234", "GOD-100-PPPPP-12345",
+    "GOD-200-QQQQQ-23456", "GOD-300-RRRRR-34567", "GOD-400-SSSSS-45678",
+    "GOD-500-TTTTT-56789", "GOD-600-UUUUU-67890", "GOD-700-VVVVV-78901",
+    "GOD-800-WWWWW-89012", "GOD-900-XXXXX-90123", "GOD-999-YYYYY-01234",
+    "KING-100-ZZZZZ-12345", "KING-200-AAAAA-23456", "KING-300-BBBBB-34567",
+    "KING-400-CCCCC-45678", "KING-500-DDDDD-56789", "KING-600-EEEEE-67890",
+    "KING-700-FFFFF-78901", "KING-800-GGGGG-89012", "KING-900-HHHHH-90123",
+    "KING-999-IIIII-01234"
 }
 local validKeys = {}
 for _, key in ipairs(validKeysList) do
@@ -457,10 +951,15 @@ local settings = {
         fovColorB = 255,
         lineColorR = 255,
         lineColorG = 0,
-        lineColorB = 0
+        lineColorB = 0,
+        ignoreTeam = true
     },
     teleport = {
         enabled = true
+    },
+    afk = {
+        enabled = true,
+        interval = 45
     }
 }
 
@@ -491,7 +990,8 @@ local function saveConfig(configName)
     local configData = {
         name = configName,
         savedAt = os.date("%Y-%m-%d %H:%M:%S"),
-        settings = settings
+        settings = settings,
+        teamPlayers = teamPlayers
     }
     
     local jsonData = HttpService:JSONEncode(configData)
@@ -539,6 +1039,21 @@ local function loadConfig(configName)
             settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50)
             settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255)
             settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0)
+            if loaded.settings.afk then
+                settings.afk.enabled = loaded.settings.afk.enabled or true
+                settings.afk.interval = loaded.settings.afk.interval or 45
+                if _G.AntiAFKControl then
+                    if settings.afk.enabled then
+                        _G.AntiAFKControl.start()
+                    else
+                        _G.AntiAFKControl.stop()
+                    end
+                    _G.AntiAFKControl.setInterval(settings.afk.interval)
+                end
+            end
+            if loaded.teamPlayers then
+                teamPlayers = loaded.teamPlayers
+            end
             return true, "✅ Loaded: " .. configName
         end
     end
@@ -618,6 +1133,18 @@ local function autoLoadConfigOnStart()
     return false, "No auto-load config set"
 end
 
+-- ============ AFK CONTROL FUNCTIONS ==========
+local function updateAFK()
+    if _G.AntiAFKControl then
+        if settings.afk.enabled then
+            _G.AntiAFKControl.start()
+        else
+            _G.AntiAFKControl.stop()
+        end
+        _G.AntiAFKControl.setInterval(settings.afk.interval)
+    end
+end
+
 -- Dọn dẹp drawing cũ
 pcall(function()
     for _, data in pairs(espBoxes or {}) do
@@ -690,7 +1217,7 @@ end
 updateFOVPos()
 Camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateFOVPos)
 
--- LẤY DANH SÁCH MỤC TIÊU
+-- LẤY DANH SÁCH MỤC TIÊU (BỎ QUA TEAM)
 local function getAllTargets()
     local targets = {}
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -699,14 +1226,18 @@ local function getAllTargets()
     if settings.aimbot.aimMode == "Players" or settings.aimbot.aimMode == "Both" then
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
-                local char = player.Character
-                if char then
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    local targetPart = char:FindFirstChild(settings.aimbot.aimPart)
-                    if hum and hum.Health > 0 and targetPart then
-                        local distance = (myRoot.Position - targetPart.Position).Magnitude
-                        if distance <= settings.aimbot.maxDistance then
-                            table.insert(targets, {type = "Player", name = player.Name, part = targetPart, character = char, distance = distance})
+                if settings.aimbot.ignoreTeam and isTeammate(player) then
+                    -- Bỏ qua teammate
+                else
+                    local char = player.Character
+                    if char then
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        local targetPart = char:FindFirstChild(settings.aimbot.aimPart)
+                        if hum and hum.Health > 0 and targetPart then
+                            local distance = (myRoot.Position - targetPart.Position).Magnitude
+                            if distance <= settings.aimbot.maxDistance then
+                                table.insert(targets, {type = "Player", name = player.Name, part = targetPart, character = char, distance = distance, player = player})
+                            end
                         end
                     end
                 end
@@ -797,7 +1328,7 @@ end
 
 -- BẮN (NHANH, KHÔNG DELAY)
 local lastShotTime = 0
-local SHOT_DELAY = 0.03 -- Giảm còn 30ms để bắn nhanh hơn
+local SHOT_DELAY = 0.03
 
 local function shoot()
     local currentTime = tick()
@@ -839,7 +1370,6 @@ local function moveToTarget(targetData)
     if not onScreen then return false end
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local delta = Vector2.new(targetPos.X, targetPos.Y) - centerScreen
-    -- GIẢM NGƯỠNG TỪ 3 XUỐNG 2 PIXEL ĐỂ BẮN NHANH HƠN
     if delta.Magnitude < 2 then return true end
     local moveX = delta.X / settings.aimbot.smoothness
     local moveY = delta.Y / settings.aimbot.smoothness
@@ -883,12 +1413,12 @@ UserInputService.InputEnded:Connect(function(input, gp)
     end
 end)
 
--- ============ RENDER STEP CHÍNH (LINE LUÔN HIỆN + AUTO SHOT NHANH) ==========
+-- ============ RENDER STEP CHÍNH ==========
 RunService.RenderStepped:Connect(function()
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local bestTarget = getBestTarget()
     
-    -- LINE LUÔN HIỆN (KHI CÓ TARGET TRONG FOV)
+    -- LINE LUÔN HIỆN
     if settings.aimbot.showLine and bestTarget and bestTarget.part then
         local targetPos, onScreen = Camera:WorldToViewportPoint(bestTarget.part.Position)
         if onScreen then
@@ -905,7 +1435,7 @@ RunService.RenderStepped:Connect(function()
         aimLine.Visible = false
     end
     
-    -- AIMBOT + AUTO SHOT (CHỈ KHI GIỮ CHUỘT PHẢI)
+    -- AIMBOT + AUTO SHOT
     if not (settings.aimbot.enabled and isAiming) then 
         lockedTarget = nil
         isTargetLocked = false
@@ -928,18 +1458,15 @@ RunService.RenderStepped:Connect(function()
     end
     
     if targetData and targetData.part then
-        -- Kiểm tra xem tâm đã chạm đầu chưa
         local targetPos, onScreen = Camera:WorldToViewportPoint(targetData.part.Position)
         local isOnTarget = false
         if onScreen then
             local delta = (Vector2.new(targetPos.X, targetPos.Y) - centerScreen).Magnitude
-            isOnTarget = delta < 2 -- Tâm đã chạm đầu
+            isOnTarget = delta < 2
         end
         
-        -- Di chuyển chuột đến target
         moveToTarget(targetData)
         
-        -- AUTO SHOT: BẮN NGAY LẬP TỨC KHI TÂM CHẠM ĐẦU VÀ THẤY NGƯỜI
         if settings.aimbot.autoShot and isOnTarget then
             if canSeeTarget(targetData.part) then
                 shoot()
@@ -965,7 +1492,7 @@ RunService.RenderStepped:Connect(function()
     aimbotFOV.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 end)
 
--- ESP + SKELETON (giữ nguyên từ code cũ)
+-- ESP + SKELETON
 local espBoxes = {}
 local espSkeletons = {}
 
@@ -1005,7 +1532,8 @@ local function addESP(target, isNPC)
     for i = 1, 4 do
         local line = Drawing.new("Line")
         line.Thickness = 2
-        line.Color = isNPC and settings.esp.npcColor or settings.esp.boxColor
+        local isTeam = (not isNPC) and isTeammate(target)
+        line.Color = isTeam and Color3.fromRGB(0, 255, 100) or (isNPC and settings.esp.npcColor or settings.esp.boxColor)
         line.Visible = true
         table.insert(box, line)
     end
@@ -1107,10 +1635,13 @@ RunService.RenderStepped:Connect(function()
     local activeTargets = {}
     for target, data in pairs(espBoxes) do
         local root = nil; local hum = nil; local char = nil
+        local isTeam = false
+        
         if not data.isNPC then
             char = target.Character
             root = char and char:FindFirstChild("HumanoidRootPart")
             hum = char and char:FindFirstChildOfClass("Humanoid")
+            isTeam = isTeammate(target)
         else
             char = target
             root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head") or char:FindFirstChild("Torso")
@@ -1152,25 +1683,31 @@ RunService.RenderStepped:Connect(function()
                     maxX = math.max(maxX, point.X); maxY = math.max(maxY, point.Y)
                 end
                 if settings.esp.box then
+                    local boxColor = isTeam and Color3.fromRGB(0, 255, 100) or (data.isNPC and settings.esp.npcColor or settings.esp.boxColor)
+                    for _, l in pairs(data.box) do 
+                        l.Color = boxColor
+                        l.Visible = true 
+                    end
                     data.box[1].From = Vector2.new(minX, minY); data.box[1].To = Vector2.new(maxX, minY)
                     data.box[2].From = Vector2.new(maxX, minY); data.box[2].To = Vector2.new(maxX, maxY)
                     data.box[3].From = Vector2.new(maxX, maxY); data.box[3].To = Vector2.new(minX, maxY)
                     data.box[4].From = Vector2.new(minX, maxY); data.box[4].To = Vector2.new(minX, minY)
-                    for _, l in pairs(data.box) do 
-                        l.Color = data.isNPC and settings.esp.npcColor or settings.esp.boxColor
-                        l.Visible = true 
-                    end
                 else for _, l in pairs(data.box) do l.Visible = false end end
+                
                 if settings.esp.skeleton and not data.isNPC and char then
                     local parts = getSkeletonParts(char)
-                    drawSkeleton(espSkeletons[target], parts, settings.esp.skeletonColor)
+                    local skelColor = isTeam and Color3.fromRGB(0, 255, 100) or settings.esp.skeletonColor
+                    drawSkeleton(espSkeletons[target], parts, skelColor)
                 elseif espSkeletons[target] then 
                     for _, l in pairs(espSkeletons[target]) do l.Visible = false end 
                 end
                 local text = data.text
                 if text then
                     local str = ""
-                    if settings.esp.name then str = target.Name end
+                    if settings.esp.name then 
+                        str = target.Name
+                        if isTeam then str = str .. " 🤝" end
+                    end
                     if settings.esp.distance then str = str .. (str ~= "" and " | " or "") .. math.floor(dist) .. "m" end
                     if settings.esp.health and hum then str = str .. (str ~= "" and " | " or "") .. math.floor(hum.Health) .. " HP" end
                     text.Text = str
@@ -1246,7 +1783,7 @@ local function refreshLocalPlayerUI()
     end
 end
 
--- ============ MENU CHÍNH (RÚT GỌN) ==========
+-- ============ MENU CHÍNH (ĐÃ TĂNG CHIỀU DÀI) ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuroraMenu"
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -1262,8 +1799,8 @@ overlay.Visible = false
 overlay.Parent = screenGui
 
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 580, 0, 800)
-menu.Position = UDim2.new(0.5, -290, 0.5, -400)
+menu.Size = UDim2.new(0, 750, 0, 950)  -- TĂNG CHIỀU CAO TỪ 800 LÊN 950
+menu.Position = UDim2.new(0.5, -375, 0.5, -475)  -- CĂN LẠI VỊ TRÍ
 menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 menu.BackgroundTransparency = 0.08
 menu.BorderSizePixel = 0
@@ -1358,7 +1895,7 @@ local subTitle = Instance.new("TextLabel")
 subTitle.Size = UDim2.new(1, -100, 0, 20)
 subTitle.Position = UDim2.new(0, 22, 0, 52)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "ESP • SKELETON • AIMBOT • LINE AIM (ALWAYS) • AUTO SHOT • VALUE • DEVICE • TP • CONFIG"
+subTitle.Text = "ESP • SKELETON • AIMBOT • LINE AIM • AUTO SHOT • VALUE • DEVICE • TP • AFK • PLAYERS • INFO • CONFIG"
 subTitle.TextColor3 = Color3.fromRGB(150, 200, 255)
 subTitle.TextSize = 11
 subTitle.Font = Enum.Font.Gotham
@@ -1402,8 +1939,8 @@ tabBar.BorderSizePixel = 0
 tabBar.Parent = menu
 
 local tabs = {}
-local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 BONE", "⚡ VALUE", "🎮 DEVICE", "🌀 TP", "⚙️ CONFIG"}
-local tabWidth = 580 / #tabNames
+local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 BONE", "⚡ VALUE", "🎮 DEVICE", "🌀 TP", "💤 AFK", "👥 PLAYERS", "ℹ️ INFO", "⚙️ CONFIG"}
+local tabWidth = 750 / #tabNames
 
 for i, name in ipairs(tabNames) do
     local btn = Instance.new("TextButton")
@@ -1453,17 +1990,17 @@ particleCorner.CornerRadius = UDim.new(1, 0)
 particleCorner.Parent = particle
 
 local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, -40, 1, -165)
+contentArea.Size = UDim2.new(1, -40, 1, -135)  -- TĂNG VÙNG NỘI DUNG
 contentArea.Position = UDim2.new(0, 20, 0, 145)
 contentArea.BackgroundTransparency = 1
 contentArea.Parent = menu
 
--- Panels
+-- Panels với CanvasSize tăng lên
 local aimbotPanel = Instance.new("ScrollingFrame")
 aimbotPanel.Size = UDim2.new(1, 0, 1, 0)
 aimbotPanel.BackgroundTransparency = 1
 aimbotPanel.BorderSizePixel = 0
-aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 850)
+aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 1050)
 aimbotPanel.ScrollBarThickness = 4
 aimbotPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 aimbotPanel.Parent = contentArea
@@ -1472,7 +2009,7 @@ local espPanel = Instance.new("ScrollingFrame")
 espPanel.Size = UDim2.new(1, 0, 1, 0)
 espPanel.BackgroundTransparency = 1
 espPanel.BorderSizePixel = 0
-espPanel.CanvasSize = UDim2.new(0, 0, 0, 950)
+espPanel.CanvasSize = UDim2.new(0, 0, 0, 1050)
 espPanel.ScrollBarThickness = 4
 espPanel.Parent = contentArea
 espPanel.Visible = false
@@ -1481,7 +2018,7 @@ local skeletonPanel = Instance.new("ScrollingFrame")
 skeletonPanel.Size = UDim2.new(1, 0, 1, 0)
 skeletonPanel.BackgroundTransparency = 1
 skeletonPanel.BorderSizePixel = 0
-skeletonPanel.CanvasSize = UDim2.new(0, 0, 0, 220)
+skeletonPanel.CanvasSize = UDim2.new(0, 0, 0, 300)
 skeletonPanel.ScrollBarThickness = 4
 skeletonPanel.Parent = contentArea
 skeletonPanel.Visible = false
@@ -1490,7 +2027,7 @@ local setValuePanel = Instance.new("ScrollingFrame")
 setValuePanel.Size = UDim2.new(1, 0, 1, 0)
 setValuePanel.BackgroundTransparency = 1
 setValuePanel.BorderSizePixel = 0
-setValuePanel.CanvasSize = UDim2.new(0, 0, 0, 350)
+setValuePanel.CanvasSize = UDim2.new(0, 0, 0, 400)
 setValuePanel.ScrollBarThickness = 4
 setValuePanel.Parent = contentArea
 setValuePanel.Visible = false
@@ -1499,7 +2036,7 @@ local devicePanel = Instance.new("ScrollingFrame")
 devicePanel.Size = UDim2.new(1, 0, 1, 0)
 devicePanel.BackgroundTransparency = 1
 devicePanel.BorderSizePixel = 0
-devicePanel.CanvasSize = UDim2.new(0, 0, 0, 400)
+devicePanel.CanvasSize = UDim2.new(0, 0, 0, 450)
 devicePanel.ScrollBarThickness = 4
 devicePanel.Parent = contentArea
 devicePanel.Visible = false
@@ -1508,16 +2045,45 @@ local tpPanel = Instance.new("ScrollingFrame")
 tpPanel.Size = UDim2.new(1, 0, 1, 0)
 tpPanel.BackgroundTransparency = 1
 tpPanel.BorderSizePixel = 0
-tpPanel.CanvasSize = UDim2.new(0, 0, 0, 200)
+tpPanel.CanvasSize = UDim2.new(0, 0, 0, 250)
 tpPanel.ScrollBarThickness = 4
 tpPanel.Parent = contentArea
 tpPanel.Visible = false
+
+local afkPanel = Instance.new("ScrollingFrame")
+afkPanel.Size = UDim2.new(1, 0, 1, 0)
+afkPanel.BackgroundTransparency = 1
+afkPanel.BorderSizePixel = 0
+afkPanel.CanvasSize = UDim2.new(0, 0, 0, 550)
+afkPanel.ScrollBarThickness = 4
+afkPanel.Parent = contentArea
+afkPanel.Visible = false
+
+local playersPanel = Instance.new("ScrollingFrame")
+playersPanel.Size = UDim2.new(1, 0, 1, 0)
+playersPanel.BackgroundTransparency = 1
+playersPanel.BorderSizePixel = 0
+playersPanel.CanvasSize = UDim2.new(0, 0, 0, 800)
+playersPanel.ScrollBarThickness = 4
+playersPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+playersPanel.Parent = contentArea
+playersPanel.Visible = false
+
+local infoPanel = Instance.new("ScrollingFrame")
+infoPanel.Size = UDim2.new(1, 0, 1, 0)
+infoPanel.BackgroundTransparency = 1
+infoPanel.BorderSizePixel = 0
+infoPanel.CanvasSize = UDim2.new(0, 0, 0, 850)
+infoPanel.ScrollBarThickness = 4
+infoPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+infoPanel.Parent = contentArea
+infoPanel.Visible = false
 
 local configPanel = Instance.new("ScrollingFrame")
 configPanel.Size = UDim2.new(1, 0, 1, 0)
 configPanel.BackgroundTransparency = 1
 configPanel.BorderSizePixel = 0
-configPanel.CanvasSize = UDim2.new(0, 0, 0, 700)
+configPanel.CanvasSize = UDim2.new(0, 0, 0, 850)
 configPanel.ScrollBarThickness = 4
 configPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 configPanel.Parent = contentArea
@@ -1835,11 +2401,507 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
+-- ============ INFO PANEL (CÓ AVATAR THẬT) ==========
+local function refreshInfoPanel()
+    for _, child in pairs(infoPanel:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    local y = 10
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Position = UDim2.new(0, 5, 0, y)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    titleFrame.BackgroundTransparency = 0.4
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = infoPanel
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "ℹ️ PLAYER INFORMATION"
+    titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = titleFrame
+    
+    y = y + 70
+    
+    -- Avatar Frame
+    local avatarFrame = Instance.new("Frame")
+    avatarFrame.Size = UDim2.new(0, 90, 0, 90)
+    avatarFrame.Position = UDim2.new(0.5, -45, 0, y)
+    avatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    avatarFrame.BackgroundTransparency = 0.3
+    avatarFrame.BorderSizePixel = 2
+    avatarFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
+    avatarFrame.Parent = infoPanel
+    
+    local avatarCorner = Instance.new("UICorner")
+    avatarCorner.CornerRadius = UDim.new(0, 45)
+    avatarCorner.Parent = avatarFrame
+    
+    local avatarImage = Instance.new("ImageLabel")
+    avatarImage.Size = UDim2.new(1, -4, 1, -4)
+    avatarImage.Position = UDim2.new(0, 2, 0, 2)
+    avatarImage.BackgroundTransparency = 1
+    avatarImage.Parent = avatarFrame
+    
+    local imageCorner = Instance.new("UICorner")
+    imageCorner.CornerRadius = UDim.new(0, 43)
+    imageCorner.Parent = avatarImage
+    
+    local userId = LocalPlayer.UserId
+    task.spawn(function()
+        local success, avatarUrl = pcall(function()
+            return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+        end)
+        if success and avatarUrl and avatarUrl ~= "" then
+            avatarImage.Image = avatarUrl
+        else
+            avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        end
+    end)
+    
+    y = y + 105
+    
+    local nameFrame = Instance.new("Frame")
+    nameFrame.Size = UDim2.new(1, -10, 0, 40)
+    nameFrame.Position = UDim2.new(0, 5, 0, y)
+    nameFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    nameFrame.BackgroundTransparency = 0.4
+    nameFrame.BorderSizePixel = 0
+    nameFrame.Parent = infoPanel
+    local nameCorner = Instance.new("UICorner")
+    nameCorner.CornerRadius = UDim.new(0, 12)
+    nameCorner.Parent = nameFrame
+    
+    local playerNameLabel = Instance.new("TextLabel")
+    playerNameLabel.Size = UDim2.new(1, -20, 0, 30)
+    playerNameLabel.Position = UDim2.new(0, 10, 0, 5)
+    playerNameLabel.BackgroundTransparency = 1
+    playerNameLabel.Text = LocalPlayer.Name
+    playerNameLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    playerNameLabel.TextSize = 18
+    playerNameLabel.Font = Enum.Font.GothamBold
+    playerNameLabel.TextXAlignment = Enum.TextXAlignment.Center
+    playerNameLabel.Parent = nameFrame
+    
+    y = y + 55
+    
+    local statsGrid = Instance.new("Frame")
+    statsGrid.Size = UDim2.new(1, -10, 0, 280)
+    statsGrid.Position = UDim2.new(0, 5, 0, y)
+    statsGrid.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    statsGrid.BackgroundTransparency = 0.4
+    statsGrid.BorderSizePixel = 0
+    statsGrid.Parent = infoPanel
+    local gridCorner = Instance.new("UICorner")
+    gridCorner.CornerRadius = UDim.new(0, 12)
+    gridCorner.Parent = statsGrid
+    
+    local health, maxHealth = getPlayerHealth()
+    local kills = getPlayerKills()
+    local deaths = getPlayerDeaths()
+    local elo = getPlayerELO()
+    local level = getPlayerLevel()
+    local winStreak = getPlayerWinStreak()
+    local position = getPlayerPosition()
+    local region = getPlayerRegion()
+    local kd = deaths > 0 and string.format("%.2f", kills / deaths) or kills
+    
+    -- Row 1
+    local stat1Frame = Instance.new("Frame")
+    stat1Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat1Frame.Position = UDim2.new(0, 5, 0, 10)
+    stat1Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat1Frame.BackgroundTransparency = 0.3
+    stat1Frame.BorderSizePixel = 0
+    stat1Frame.Parent = statsGrid
+    local stat1Corner = Instance.new("UICorner")
+    stat1Corner.CornerRadius = UDim.new(0, 10)
+    stat1Corner.Parent = stat1Frame
+    
+    local stat1Icon = Instance.new("TextLabel")
+    stat1Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat1Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat1Icon.BackgroundTransparency = 1
+    stat1Icon.Text = "❤️"
+    stat1Icon.TextColor3 = Color3.fromRGB(255, 80, 80)
+    stat1Icon.TextSize = 28
+    stat1Icon.Font = Enum.Font.GothamBold
+    stat1Icon.Parent = stat1Frame
+    
+    local stat1Label = Instance.new("TextLabel")
+    stat1Label.Size = UDim2.new(1, -60, 0, 25)
+    stat1Label.Position = UDim2.new(0, 55, 0, 15)
+    stat1Label.BackgroundTransparency = 1
+    stat1Label.Text = "HEALTH"
+    stat1Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat1Label.TextSize = 11
+    stat1Label.Font = Enum.Font.Gotham
+    stat1Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat1Label.Parent = stat1Frame
+    
+    local stat1Value = Instance.new("TextLabel")
+    stat1Value.Size = UDim2.new(1, -60, 0, 35)
+    stat1Value.Position = UDim2.new(0, 55, 0, 35)
+    stat1Value.BackgroundTransparency = 1
+    stat1Value.Text = health .. " / " .. maxHealth
+    stat1Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stat1Value.TextSize = 18
+    stat1Value.Font = Enum.Font.GothamBold
+    stat1Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat1Value.Parent = stat1Frame
+    
+    local stat2Frame = Instance.new("Frame")
+    stat2Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat2Frame.Position = UDim2.new(0.5, 5, 0, 10)
+    stat2Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat2Frame.BackgroundTransparency = 0.3
+    stat2Frame.BorderSizePixel = 0
+    stat2Frame.Parent = statsGrid
+    local stat2Corner = Instance.new("UICorner")
+    stat2Corner.CornerRadius = UDim.new(0, 10)
+    stat2Corner.Parent = stat2Frame
+    
+    local stat2Icon = Instance.new("TextLabel")
+    stat2Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat2Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat2Icon.BackgroundTransparency = 1
+    stat2Icon.Text = "⭐"
+    stat2Icon.TextColor3 = Color3.fromRGB(255, 215, 0)
+    stat2Icon.TextSize = 28
+    stat2Icon.Font = Enum.Font.GothamBold
+    stat2Icon.Parent = stat2Frame
+    
+    local stat2Label = Instance.new("TextLabel")
+    stat2Label.Size = UDim2.new(1, -60, 0, 25)
+    stat2Label.Position = UDim2.new(0, 55, 0, 15)
+    stat2Label.BackgroundTransparency = 1
+    stat2Label.Text = "LEVEL"
+    stat2Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat2Label.TextSize = 11
+    stat2Label.Font = Enum.Font.Gotham
+    stat2Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat2Label.Parent = stat2Frame
+    
+    local stat2Value = Instance.new("TextLabel")
+    stat2Value.Size = UDim2.new(1, -60, 0, 35)
+    stat2Value.Position = UDim2.new(0, 55, 0, 35)
+    stat2Value.BackgroundTransparency = 1
+    stat2Value.Text = level
+    stat2Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stat2Value.TextSize = 18
+    stat2Value.Font = Enum.Font.GothamBold
+    stat2Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat2Value.Parent = stat2Frame
+    
+    -- Row 2
+    local stat3Frame = Instance.new("Frame")
+    stat3Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat3Frame.Position = UDim2.new(0, 5, 0, 100)
+    stat3Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat3Frame.BackgroundTransparency = 0.3
+    stat3Frame.BorderSizePixel = 0
+    stat3Frame.Parent = statsGrid
+    local stat3Corner = Instance.new("UICorner")
+    stat3Corner.CornerRadius = UDim.new(0, 10)
+    stat3Corner.Parent = stat3Frame
+    
+    local stat3Icon = Instance.new("TextLabel")
+    stat3Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat3Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat3Icon.BackgroundTransparency = 1
+    stat3Icon.Text = "⚔️"
+    stat3Icon.TextColor3 = Color3.fromRGB(255, 100, 100)
+    stat3Icon.TextSize = 28
+    stat3Icon.Font = Enum.Font.GothamBold
+    stat3Icon.Parent = stat3Frame
+    
+    local stat3Label = Instance.new("TextLabel")
+    stat3Label.Size = UDim2.new(1, -60, 0, 25)
+    stat3Label.Position = UDim2.new(0, 55, 0, 15)
+    stat3Label.BackgroundTransparency = 1
+    stat3Label.Text = "KILLS"
+    stat3Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat3Label.TextSize = 11
+    stat3Label.Font = Enum.Font.Gotham
+    stat3Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat3Label.Parent = stat3Frame
+    
+    local stat3Value = Instance.new("TextLabel")
+    stat3Value.Size = UDim2.new(1, -60, 0, 35)
+    stat3Value.Position = UDim2.new(0, 55, 0, 35)
+    stat3Value.BackgroundTransparency = 1
+    stat3Value.Text = kills
+    stat3Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stat3Value.TextSize = 18
+    stat3Value.Font = Enum.Font.GothamBold
+    stat3Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat3Value.Parent = stat3Frame
+    
+    local stat4Frame = Instance.new("Frame")
+    stat4Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat4Frame.Position = UDim2.new(0.5, 5, 0, 100)
+    stat4Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat4Frame.BackgroundTransparency = 0.3
+    stat4Frame.BorderSizePixel = 0
+    stat4Frame.Parent = statsGrid
+    local stat4Corner = Instance.new("UICorner")
+    stat4Corner.CornerRadius = UDim.new(0, 10)
+    stat4Corner.Parent = stat4Frame
+    
+    local stat4Icon = Instance.new("TextLabel")
+    stat4Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat4Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat4Icon.BackgroundTransparency = 1
+    stat4Icon.Text = "💀"
+    stat4Icon.TextColor3 = Color3.fromRGB(100, 100, 200)
+    stat4Icon.TextSize = 28
+    stat4Icon.Font = Enum.Font.GothamBold
+    stat4Icon.Parent = stat4Frame
+    
+    local stat4Label = Instance.new("TextLabel")
+    stat4Label.Size = UDim2.new(1, -60, 0, 25)
+    stat4Label.Position = UDim2.new(0, 55, 0, 15)
+    stat4Label.BackgroundTransparency = 1
+    stat4Label.Text = "DEATHS"
+    stat4Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat4Label.TextSize = 11
+    stat4Label.Font = Enum.Font.Gotham
+    stat4Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat4Label.Parent = stat4Frame
+    
+    local stat4Value = Instance.new("TextLabel")
+    stat4Value.Size = UDim2.new(1, -60, 0, 35)
+    stat4Value.Position = UDim2.new(0, 55, 0, 35)
+    stat4Value.BackgroundTransparency = 1
+    stat4Value.Text = deaths
+    stat4Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stat4Value.TextSize = 18
+    stat4Value.Font = Enum.Font.GothamBold
+    stat4Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat4Value.Parent = stat4Frame
+    
+    -- Row 3
+    local stat5Frame = Instance.new("Frame")
+    stat5Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat5Frame.Position = UDim2.new(0, 5, 0, 190)
+    stat5Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat5Frame.BackgroundTransparency = 0.3
+    stat5Frame.BorderSizePixel = 0
+    stat5Frame.Parent = statsGrid
+    local stat5Corner = Instance.new("UICorner")
+    stat5Corner.CornerRadius = UDim.new(0, 10)
+    stat5Corner.Parent = stat5Frame
+    
+    local stat5Icon = Instance.new("TextLabel")
+    stat5Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat5Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat5Icon.BackgroundTransparency = 1
+    stat5Icon.Text = "📊"
+    stat5Icon.TextColor3 = Color3.fromRGB(100, 200, 100)
+    stat5Icon.TextSize = 28
+    stat5Icon.Font = Enum.Font.GothamBold
+    stat5Icon.Parent = stat5Frame
+    
+    local stat5Label = Instance.new("TextLabel")
+    stat5Label.Size = UDim2.new(1, -60, 0, 25)
+    stat5Label.Position = UDim2.new(0, 55, 0, 15)
+    stat5Label.BackgroundTransparency = 1
+    stat5Label.Text = "K/D RATIO"
+    stat5Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat5Label.TextSize = 11
+    stat5Label.Font = Enum.Font.Gotham
+    stat5Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat5Label.Parent = stat5Frame
+    
+    local stat5Value = Instance.new("TextLabel")
+    stat5Value.Size = UDim2.new(1, -60, 0, 35)
+    stat5Value.Position = UDim2.new(0, 55, 0, 35)
+    stat5Value.BackgroundTransparency = 1
+    stat5Value.Text = kd
+    stat5Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stat5Value.TextSize = 18
+    stat5Value.Font = Enum.Font.GothamBold
+    stat5Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat5Value.Parent = stat5Frame
+    
+    local stat6Frame = Instance.new("Frame")
+    stat6Frame.Size = UDim2.new(0.5, -10, 0, 80)
+    stat6Frame.Position = UDim2.new(0.5, 5, 0, 190)
+    stat6Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    stat6Frame.BackgroundTransparency = 0.3
+    stat6Frame.BorderSizePixel = 0
+    stat6Frame.Parent = statsGrid
+    local stat6Corner = Instance.new("UICorner")
+    stat6Corner.CornerRadius = UDim.new(0, 10)
+    stat6Corner.Parent = stat6Frame
+    
+    local stat6Icon = Instance.new("TextLabel")
+    stat6Icon.Size = UDim2.new(0, 40, 0, 40)
+    stat6Icon.Position = UDim2.new(0, 10, 0, 20)
+    stat6Icon.BackgroundTransparency = 1
+    stat6Icon.Text = "🔥"
+    stat6Icon.TextColor3 = Color3.fromRGB(255, 150, 50)
+    stat6Icon.TextSize = 28
+    stat6Icon.Font = Enum.Font.GothamBold
+    stat6Icon.Parent = stat6Frame
+    
+    local stat6Label = Instance.new("TextLabel")
+    stat6Label.Size = UDim2.new(1, -60, 0, 25)
+    stat6Label.Position = UDim2.new(0, 55, 0, 15)
+    stat6Label.BackgroundTransparency = 1
+    stat6Label.Text = "WIN STREAK"
+    stat6Label.TextColor3 = Color3.fromRGB(180, 180, 220)
+    stat6Label.TextSize = 11
+    stat6Label.Font = Enum.Font.Gotham
+    stat6Label.TextXAlignment = Enum.TextXAlignment.Left
+    stat6Label.Parent = stat6Frame
+    
+    local stat6Value = Instance.new("TextLabel")
+    stat6Value.Size = UDim2.new(1, -60, 0, 35)
+    stat6Value.Position = UDim2.new(0, 55, 0, 35)
+    stat6Value.BackgroundTransparency = 1
+    stat6Value.Text = winStreak
+    stat6Value.TextColor3 = winStreak > 0 and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(150, 150, 150)
+    stat6Value.TextSize = 18
+    stat6Value.Font = Enum.Font.GothamBold
+    stat6Value.TextXAlignment = Enum.TextXAlignment.Left
+    stat6Value.Parent = stat6Frame
+    
+    y = y + 295
+    
+    local posFrame = Instance.new("Frame")
+    posFrame.Size = UDim2.new(1, -10, 0, 90)
+    posFrame.Position = UDim2.new(0, 5, 0, y)
+    posFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    posFrame.BackgroundTransparency = 0.4
+    posFrame.BorderSizePixel = 0
+    posFrame.Parent = infoPanel
+    local posCorner = Instance.new("UICorner")
+    posCorner.CornerRadius = UDim.new(0, 12)
+    posCorner.Parent = posFrame
+    
+    local posTitle = Instance.new("TextLabel")
+    posTitle.Size = UDim2.new(1, -20, 0, 30)
+    posTitle.Position = UDim2.new(0, 10, 0, 8)
+    posTitle.BackgroundTransparency = 1
+    posTitle.Text = "📍 CURRENT POSITION"
+    posTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+    posTitle.TextSize = 13
+    posTitle.Font = Enum.Font.GothamBold
+    posTitle.TextXAlignment = Enum.TextXAlignment.Left
+    posTitle.Parent = posFrame
+    
+    local posValue = Instance.new("TextLabel")
+    posValue.Size = UDim2.new(1, -20, 0, 40)
+    posValue.Position = UDim2.new(0, 10, 0, 40)
+    posValue.BackgroundTransparency = 1
+    posValue.Text = "X: " .. position
+    posValue.TextColor3 = Color3.fromRGB(200, 200, 230)
+    posValue.TextSize = 14
+    posValue.Font = Enum.Font.Gotham
+    posValue.TextXAlignment = Enum.TextXAlignment.Left
+    posValue.Parent = posFrame
+    
+    y = y + 105
+    
+    local eloFrame = Instance.new("Frame")
+    eloFrame.Size = UDim2.new(1, -10, 0, 90)
+    eloFrame.Position = UDim2.new(0, 5, 0, y)
+    eloFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    eloFrame.BackgroundTransparency = 0.4
+    eloFrame.BorderSizePixel = 0
+    eloFrame.Parent = infoPanel
+    local eloCorner = Instance.new("UICorner")
+    eloCorner.CornerRadius = UDim.new(0, 12)
+    eloCorner.Parent = eloFrame
+    
+    local eloTitle = Instance.new("TextLabel")
+    eloTitle.Size = UDim2.new(1, -20, 0, 30)
+    eloTitle.Position = UDim2.new(0, 10, 0, 8)
+    eloTitle.BackgroundTransparency = 1
+    eloTitle.Text = "🏆 RANK & REGION"
+    eloTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+    eloTitle.TextSize = 13
+    eloTitle.Font = Enum.Font.GothamBold
+    eloTitle.TextXAlignment = Enum.TextXAlignment.Left
+    eloTitle.Parent = eloFrame
+    
+    local function getEloColor(elo)
+        if elo >= 2000 then return Color3.fromRGB(255, 215, 0) end
+        if elo >= 1500 then return Color3.fromRGB(192, 192, 192) end
+        if elo >= 1000 then return Color3.fromRGB(205, 127, 50) end
+        return Color3.fromRGB(100, 100, 100)
+    end
+    
+    local eloValue = Instance.new("TextLabel")
+    eloValue.Size = UDim2.new(0.5, -15, 0, 40)
+    eloValue.Position = UDim2.new(0, 10, 0, 40)
+    eloValue.BackgroundTransparency = 1
+    eloValue.Text = "ELO: " .. elo
+    eloValue.TextColor3 = getEloColor(elo)
+    eloValue.TextSize = 16
+    eloValue.Font = Enum.Font.GothamBold
+    eloValue.TextXAlignment = Enum.TextXAlignment.Left
+    eloValue.Parent = eloFrame
+    
+    local regionValue = Instance.new("TextLabel")
+    regionValue.Size = UDim2.new(0.5, -15, 0, 40)
+    regionValue.Position = UDim2.new(0.5, 5, 0, 40)
+    regionValue.BackgroundTransparency = 1
+    regionValue.Text = "🌍 Region: " .. region
+    regionValue.TextColor3 = Color3.fromRGB(200, 200, 230)
+    regionValue.TextSize = 14
+    regionValue.Font = Enum.Font.Gotham
+    regionValue.TextXAlignment = Enum.TextXAlignment.Left
+    regionValue.Parent = eloFrame
+    
+    y = y + 105
+    
+    local refreshBtn = Instance.new("TextButton")
+    refreshBtn.Size = UDim2.new(0.9, 0, 0, 45)
+    refreshBtn.Position = UDim2.new(0.05, 0, 0, y)
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    refreshBtn.Text = "🔄 REFRESH INFO"
+    refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshBtn.TextSize = 14
+    refreshBtn.Font = Enum.Font.GothamBold
+    refreshBtn.Parent = infoPanel
+    local refreshCorner = Instance.new("UICorner")
+    refreshCorner.CornerRadius = UDim.new(0, 10)
+    refreshCorner.Parent = refreshBtn
+    
+    refreshBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        refreshInfoPanel()
+    end)
+    
+    refreshBtn.MouseEnter:Connect(function()
+        TweenService:Create(refreshBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 170, 220)}):Play()
+    end)
+    refreshBtn.MouseLeave:Connect(function()
+        TweenService:Create(refreshBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 150, 200)}):Play()
+    end)
+end
+
 -- ============ BUILD UI ==========
 
 -- AIMBOT PANEL
 local y = 10
 createModernToggle(aimbotPanel, y, "⚡ ENABLE AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
+y = y + 60
+createModernToggle(aimbotPanel, y, "🤝 IGNORE TEAMMATES", function() return settings.aimbot.ignoreTeam end, function(v) settings.aimbot.ignoreTeam = v end)
 y = y + 60
 
 -- AIM MODE
@@ -1957,7 +3019,7 @@ createColorPicker(aimbotPanel, y, "🎨 LINE COLOR",
     function() end
 )
 
--- ESP PANEL (rút gọn)
+-- ESP PANEL
 y = 10
 createModernToggle(espPanel, y, "✨ ENABLE ESP", function() return settings.esp.enabled end, function(v) settings.esp.enabled = v end)
 y = y + 60
@@ -2174,7 +3236,478 @@ guideLabel.TextSize = 12
 guideLabel.TextXAlignment = Enum.TextXAlignment.Center
 guideLabel.Parent = guideCard
 
--- ============ CONFIG PANEL (RÚT GỌN) ==========
+-- AFK PANEL
+y = 10
+createModernToggle(afkPanel, y, "💤 ENABLE ANTI AFK", 
+    function() return settings.afk.enabled end, 
+    function(v) 
+        settings.afk.enabled = v 
+        updateAFK()
+    end
+)
+
+y = y + 70
+createModernSlider(afkPanel, y, "⏱️ AFK INTERVAL (seconds)", 10, 300, settings.afk.interval, "s", 
+    function(v) 
+        settings.afk.interval = v 
+        updateAFK()
+    end
+)
+
+y = y + 90
+local statusCard = Instance.new("Frame")
+statusCard.Size = UDim2.new(1, -10, 0, 100)
+statusCard.Position = UDim2.new(0, 5, 0, y)
+statusCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+statusCard.BackgroundTransparency = 0.4
+statusCard.BorderSizePixel = 0
+statusCard.Parent = afkPanel
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(0, 12)
+statusCorner.Parent = statusCard
+
+local statusTitle = Instance.new("TextLabel")
+statusTitle.Size = UDim2.new(1, -20, 0, 30)
+statusTitle.Position = UDim2.new(0, 10, 0, 8)
+statusTitle.BackgroundTransparency = 1
+statusTitle.Text = "📊 AFK STATUS"
+statusTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+statusTitle.TextSize = 13
+statusTitle.Font = Enum.Font.GothamBold
+statusTitle.TextXAlignment = Enum.TextXAlignment.Left
+statusTitle.Parent = statusCard
+
+local statusValue = Instance.new("TextLabel")
+statusValue.Size = UDim2.new(1, -20, 0, 30)
+statusValue.Position = UDim2.new(0, 10, 0, 40)
+statusValue.BackgroundTransparency = 1
+statusValue.Text = settings.afk.enabled and "✅ ACTIVE" or "❌ DISABLED"
+statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+statusValue.TextSize = 14
+statusValue.Font = Enum.Font.GothamBold
+statusValue.TextXAlignment = Enum.TextXAlignment.Left
+statusValue.Parent = statusCard
+
+local intervalValue = Instance.new("TextLabel")
+intervalValue.Size = UDim2.new(1, -20, 0, 30)
+intervalValue.Position = UDim2.new(0, 10, 0, 65)
+intervalValue.BackgroundTransparency = 1
+intervalValue.Text = "⏱️ Interval: " .. settings.afk.interval .. " seconds"
+intervalValue.TextColor3 = Color3.fromRGB(200, 200, 230)
+intervalValue.TextSize = 12
+intervalValue.Font = Enum.Font.Gotham
+intervalValue.TextXAlignment = Enum.TextXAlignment.Left
+intervalValue.Parent = statusCard
+
+local function updateAFKStatus()
+    statusValue.Text = settings.afk.enabled and "✅ ACTIVE" or "❌ DISABLED"
+    statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+    intervalValue.Text = "⏱️ Interval: " .. settings.afk.interval .. " seconds"
+end
+
+local originalUpdateAFK = updateAFK
+updateAFK = function()
+    originalUpdateAFK()
+    updateAFKStatus()
+end
+
+y = y + 115
+local infoCard = Instance.new("Frame")
+infoCard.Size = UDim2.new(1, -10, 0, 120)
+infoCard.Position = UDim2.new(0, 5, 0, y)
+infoCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+infoCard.BackgroundTransparency = 0.4
+infoCard.BorderSizePixel = 0
+infoCard.Parent = afkPanel
+local infoCorner = Instance.new("UICorner")
+infoCorner.CornerRadius = UDim.new(0, 12)
+infoCorner.Parent = infoCard
+
+local infoTitle = Instance.new("TextLabel")
+infoTitle.Size = UDim2.new(1, -20, 0, 30)
+infoTitle.Position = UDim2.new(0, 10, 0, 8)
+infoTitle.BackgroundTransparency = 1
+infoTitle.Text = "ℹ️ HOW ANTI AFK WORKS"
+infoTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+infoTitle.TextSize = 13
+infoTitle.Font = Enum.Font.GothamBold
+infoTitle.TextXAlignment = Enum.TextXAlignment.Left
+infoTitle.Parent = infoCard
+
+local infoDesc = Instance.new("TextLabel")
+infoDesc.Size = UDim2.new(1, -20, 0, 80)
+infoDesc.Position = UDim2.new(0, 10, 0, 35)
+infoDesc.BackgroundTransparency = 1
+infoDesc.Text = "• Simulates random inputs every interval\n• Prevents game from kicking you for inactivity\n• Works with: Mouse movement, small jumps,\n  camera wiggle, key presses, and more"
+infoDesc.TextColor3 = Color3.fromRGB(180, 180, 210)
+infoDesc.TextSize = 11
+infoDesc.Font = Enum.Font.Gotham
+infoDesc.TextXAlignment = Enum.TextXAlignment.Left
+infoDesc.Parent = infoCard
+
+updateAFKStatus()
+
+-- PLAYERS PANEL
+local function refreshPlayersList()
+    for _, child in pairs(playersPanel:GetChildren()) do
+        if child:IsA("Frame") or child:IsA("ScrollingFrame") or child:IsA("TextButton") or child:IsA("TextBox") then
+            child:Destroy()
+        end
+    end
+    
+    local yPos = 10
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Position = UDim2.new(0, 5, 0, yPos)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    titleFrame.BackgroundTransparency = 0.4
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = playersPanel
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "👥 PLAYERS IN SERVER"
+    titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = titleFrame
+    
+    yPos = yPos + 70
+    
+    local statsFrame = Instance.new("Frame")
+    statsFrame.Size = UDim2.new(1, -10, 0, 40)
+    statsFrame.Position = UDim2.new(0, 5, 0, yPos)
+    statsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    statsFrame.BackgroundTransparency = 0.4
+    statsFrame.BorderSizePixel = 0
+    statsFrame.Parent = playersPanel
+    local statsCorner = Instance.new("UICorner")
+    statsCorner.CornerRadius = UDim.new(0, 12)
+    statsCorner.Parent = statsFrame
+    
+    local playerCount = #Players:GetPlayers()
+    local teamCount = 0
+    for name, _ in pairs(teamPlayers) do
+        if Players:FindFirstChild(name) then
+            teamCount = teamCount + 1
+        end
+    end
+    
+    local statsLabel = Instance.new("TextLabel")
+    statsLabel.Size = UDim2.new(1, -20, 0, 30)
+    statsLabel.Position = UDim2.new(0, 10, 0, 5)
+    statsLabel.BackgroundTransparency = 1
+    statsLabel.Text = "📊 Total: " .. playerCount .. " players  |  🤝 Team: " .. teamCount .. " players"
+    statsLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
+    statsLabel.TextSize = 13
+    statsLabel.Font = Enum.Font.Gotham
+    statsLabel.TextXAlignment = Enum.TextXAlignment.Center
+    statsLabel.Parent = statsFrame
+    
+    yPos = yPos + 55
+    
+    local searchFrame = Instance.new("Frame")
+    searchFrame.Size = UDim2.new(1, -10, 0, 45)
+    searchFrame.Position = UDim2.new(0, 5, 0, yPos)
+    searchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    searchFrame.BackgroundTransparency = 0.4
+    searchFrame.BorderSizePixel = 0
+    searchFrame.Parent = playersPanel
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 10)
+    searchCorner.Parent = searchFrame
+    
+    local searchIcon = Instance.new("TextLabel")
+    searchIcon.Size = UDim2.new(0, 35, 0, 35)
+    searchIcon.Position = UDim2.new(0, 8, 0, 5)
+    searchIcon.BackgroundTransparency = 1
+    searchIcon.Text = "🔍"
+    searchIcon.TextColor3 = Color3.fromRGB(150, 150, 200)
+    searchIcon.TextSize = 18
+    searchIcon.Font = Enum.Font.Gotham
+    searchIcon.TextXAlignment = Enum.TextXAlignment.Center
+    searchIcon.Parent = searchFrame
+    
+    local searchBox = Instance.new("TextBox")
+    searchBox.Size = UDim2.new(1, -55, 0, 35)
+    searchBox.Position = UDim2.new(0, 48, 0, 5)
+    searchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    searchBox.BackgroundTransparency = 0.2
+    searchBox.PlaceholderText = "🔎 Search player by name..."
+    searchBox.Text = ""
+    searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBox.TextSize = 12
+    searchBox.Font = Enum.Font.Gotham
+    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+    searchBox.ClearTextOnFocus = true
+    searchBox.Parent = searchFrame
+    local searchBoxCorner = Instance.new("UICorner")
+    searchBoxCorner.CornerRadius = UDim.new(0, 8)
+    searchBoxCorner.Parent = searchBox
+    
+    yPos = yPos + 60
+    
+    local clearTeamBtn = Instance.new("TextButton")
+    clearTeamBtn.Size = UDim2.new(0.9, 0, 0, 40)
+    clearTeamBtn.Position = UDim2.new(0.05, 0, 0, yPos)
+    clearTeamBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+    clearTeamBtn.Text = "🗑️ CLEAR ALL TEAMMATES"
+    clearTeamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearTeamBtn.TextSize = 13
+    clearTeamBtn.Font = Enum.Font.GothamBold
+    clearTeamBtn.Parent = playersPanel
+    local clearCorner = Instance.new("UICorner")
+    clearCorner.CornerRadius = UDim.new(0, 10)
+    clearCorner.Parent = clearTeamBtn
+    
+    clearTeamBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        clearAllTeammates()
+        refreshPlayersList()
+        local notif = Drawing.new("Text")
+        notif.Text = "✅ Cleared all teammates!"
+        notif.Size = 14
+        notif.Color = Color3.fromRGB(0, 255, 0)
+        notif.Center = true
+        notif.Outline = true
+        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+        notif.Visible = true
+        task.wait(1.5)
+        notif.Visible = false
+        notif:Remove()
+    end)
+    
+    yPos = yPos + 55
+    
+    local listTitle = Instance.new("TextLabel")
+    listTitle.Size = UDim2.new(1, -20, 0, 30)
+    listTitle.Position = UDim2.new(0, 10, 0, yPos)
+    listTitle.BackgroundTransparency = 1
+    listTitle.Text = "👥 PLAYER LIST"
+    listTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+    listTitle.TextSize = 14
+    listTitle.Font = Enum.Font.GothamBold
+    listTitle.TextXAlignment = Enum.TextXAlignment.Left
+    listTitle.Parent = playersPanel
+    
+    yPos = yPos + 40
+    
+    local playerScrollFrame = Instance.new("ScrollingFrame")
+    playerScrollFrame.Size = UDim2.new(1, -10, 0, 400)
+    playerScrollFrame.Position = UDim2.new(0, 5, 0, yPos)
+    playerScrollFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
+    playerScrollFrame.BackgroundTransparency = 0.3
+    playerScrollFrame.BorderSizePixel = 0
+    playerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 200)
+    playerScrollFrame.ScrollBarThickness = 4
+    playerScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+    playerScrollFrame.ClipsDescendants = true
+    playerScrollFrame.Parent = playersPanel
+    local scrollCorner = Instance.new("UICorner")
+    scrollCorner.CornerRadius = UDim.new(0, 12)
+    scrollCorner.Parent = playerScrollFrame
+    
+    local scrollContainer = Instance.new("Frame")
+    scrollContainer.Size = UDim2.new(1, 0, 0, 0)
+    scrollContainer.BackgroundTransparency = 1
+    scrollContainer.Parent = playerScrollFrame
+    
+    local function updatePlayerList(filterText)
+        for _, child in pairs(scrollContainer:GetChildren()) do
+            child:Destroy()
+        end
+        
+        local scrollY = 0
+        local playersList = {}
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                table.insert(playersList, player)
+            end
+        end
+        
+        table.sort(playersList, function(a, b) return a.Name < b.Name end)
+        
+        local filteredPlayers = {}
+        local searchLower = filterText and string.lower(filterText) or ""
+        
+        for _, player in pairs(playersList) do
+            if searchLower == "" or string.find(string.lower(player.Name), searchLower, 1, true) then
+                table.insert(filteredPlayers, player)
+            end
+        end
+        
+        for _, player in pairs(filteredPlayers) do
+            local isTeam = isTeammate(player)
+            
+            local playerFrame = Instance.new("Frame")
+            playerFrame.Size = UDim2.new(1, -10, 0, 55)
+            playerFrame.Position = UDim2.new(0, 5, 0, scrollY)
+            playerFrame.BackgroundColor3 = isTeam and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(35, 35, 55)
+            playerFrame.BackgroundTransparency = 0.3
+            playerFrame.BorderSizePixel = 0
+            playerFrame.Parent = scrollContainer
+            local playerCorner = Instance.new("UICorner")
+            playerCorner.CornerRadius = UDim.new(0, 10)
+            playerCorner.Parent = playerFrame
+            
+            local iconLabel = Instance.new("TextLabel")
+            iconLabel.Size = UDim2.new(0, 40, 0, 40)
+            iconLabel.Position = UDim2.new(0, 10, 0, 8)
+            iconLabel.BackgroundTransparency = 1
+            iconLabel.Text = isTeam and "🤝" or "👤"
+            iconLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(200, 200, 200)
+            iconLabel.TextSize = 24
+            iconLabel.Font = Enum.Font.GothamBold
+            iconLabel.TextXAlignment = Enum.TextXAlignment.Center
+            iconLabel.Parent = playerFrame
+            
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Size = UDim2.new(0, 150, 0, 25)
+            nameLabel.Position = UDim2.new(0, 60, 0, 8)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Text = player.Name
+            nameLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 255, 255)
+            nameLabel.TextSize = 14
+            nameLabel.Font = Enum.Font.GothamBold
+            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            nameLabel.Parent = playerFrame
+            
+            local statusLabel = Instance.new("TextLabel")
+            statusLabel.Size = UDim2.new(0, 80, 0, 20)
+            statusLabel.Position = UDim2.new(0, 60, 0, 30)
+            statusLabel.BackgroundTransparency = 1
+            statusLabel.Text = isTeam and "🤝 TEAMMATE" or "⚔️ ENEMY"
+            statusLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 100, 100)
+            statusLabel.TextSize = 10
+            statusLabel.Font = Enum.Font.Gotham
+            statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+            statusLabel.Parent = playerFrame
+            
+            local teamBtn = Instance.new("TextButton")
+            teamBtn.Size = UDim2.new(0, 100, 0, 36)
+            teamBtn.Position = UDim2.new(1, -215, 0, 10)
+            teamBtn.BackgroundColor3 = isTeam and Color3.fromRGB(100, 60, 60) or Color3.fromRGB(0, 150, 200)
+            teamBtn.Text = isTeam and "❌ REMOVE TEAM" or "🤝 MARK TEAM"
+            teamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            teamBtn.TextSize = 11
+            teamBtn.Font = Enum.Font.GothamBold
+            teamBtn.Parent = playerFrame
+            local teamCorner = Instance.new("UICorner")
+            teamCorner.CornerRadius = UDim.new(0, 8)
+            teamCorner.Parent = teamBtn
+            
+            teamBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                if isTeam then
+                    removeTeammate(player)
+                else
+                    addTeammate(player)
+                end
+                refreshPlayersList()
+            end)
+            
+            local specBtn = Instance.new("TextButton")
+            specBtn.Size = UDim2.new(0, 80, 0, 36)
+            specBtn.Position = UDim2.new(1, -110, 0, 10)
+            specBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+            specBtn.Text = "👁️ SPECTATE"
+            specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            specBtn.TextSize = 11
+            specBtn.Font = Enum.Font.GothamBold
+            specBtn.Parent = playerFrame
+            local specCorner = Instance.new("UICorner")
+            specCorner.CornerRadius = UDim.new(0, 8)
+            specCorner.Parent = specBtn
+            
+            specBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                if player.Character and player.Character:FindFirstChild("Humanoid") then
+                    Camera.CameraSubject = player.Character.Humanoid
+                    Camera.CameraType = Enum.CameraType.Attach
+                    local notif = Drawing.new("Text")
+                    notif.Text = "👁️ Spectating: " .. player.Name
+                    notif.Size = 14
+                    notif.Color = Color3.fromRGB(0, 200, 255)
+                    notif.Center = true
+                    notif.Outline = true
+                    notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+                    notif.Visible = true
+                    task.wait(1.5)
+                    notif.Visible = false
+                    notif:Remove()
+                end
+            end)
+            
+            scrollY = scrollY + 65
+        end
+        
+        local localFrame = Instance.new("Frame")
+        localFrame.Size = UDim2.new(1, -10, 0, 55)
+        localFrame.Position = UDim2.new(0, 5, 0, scrollY)
+        localFrame.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
+        localFrame.BackgroundTransparency = 0.3
+        localFrame.BorderSizePixel = 0
+        localFrame.Parent = scrollContainer
+        local localCorner = Instance.new("UICorner")
+        localCorner.CornerRadius = UDim.new(0, 10)
+        localCorner.Parent = localFrame
+        
+        local localIcon = Instance.new("TextLabel")
+        localIcon.Size = UDim2.new(0, 40, 0, 40)
+        localIcon.Position = UDim2.new(0, 10, 0, 8)
+        localIcon.BackgroundTransparency = 1
+        localIcon.Text = "👑"
+        localIcon.TextColor3 = Color3.fromRGB(255, 215, 0)
+        localIcon.TextSize = 24
+        localIcon.Font = Enum.Font.GothamBold
+        localIcon.TextXAlignment = Enum.TextXAlignment.Center
+        localIcon.Parent = localFrame
+        
+        local localNameLabel = Instance.new("TextLabel")
+        localNameLabel.Size = UDim2.new(0, 150, 0, 25)
+        localNameLabel.Position = UDim2.new(0, 60, 0, 8)
+        localNameLabel.BackgroundTransparency = 1
+        localNameLabel.Text = LocalPlayer.Name .. " (YOU)"
+        localNameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+        localNameLabel.TextSize = 14
+        localNameLabel.Font = Enum.Font.GothamBold
+        localNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        localNameLabel.Parent = localFrame
+        
+        local localStatus = Instance.new("TextLabel")
+        localStatus.Size = UDim2.new(0, 80, 0, 20)
+        localStatus.Position = UDim2.new(0, 60, 0, 30)
+        localStatus.BackgroundTransparency = 1
+        localStatus.Text = "👑 YOU"
+        localStatus.TextColor3 = Color3.fromRGB(255, 215, 0)
+        localStatus.TextSize = 10
+        localStatus.Font = Enum.Font.Gotham
+        localStatus.TextXAlignment = Enum.TextXAlignment.Left
+        localStatus.Parent = localFrame
+        
+        scrollY = scrollY + 65
+        playerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 400))
+        scrollContainer.Size = UDim2.new(1, 0, 0, scrollY)
+    end
+    
+    updatePlayerList("")
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        updatePlayerList(searchBox.Text)
+    end)
+end
+
+Players.PlayerAdded:Connect(refreshPlayersList)
+Players.PlayerRemoving:Connect(refreshPlayersList)
+
+-- CONFIG PANEL
 local function refreshConfigList()
     for _, child in pairs(configPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -2459,6 +3992,9 @@ local function refreshConfigList()
                 local success, msg = loadConfig(cfgName)
                 if success then
                     refreshWinStreakDisplay()
+                    updateAFKStatus()
+                    refreshPlayersList()
+                    refreshInfoPanel()
                 end
                 local notif = Drawing.new("Text")
                 notif.Text = msg
@@ -2563,12 +4099,16 @@ local function refreshConfigList()
 end
 
 refreshConfigList()
+refreshInfoPanel()
 
 local function doAutoLoadOnStart()
     ensureConfigFolder()
     local success, msg = autoLoadConfigOnStart()
     if success then
         refreshWinStreakDisplay()
+        updateAFKStatus()
+        refreshPlayersList()
+        refreshInfoPanel()
         local notif = Drawing.new("Text")
         notif.Text = "🔧 " .. msg
         notif.Size = 14
@@ -2586,7 +4126,7 @@ end
 doAutoLoadOnStart()
 
 -- Tab switching
-local panels = {aimbotPanel, espPanel, skeletonPanel, setValuePanel, devicePanel, tpPanel, configPanel}
+local panels = {aimbotPanel, espPanel, skeletonPanel, setValuePanel, devicePanel, tpPanel, afkPanel, playersPanel, infoPanel, configPanel}
 local function switchTab(tabIndex, panel, btn)
     TweenService:Create(contentArea, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
     task.wait(0.1)
@@ -2595,7 +4135,10 @@ local function switchTab(tabIndex, panel, btn)
     end
     panel.Visible = true
     if tabIndex == 4 then refreshWinStreakDisplay() end
-    if tabIndex == 7 then refreshConfigList() end
+    if tabIndex == 7 then updateAFKStatus() end
+    if tabIndex == 8 then refreshPlayersList() end
+    if tabIndex == 9 then refreshInfoPanel() end
+    if tabIndex == 10 then refreshConfigList() end
     for i, b in ipairs(tabs) do
         TweenService:Create(b, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 160, 200), Font = Enum.Font.GothamSemibold}):Play()
     end
@@ -2621,8 +4164,8 @@ local function openMenu()
     menu.Size = UDim2.new(0, 0, 0, 0)
     menu.Position = UDim2.new(0.5, 0, 0.5, 0)
     TweenService:Create(menu, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 580, 0, 800),
-        Position = UDim2.new(0.5, -290, 0.5, -400)
+        Size = UDim2.new(0, 750, 0, 950),
+        Position = UDim2.new(0.5, -375, 0.5, -475)
     }):Play()
     TweenService:Create(blur, TweenInfo.new(0.3), {Size = 12}):Play()
 end
@@ -2707,7 +4250,7 @@ subNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y
 subNotif.Visible = true
 
 local deviceNotif = Drawing.new("Text")
-deviceNotif.Text = "🎮 Device Spoofer | 🔫 Aimbot | 📏 LINE ALWAYS ON | ⚡ AUTO SHOT (NO DELAY)"
+deviceNotif.Text = "🎮 Device Spoofer | 🔫 Aimbot | 📏 LINE ALWAYS ON | ⚡ AUTO SHOT | 💤 ANTI AFK | 👥 TEAM SYSTEM | ℹ️ INFO"
 deviceNotif.Size = 12
 deviceNotif.Color = Color3.fromRGB(200, 200, 100)
 deviceNotif.Center = true
@@ -2724,7 +4267,7 @@ subNotif:Remove()
 deviceNotif:Remove()
 
 print("========================================")
-print("     ✦ KHANHGD CHEAT v8.0 ✦")
+print("     ✦ KHANHGD CHEAT v13.0 ✦")
 print("========================================")
 print("  VERIFIED KEY: " .. currentKey)
 print("  PLAYER: " .. playerName)
@@ -2735,8 +4278,10 @@ print("  X = TELEPORT")
 print("========================================")
 print("  📏 LINE LUÔN HIỆN (CÓ THỂ TẮT/BẬT)")
 print("  ⚡ AUTO SHOT BẮN NGAY KHI TÂM CHẠM ĐẦU")
-print("  🎨 ĐỔI MÀU LINE TRONG TAB AIM")
-print("  🔫 KHÔNG BẮN XUYÊN TƯỜNG")
+print("  💤 ANTI AFK TỰ ĐỘNG (CÀI TRONG TAB AFK)")
+print("  👥 TEAM SYSTEM - ĐÁNH DẤU ĐỒNG ĐỘI KHÔNG AIM")
+print("  🔍 SEARCH PLAYER - LỌC DANH SÁCH THEO TÊN")
+print("  ℹ️ INFO TAB - XEM TẤT CẢ THÔNG TIN + AVATAR THẬT")
 print("========================================")
 local autoCfg = getAutoLoadConfig()
 if autoCfg then
@@ -2750,3 +4295,7 @@ end
 if isKeyValidated then
     loadMainMenu()
 end
+
+updateAFK()
+
+print("✅ Anti AFK Persistent đã chạy!")
