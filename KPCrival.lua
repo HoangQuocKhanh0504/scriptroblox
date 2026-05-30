@@ -1,6 +1,4 @@
--- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB (AVATAR THẬT)
--- ULTRA MODERN MENU WITH EFFECTS - FULL ROUNDED CORNERS
--- FIXED: Line luôn hiện, Auto shot bắn NGAY LẬP TỨC khi tâm chạm đầu
+-- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB + ADMIN TAB + SKIN TAB (FULL)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -11,8 +9,177 @@ local VirtualInput = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 
--- ============ TEAM SYSTEM (KHÔNG AIM) ==========
+-- ============ SKIN CHANGER SETUP ==========
+local ViewModels = LocalPlayer.PlayerScripts.Assets.ViewModels
+local WeaponsPath = ViewModels.Weapons
+
+local SkinFolders = {
+    ViewModels.Bundles,
+    ViewModels["Festive Skin Case"],
+    ViewModels.Glorious,
+    ViewModels.Other,
+    ViewModels.Seasons,
+    ViewModels["Skin Case"],
+    ViewModels["Skin Case 2"],
+    ViewModels["Skin Case 3"],
+    ViewModels["Spooky Skin Case"],
+}
+
+local IgnoreNames = {"Unobtainable", "unobtainable", "Test", "test", "Temp", "temp"}
+
+local selectedSkin = nil
+local selectedWeapon = nil
+local allSkins = {}
+local allWeapons = {}
+
+-- ============ HỆ THỐNG LƯU NHIỀU SKIN (AUTO SAVE) ==========
+local savedSkinList = {} -- {[weaponName] = skinName}
+local lastAppliedWeapon = nil
+local lastAppliedSkin = nil
+
+local function shouldIgnore(name)
+    for _, ignore in ipairs(IgnoreNames) do
+        if string.find(string.lower(name), string.lower(ignore)) then
+            return true
+        end
+    end
+    return false
+end
+
+local function ScanAllSkins()
+    allSkins = {}
+    for _, folder in ipairs(SkinFolders) do
+        if folder and folder:IsA("Folder") then
+            local folderName = folder.Name
+            for _, child in ipairs(folder:GetChildren()) do
+                if (child:IsA("Folder") or child:IsA("Model")) and not shouldIgnore(child.Name) then
+                    table.insert(allSkins, {
+                        name = child.Name,
+                        path = child,
+                        folderName = folderName
+                    })
+                end
+            end
+        end
+    end
+    return allSkins
+end
+
+local function ScanWeapons()
+    allWeapons = {}
+    if not WeaponsPath then return end
+    for _, child in ipairs(WeaponsPath:GetChildren()) do
+        if (child:IsA("Folder") or child:IsA("Model")) and not shouldIgnore(child.Name) then
+            table.insert(allWeapons, {
+                name = child.Name,
+                path = child
+            })
+        end
+    end
+    return allWeapons
+end
+
+-- APPLY SKIN VÀ TỰ ĐỘNG LƯU
+local function ApplySkinAndAutoSave(skin, weapon)
+    if not skin or not weapon then return false, "Thiếu dữ liệu" end
+    
+    local success, err = pcall(function()
+        weapon.path:ClearAllChildren()
+        for _, v in ipairs(skin.path:GetChildren()) do
+            v:Clone().Parent = weapon.path
+        end
+    end)
+    
+    if success then
+        savedSkinList[weapon.name] = skin.name
+        lastAppliedWeapon = weapon.name
+        lastAppliedSkin = skin.name
+    end
+    
+    return success, err
+end
+
+local function AutoApplySkin()
+    if selectedSkin and selectedWeapon then
+        return ApplySkinAndAutoSave(selectedSkin, selectedWeapon)
+    end
+    return false, "Chưa chọn đủ"
+end
+
+-- ÁP DỤNG TẤT CẢ SKIN ĐÃ LƯU
+local function ApplyAllSavedSkins()
+    local count = 0
+    for weaponName, skinName in pairs(savedSkinList) do
+        local weapon = nil
+        local skin = nil
+        for _, w in ipairs(allWeapons) do
+            if w.name == weaponName then weapon = w; break end
+        end
+        for _, s in ipairs(allSkins) do
+            if s.name == skinName then skin = s; break end
+        end
+        if weapon and skin then
+            pcall(function()
+                weapon.path:ClearAllChildren()
+                for _, v in ipairs(skin.path:GetChildren()) do
+                    v:Clone().Parent = weapon.path
+                end
+            end)
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function tablelength(T)
+    local count = 0
+    for _ in pairs(T) do count = count + 1 end
+    return count
+end
+
+-- ============ ADMIN CONFIG ==========
+local ADMIN_NAME = "hoangquockhanh0504"
+local ADMIN_ID = 10917708647
+local ADMIN_DISPLAY_NAME = "DonkVN"
+local isAdminOnline = false
+local adminPlayer = nil
+
+local function checkAdminOnline()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Name:lower() == ADMIN_NAME:lower() then
+            adminPlayer = player
+            isAdminOnline = true
+            return true
+        end
+    end
+    adminPlayer = nil
+    isAdminOnline = false
+    return false
+end
+
+local function joinAdminServer()
+    if not isAdminOnline or not adminPlayer then
+        return false, "❌ Admin hiện không trực tuyến!"
+    end
+    local jobId = adminPlayer.Team ~= nil and game.JobId or adminPlayer:GetAttribute("JobId")
+    if not jobId or jobId == "" then
+        jobId = adminPlayer.Team and game.JobId or nil
+    end
+    if jobId and jobId ~= game.JobId then
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, LocalPlayer)
+        end)
+        return true, "✅ Đang chuyển đến server của admin..."
+    elseif jobId == game.JobId then
+        return false, "ℹ️ Bạn đã ở cùng server với admin!"
+    else
+        return false, "❌ Không thể vào server của admin!"
+    end
+end
+
+-- ============ TEAM SYSTEM ==========
 local teamPlayers = {}
 
 local function isTeammate(player)
@@ -31,7 +198,7 @@ local function clearAllTeammates()
     teamPlayers = {}
 end
 
--- ============ LẤY THÔNG TIN NGƯỜI CHƠI ==========
+-- ============ LẤY THÔNG TIN ==========
 local function getPlayerHealth()
     local character = LocalPlayer.Character
     if character then
@@ -118,10 +285,10 @@ local function getPlayerPosition()
 end
 
 local function getPlayerRegion()
-    return "N/A"
+    return "BETA"
 end
 
--- ============ ANTI AFK PERSISTENT ==========
+-- ============ ANTI AFK ==========
 local AntiAFK = {}
 AntiAFK.__index = AntiAFK
 
@@ -148,7 +315,6 @@ end
 
 local function createAntiAFKInstance()
     local self = setmetatable({}, AntiAFK)
-    
     self.Services = {
         Players = game:GetService("Players"),
         UserInput = game:GetService("UserInputService"),
@@ -156,7 +322,6 @@ local function createAntiAFKInstance()
         VirtualUser = game:GetService("VirtualUser"),
         CoreGui = game:GetService("CoreGui")
     }
-    
     self.LocalPlayer = self.Services.Players.LocalPlayer
     self.connections = {}
     self.isRunning = true
@@ -275,7 +440,6 @@ local function createAntiAFKInstance()
         local now = tick()
         if now - self.lastRun < self.interval then return end
         self.lastRun = now
-        
         local methodsList = {"virtualUser", "simulateInput", "smallMove", "cameraWiggle", "contextAction", "silentChat", "smallJump", "fakeRemote", "rotateCamera", "pressW", "pressA", "pressD"}
         local selected = methodsList[math.random(1, #methodsList)]
         pcall(function() self.methods[selected]() end)
@@ -349,7 +513,6 @@ local function createAntiAFKInstance()
         self:createMiniGui()
         _G.__ANTI_AFK_INSTANCE__ = self
     end
-    
     return self
 end
 
@@ -371,20 +534,16 @@ _G.AntiAFKControl = {
     getInterval = function() return _G.__ANTI_AFK_INSTANCE__ and _G.__ANTI_AFK_INSTANCE__.interval or 45 end
 }
 
--- ============ CONFIG SYSTEM SETUP ==========
+-- ============ CONFIG SYSTEM ==========
 local ConfigFolder = "KhanhGD_Configs"
 
--- ============ DEVICE SPOOFER SETUP ==========
 local SetControlsRemote = nil
 pcall(function()
     SetControlsRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Replication"):WaitForChild("Fighter"):WaitForChild("SetControls")
 end)
 
 local function spoofDevice(wantedDevice)
-    if not SetControlsRemote then
-        warn("SetControls remote not found!")
-        return
-    end
+    if not SetControlsRemote then return end
     pcall(function()
         SetControlsRemote:FireServer("MouseKeyboard")
         task.wait(0.3)
@@ -392,7 +551,6 @@ local function spoofDevice(wantedDevice)
     end)
 end
 
--- ============ ÂM THANH NHẸ ==========
 local function playClickSound()
     local sound = Instance.new("Sound")
     sound.SoundId = "rbxassetid://9120386436"
@@ -584,13 +742,13 @@ end
 
 local function validateKey(inputKey)
     if not inputKey or inputKey == "" then
-        return false, "Please enter a key!"
+        return false, "Vui lòng nhập key!"
     end
     local normalizedKey = string.upper(string.gsub(inputKey, "%s+", ""))
     if validKeys[normalizedKey] then
-        return true, "Key verified successfully!"
+        return true, "Key hợp lệ!"
     end
-    return false, "Invalid key! Please check and try again."
+    return false, "Key không hợp lệ!"
 end
 
 local function onKeyValidated(key)
@@ -678,7 +836,7 @@ local keyTitle = Instance.new("TextLabel")
 keyTitle.Size = UDim2.new(1, 0, 0, 60)
 keyTitle.Position = UDim2.new(0, 0, 0, 20)
 keyTitle.BackgroundTransparency = 1
-keyTitle.Text = "🔐 KEY VERIFICATION"
+keyTitle.Text = "🔐 XÁC THỰC KEY"
 keyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 keyTitle.TextSize = 22
 keyTitle.Font = Enum.Font.GothamBold
@@ -689,7 +847,7 @@ local keySubtitle = Instance.new("TextLabel")
 keySubtitle.Size = UDim2.new(1, -40, 0, 30)
 keySubtitle.Position = UDim2.new(0, 20, 0, 85)
 keySubtitle.BackgroundTransparency = 1
-keySubtitle.Text = "Enter your license key to continue"
+keySubtitle.Text = "Nhập key để tiếp tục"
 keySubtitle.TextColor3 = Color3.fromRGB(160, 160, 200)
 keySubtitle.TextSize = 12
 keySubtitle.Font = Enum.Font.Gotham
@@ -718,7 +876,7 @@ local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, -40, 0, 30)
 statusLabel.Position = UDim2.new(0, 20, 0, 190)
 statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Waiting for key..."
+statusLabel.Text = "Đang chờ key..."
 statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
 statusLabel.TextSize = 11
 statusLabel.Font = Enum.Font.Gotham
@@ -735,7 +893,7 @@ local submitBtn = Instance.new("TextButton")
 submitBtn.Size = UDim2.new(0, 200, 0, 45)
 submitBtn.Position = UDim2.new(0, 0, 0, 0)
 submitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-submitBtn.Text = "VERIFY KEY"
+submitBtn.Text = "XÁC THỰC"
 submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 submitBtn.TextSize = 14
 submitBtn.Font = Enum.Font.GothamBold
@@ -750,7 +908,7 @@ local getKeyBtn = Instance.new("TextButton")
 getKeyBtn.Size = UDim2.new(0, 200, 0, 45)
 getKeyBtn.Position = UDim2.new(0, 220, 0, 0)
 getKeyBtn.BackgroundColor3 = Color3.fromRGB(45, 65, 45)
-getKeyBtn.Text = "🔑 GET KEY"
+getKeyBtn.Text = "🔑 LẤY KEY"
 getKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 getKeyBtn.TextSize = 14
 getKeyBtn.Font = Enum.Font.GothamBold
@@ -822,20 +980,20 @@ getKeyBtn.MouseButton1Click:Connect(function()
     notifText.Parent = notifFrame
     
     if copied then
-        notifText.Text = "✅ LINK COPIED!\n\n" .. keyLink
-        statusLabel.Text = "✅ Link copied! Open browser and paste"
+        notifText.Text = "✅ ĐÃ SAO CHÉP LINK!\n\n" .. keyLink
+        statusLabel.Text = "✅ Đã sao chép link! Mở trình duyệt và dán"
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
     else
-        notifText.Text = "❌ Cannot copy automatically!\n\nPlease copy manually:\n" .. keyLink
-        statusLabel.Text = "❌ Please copy link manually: " .. keyLink
+        notifText.Text = "❌ Không thể sao chép tự động!\n\nVui lòng sao chép thủ công:\n" .. keyLink
+        statusLabel.Text = "❌ Vui lòng sao chép thủ công: " .. keyLink
         statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     end
     
     task.wait(3)
     notifFrame:Destroy()
     task.wait(2)
-    if statusLabel.Text ~= "Waiting for key..." then
-        statusLabel.Text = "Waiting for key..."
+    if statusLabel.Text ~= "Đang chờ key..." then
+        statusLabel.Text = "Đang chờ key..."
         statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     end
 end)
@@ -844,14 +1002,14 @@ local savedKey = getSavedKey()
 if savedKey then
     local isValid, msg = validateKey(savedKey)
     if isValid then
-        statusLabel.Text = "Auto-verified! Loading menu..."
+        statusLabel.Text = "Tự động xác thực! Đang tải menu..."
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         task.wait(1)
         onKeyValidated(savedKey)
         keyScreenGui:Destroy()
         loadMainMenu()
     else
-        statusLabel.Text = "Saved key invalid! Please re-enter."
+        statusLabel.Text = "Key đã lưu không hợp lệ! Vui lòng nhập lại."
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
 end
@@ -859,7 +1017,7 @@ end
 submitBtn.MouseButton1Click:Connect(function()
     local key = keyInput.Text
     if key == "" then
-        statusLabel.Text = "Please enter a key!"
+        statusLabel.Text = "Vui lòng nhập key!"
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         return
     end
@@ -877,7 +1035,7 @@ submitBtn.MouseButton1Click:Connect(function()
         end
     end)
     
-    statusLabel.Text = "Verifying key..."
+    statusLabel.Text = "Đang xác thực key..."
     statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
     task.wait(0.5)
     
@@ -936,7 +1094,7 @@ local settings = {
     aimbot = {
         enabled = true,
         fovRadius = 200,
-        smoothness = 2,
+        smoothness = 1,  -- TĂNG TỐC (từ 2 xuống 1)
         maxDistance = 150,
         lockTarget = true,
         showFOV = true,
@@ -991,7 +1149,8 @@ local function saveConfig(configName)
         name = configName,
         savedAt = os.date("%Y-%m-%d %H:%M:%S"),
         settings = settings,
-        teamPlayers = teamPlayers
+        teamPlayers = teamPlayers,
+        savedSkins = savedSkinList
     }
     
     local jsonData = HttpService:JSONEncode(configData)
@@ -1004,13 +1163,13 @@ local function saveConfig(configName)
     end)
     
     if success then
-        return true, "✅ Saved: " .. configName
+        return true, "✅ Đã lưu: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin)"
     end
-    return false, "❌ Cannot save"
+    return false, "❌ Không thể lưu"
 end
 
 local function loadConfig(configName)
-    if not configName or configName == "" then return false, "Invalid name" end
+    if not configName or configName == "" then return false, "Tên không hợp lệ" end
     
     local success, data = pcall(function()
         if readfile and isfile then
@@ -1054,10 +1213,24 @@ local function loadConfig(configName)
             if loaded.teamPlayers then
                 teamPlayers = loaded.teamPlayers
             end
-            return true, "✅ Loaded: " .. configName
+            
+            if loaded.savedSkins then
+                savedSkinList = loaded.savedSkins
+            end
+            
+            task.spawn(function()
+                task.wait(1)
+                local count = ApplyAllSavedSkins()
+                print("✅ Đã tự động áp dụng " .. count .. " skin từ config")
+                if skinPanel and skinPanel.Visible then
+                    refreshSkinPanel()
+                end
+            end)
+            
+            return true, "✅ Đã tải: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin)"
         end
     end
-    return false, "❌ Config not found"
+    return false, "❌ Không tìm thấy config"
 end
 
 local function getConfigList()
@@ -1127,13 +1300,13 @@ local function autoLoadConfigOnStart()
     if autoLoadName and autoLoadName ~= "" then
         local success, msg = loadConfig(autoLoadName)
         if success then
-            return true, "🔧 Auto loaded: " .. autoLoadName
+            return true, "🔧 Đã tự động tải: " .. autoLoadName
         end
     end
-    return false, "No auto-load config set"
+    return false, "Chưa cài đặt auto-load"
 end
 
--- ============ AFK CONTROL FUNCTIONS ==========
+-- ============ AFK CONTROL ==========
 local function updateAFK()
     if _G.AntiAFKControl then
         if settings.afk.enabled then
@@ -1204,7 +1377,6 @@ aimbotFOV.Filled = false
 aimbotFOV.Visible = settings.aimbot.showFOV
 aimbotFOV.Transparency = 0.4
 
--- LINE TỪ TÂM ĐẾN ĐẦU ĐỊCH (LUÔN HIỆN)
 local aimLine = Drawing.new("Line")
 aimLine.Thickness = 2
 aimLine.Color = settings.aimbot.lineColor
@@ -1217,7 +1389,7 @@ end
 updateFOVPos()
 Camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateFOVPos)
 
--- LẤY DANH SÁCH MỤC TIÊU (BỎ QUA TEAM)
+-- LẤY DANH SÁCH MỤC TIÊU
 local function getAllTargets()
     local targets = {}
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -1227,7 +1399,6 @@ local function getAllTargets()
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
                 if settings.aimbot.ignoreTeam and isTeammate(player) then
-                    -- Bỏ qua teammate
                 else
                     local char = player.Character
                     if char then
@@ -1263,7 +1434,6 @@ local function getAllTargets()
     return targets
 end
 
--- WALL CHECK
 local function canSeeTarget(targetPart)
     local origin = Camera.CFrame.Position
     local direction = (targetPart.Position - origin).Unit * (targetPart.Position - origin).Magnitude
@@ -1326,9 +1496,9 @@ local function drawSkeleton(skelLines, parts, color)
     end
 end
 
--- BẮN (NHANH, KHÔNG DELAY)
+-- AIMBOT NHANH HƠN (giảm delay)
 local lastShotTime = 0
-local SHOT_DELAY = 0.03
+local SHOT_DELAY = 0.01  -- GIẢM TỪ 0.03 XUỐNG 0.01
 
 local function shoot()
     local currentTime = tick()
@@ -1339,12 +1509,11 @@ local function shoot()
         mouse1click()
     else
         VirtualInput:SendMouseButtonEvent(Enum.UserInputType.MouseButton1, Enum.UserInputState.Begin, nil, false)
-        task.wait(0.005)
+        task.wait(0.001)
         VirtualInput:SendMouseButtonEvent(Enum.UserInputType.MouseButton1, Enum.UserInputState.End, nil, false)
     end
 end
 
--- TÌM TARGET TỐT NHẤT TRONG FOV
 local function getBestTarget()
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local bestTarget = nil
@@ -1363,18 +1532,19 @@ local function getBestTarget()
     return bestTarget
 end
 
--- DI CHUYỂN CHUỘT ĐẾN TARGET
+-- DI CHUYỂN CHUỘT NHANH HƠN
 local function moveToTarget(targetData)
     if not targetData or not targetData.part then return false end
     local targetPos, onScreen = Camera:WorldToViewportPoint(targetData.part.Position)
     if not onScreen then return false end
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local delta = Vector2.new(targetPos.X, targetPos.Y) - centerScreen
-    if delta.Magnitude < 2 then return true end
-    local moveX = delta.X / settings.aimbot.smoothness
-    local moveY = delta.Y / settings.aimbot.smoothness
-    moveX = math.clamp(moveX, -20, 20)
-    moveY = math.clamp(moveY, -20, 20)
+    if delta.Magnitude < 1 then return true end
+    -- TĂNG TỐC ĐỘ DI CHUYỂN (giảm smoothness hoặc tăng move)
+    local moveX = delta.X / math.max(settings.aimbot.smoothness, 0.5)
+    local moveY = delta.Y / math.max(settings.aimbot.smoothness, 0.5)
+    moveX = math.clamp(moveX, -30, 30)  -- Tăng giới hạn
+    moveY = math.clamp(moveY, -30, 30)
     if mousemoverel then
         mousemoverel(moveX, moveY)
     elseif syn and syn.mouse_move then
@@ -1383,12 +1553,11 @@ local function moveToTarget(targetData)
         local mouse = LocalPlayer:GetMouse()
         VirtualInput:SendMouseMoveEvent(mouse.X + moveX, mouse.Y + moveY)
     end
-    return delta.Magnitude < 2
+    return delta.Magnitude < 1
 end
 
 local isAiming = false
 local lockedTarget = nil
-local isTargetLocked = false
 
 local function isTargetAlive(targetData)
     if not targetData or not targetData.character then return false end
@@ -1400,7 +1569,6 @@ UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 and settings.aimbot.enabled then 
         isAiming = true 
-        isTargetLocked = false
     end
 end)
 
@@ -1409,16 +1577,14 @@ UserInputService.InputEnded:Connect(function(input, gp)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then 
         isAiming = false
         lockedTarget = nil
-        isTargetLocked = false
     end
 end)
 
--- ============ RENDER STEP CHÍNH ==========
+-- RENDER STEP CHÍNH (TĂNG TỐC RENDER)
 RunService.RenderStepped:Connect(function()
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local bestTarget = getBestTarget()
     
-    -- LINE LUÔN HIỆN
     if settings.aimbot.showLine and bestTarget and bestTarget.part then
         local targetPos, onScreen = Camera:WorldToViewportPoint(bestTarget.part.Position)
         if onScreen then
@@ -1435,16 +1601,13 @@ RunService.RenderStepped:Connect(function()
         aimLine.Visible = false
     end
     
-    -- AIMBOT + AUTO SHOT
     if not (settings.aimbot.enabled and isAiming) then 
         lockedTarget = nil
-        isTargetLocked = false
         return 
     end
     
     if lockedTarget and not isTargetAlive(lockedTarget) then
         lockedTarget = nil
-        isTargetLocked = false
     end
     
     local targetData = nil
@@ -1462,7 +1625,7 @@ RunService.RenderStepped:Connect(function()
         local isOnTarget = false
         if onScreen then
             local delta = (Vector2.new(targetPos.X, targetPos.Y) - centerScreen).Magnitude
-            isOnTarget = delta < 2
+            isOnTarget = delta < 1  -- Tăng độ nhạy
         end
         
         moveToTarget(targetData)
@@ -1475,10 +1638,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- UPDATE FOV CIRCLE
 RunService.RenderStepped:Connect(function()
     if settings.aimbot.enabled and isAiming then
-        local pulseValue = (math.sin(tick() * 10) + 1) / 2
+        local pulseValue = (math.sin(tick() * 15) + 1) / 2  -- Tăng tốc animation
         aimbotFOV.Transparency = 0.2 + (pulseValue * 0.3)
         aimbotFOV.Thickness = 2 + (pulseValue * 2)
     else
@@ -1615,7 +1777,7 @@ if workspace:FindFirstChild("ShootingRangeEntities") then
 end
 
 local lastRenderTime = 0
-local RENDER_INTERVAL = 1/30
+local RENDER_INTERVAL = 1/60  -- Tăng từ 30 lên 60 FPS cho ESP
 
 RunService.RenderStepped:Connect(function()
     local currentTime = tick()
@@ -1783,7 +1945,7 @@ local function refreshLocalPlayerUI()
     end
 end
 
--- ============ MENU CHÍNH (ĐÃ TĂNG CHIỀU DÀI) ==========
+-- ============ MENU CHÍNH ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuroraMenu"
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -1799,8 +1961,8 @@ overlay.Visible = false
 overlay.Parent = screenGui
 
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 750, 0, 950)  -- TĂNG CHIỀU CAO TỪ 800 LÊN 950
-menu.Position = UDim2.new(0.5, -375, 0.5, -475)  -- CĂN LẠI VỊ TRÍ
+menu.Size = UDim2.new(0, 750, 0, 950)
+menu.Position = UDim2.new(0.5, -375, 0.5, -475)
 menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 menu.BackgroundTransparency = 0.08
 menu.BorderSizePixel = 0
@@ -1895,7 +2057,7 @@ local subTitle = Instance.new("TextLabel")
 subTitle.Size = UDim2.new(1, -100, 0, 20)
 subTitle.Position = UDim2.new(0, 22, 0, 52)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "ESP • SKELETON • AIMBOT • LINE AIM • AUTO SHOT • VALUE • DEVICE • TP • AFK • PLAYERS • INFO • CONFIG"
+subTitle.Text = "ESP • XƯƠNG • AIMBOT • LINE AIM • BẮN TỰ ĐỘNG • Streak • THIẾT BỊ • TP • AFK • Player • Info • QUẢN TRỊ • CẤU HÌNH • SKIN (AUTO SAVE)"
 subTitle.TextColor3 = Color3.fromRGB(150, 200, 255)
 subTitle.TextSize = 11
 subTitle.Font = Enum.Font.Gotham
@@ -1939,7 +2101,7 @@ tabBar.BorderSizePixel = 0
 tabBar.Parent = menu
 
 local tabs = {}
-local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 BONE", "⚡ VALUE", "🎮 DEVICE", "🌀 TP", "💤 AFK", "👥 PLAYERS", "ℹ️ INFO", "⚙️ CONFIG"}
+local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 XƯƠNG", "🎨 SKIN", "⚡ Streak", "🎮 THIẾT BỊ", "🌀 TP", "💤 AFK", "👥 Player", "ℹ️ Info", "👑 ADMIN", "⚙️ CONFIG"}
 local tabWidth = 750 / #tabNames
 
 for i, name in ipairs(tabNames) do
@@ -1990,12 +2152,12 @@ particleCorner.CornerRadius = UDim.new(1, 0)
 particleCorner.Parent = particle
 
 local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, -40, 1, -135)  -- TĂNG VÙNG NỘI DUNG
+contentArea.Size = UDim2.new(1, -40, 1, -135)
 contentArea.Position = UDim2.new(0, 20, 0, 145)
 contentArea.BackgroundTransparency = 1
 contentArea.Parent = menu
 
--- Panels với CanvasSize tăng lên
+-- Panels
 local aimbotPanel = Instance.new("ScrollingFrame")
 aimbotPanel.Size = UDim2.new(1, 0, 1, 0)
 aimbotPanel.BackgroundTransparency = 1
@@ -2079,6 +2241,16 @@ infoPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 infoPanel.Parent = contentArea
 infoPanel.Visible = false
 
+local adminPanel = Instance.new("ScrollingFrame")
+adminPanel.Size = UDim2.new(1, 0, 1, 0)
+adminPanel.BackgroundTransparency = 1
+adminPanel.BorderSizePixel = 0
+adminPanel.CanvasSize = UDim2.new(0, 0, 0, 650)
+adminPanel.ScrollBarThickness = 4
+adminPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+adminPanel.Parent = contentArea
+adminPanel.Visible = false
+
 local configPanel = Instance.new("ScrollingFrame")
 configPanel.Size = UDim2.new(1, 0, 1, 0)
 configPanel.BackgroundTransparency = 1
@@ -2088,6 +2260,17 @@ configPanel.ScrollBarThickness = 4
 configPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 configPanel.Parent = contentArea
 configPanel.Visible = false
+
+-- SKIN PANEL
+local skinPanel = Instance.new("ScrollingFrame")
+skinPanel.Size = UDim2.new(1, 0, 1, 0)
+skinPanel.BackgroundTransparency = 1
+skinPanel.BorderSizePixel = 0
+skinPanel.CanvasSize = UDim2.new(0, 0, 0, 950)
+skinPanel.ScrollBarThickness = 4
+skinPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+skinPanel.Parent = contentArea
+skinPanel.Visible = false
 
 -- Helper Functions
 local function createModernToggle(parent, y, name, getValue, setValue)
@@ -2114,7 +2297,7 @@ local function createModernToggle(parent, y, name, getValue, setValue)
     toggleBtn.Size = UDim2.new(0, 80, 0, 32)
     toggleBtn.Position = UDim2.new(1, -95, 0, 10)
     toggleBtn.BorderSizePixel = 0
-    toggleBtn.Text = getValue() and "ON" or "OFF"
+    toggleBtn.Text = getValue() and "BẬT" or "TẮT"
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     toggleBtn.TextSize = 12
     toggleBtn.Font = Enum.Font.GothamBold
@@ -2126,7 +2309,7 @@ local function createModernToggle(parent, y, name, getValue, setValue)
         local val = getValue()
         local targetColor = val and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(60, 60, 85)
         TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-        toggleBtn.Text = val and "ON" or "OFF"
+        toggleBtn.Text = val and "BẬT" or "TẮT"
     end
     update()
     toggleBtn.MouseButton1Click:Connect(function()
@@ -2220,7 +2403,6 @@ local function createModernSlider(parent, y, name, minVal, maxVal, defaultValue,
     return frame
 end
 
--- COLOR PICKER
 local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, setB, updateColor)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 130)
@@ -2379,7 +2561,7 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
         btn.BackgroundColor3 = color or Color3.fromRGB(45, 45, 65)
         
         local notif = Drawing.new("Text")
-        notif.Text = "✅ Switched to " .. name
+        notif.Text = "✅ Đã chuyển sang " .. name
         notif.Size = 14
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
@@ -2401,7 +2583,832 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
--- ============ INFO PANEL (CÓ AVATAR THẬT) ==========
+-- ============ SKIN PANEL UI (FIX AUTO REFRESH & AUTO CLEAR) ==========
+local function refreshSkinPanel()
+    for _, child in pairs(skinPanel:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    local y = 10
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Position = UDim2.new(0, 5, 0, y)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    titleFrame.BackgroundTransparency = 0.4
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = skinPanel
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "🎨 SKIN CHANGER - AUTO SAVE"
+    titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = titleFrame
+    
+    y = y + 70
+    
+    -- KHUNG HIỂN THỊ TRẠNG THÁI ĐÃ CHỌN
+    local selectedFrame = Instance.new("Frame")
+    selectedFrame.Size = UDim2.new(1, -10, 0, 70)
+    selectedFrame.Position = UDim2.new(0, 5, 0, y)
+    selectedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    selectedFrame.BackgroundTransparency = 0.4
+    selectedFrame.BorderSizePixel = 1
+    selectedFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
+    selectedFrame.Parent = skinPanel
+    local selectedCorner = Instance.new("UICorner")
+    selectedCorner.CornerRadius = UDim.new(0, 12)
+    selectedCorner.Parent = selectedFrame
+    
+    local selectedSkinLabel = Instance.new("TextLabel")
+    selectedSkinLabel.Size = UDim2.new(0.5, -10, 0, 25)
+    selectedSkinLabel.Position = UDim2.new(0, 10, 0, 8)
+    selectedSkinLabel.BackgroundTransparency = 1
+    selectedSkinLabel.Text = "🎨 Skin: Chưa chọn"
+    selectedSkinLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    selectedSkinLabel.TextSize = 12
+    selectedSkinLabel.Font = Enum.Font.GothamBold
+    selectedSkinLabel.TextXAlignment = Enum.TextXAlignment.Left
+    selectedSkinLabel.Parent = selectedFrame
+    
+    local selectedWeaponLabel = Instance.new("TextLabel")
+    selectedWeaponLabel.Size = UDim2.new(0.5, -10, 0, 25)
+    selectedWeaponLabel.Position = UDim2.new(0.5, 5, 0, 8)
+    selectedWeaponLabel.BackgroundTransparency = 1
+    selectedWeaponLabel.Text = "🔫 Vũ khí: Chưa chọn"
+    selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    selectedWeaponLabel.TextSize = 12
+    selectedWeaponLabel.Font = Enum.Font.GothamBold
+    selectedWeaponLabel.TextXAlignment = Enum.TextXAlignment.Left
+    selectedWeaponLabel.Parent = selectedFrame
+    
+    local clearAllBtn = Instance.new("TextButton")
+    clearAllBtn.Size = UDim2.new(0, 100, 0, 30)
+    clearAllBtn.Position = UDim2.new(1, -110, 0, 35)
+    clearAllBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+    clearAllBtn.Text = "🗑️ BỎ CHỌN"
+    clearAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearAllBtn.TextSize = 11
+    clearAllBtn.Font = Enum.Font.GothamBold
+    clearAllBtn.Parent = selectedFrame
+    local clearCorner = Instance.new("UICorner")
+    clearCorner.CornerRadius = UDim.new(0, 6)
+    clearCorner.Parent = clearAllBtn
+    
+    -- HÀM CẬP NHẬT HIỂN THỊ
+    local function updateSelectedDisplay()
+        if selectedSkin then
+            selectedSkinLabel.Text = "🎨 Skin: " .. selectedSkin.name
+            selectedSkinLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            selectedSkinLabel.Text = "🎨 Skin: Chưa chọn"
+            selectedSkinLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+        end
+        
+        if selectedWeapon then
+            selectedWeaponLabel.Text = "🔫 Vũ khí: " .. selectedWeapon.name
+            selectedWeaponLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            selectedWeaponLabel.Text = "🔫 Vũ khí: Chưa chọn"
+            selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+        end
+    end
+    
+    clearAllBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        selectedSkin = nil
+        selectedWeapon = nil
+        updateSelectedDisplay()
+        
+        for _, child in pairs(sourceScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+        for _, child in pairs(weaponScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+        
+        skinStatus.Text = "✅ Đã bỏ chọn - Chọn skin + vũ khí để apply và auto save"
+        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+    end)
+    
+    y = y + 85
+    
+    -- DANH SÁCH SKIN
+    local skinSourceFrame = Instance.new("Frame")
+    skinSourceFrame.Size = UDim2.new(1, -10, 0, 200)
+    skinSourceFrame.Position = UDim2.new(0, 5, 0, y)
+    skinSourceFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    skinSourceFrame.BackgroundTransparency = 0.4
+    skinSourceFrame.BorderSizePixel = 0
+    skinSourceFrame.Parent = skinPanel
+    local sourceCorner = Instance.new("UICorner")
+    sourceCorner.CornerRadius = UDim.new(0, 12)
+    sourceCorner.Parent = skinSourceFrame
+    
+    local sourceLabel = Instance.new("TextLabel")
+    sourceLabel.Size = UDim2.new(1, -20, 0, 25)
+    sourceLabel.Position = UDim2.new(0, 10, 0, 8)
+    sourceLabel.BackgroundTransparency = 1
+    sourceLabel.Text = "📦 DANH SÁCH SKIN"
+    sourceLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    sourceLabel.TextSize = 12
+    sourceLabel.Font = Enum.Font.GothamBold
+    sourceLabel.TextXAlignment = Enum.TextXAlignment.Left
+    sourceLabel.Parent = skinSourceFrame
+    
+    local sourceSearch = Instance.new("TextBox")
+    sourceSearch.Size = UDim2.new(1, -20, 0, 30)
+    sourceSearch.Position = UDim2.new(0, 10, 0, 35)
+    sourceSearch.PlaceholderText = "🔍 Tìm skin..."
+    sourceSearch.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    sourceSearch.Text = ""
+    sourceSearch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sourceSearch.TextSize = 12
+    sourceSearch.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+    sourceSearch.BorderSizePixel = 0
+    sourceSearch.Parent = skinSourceFrame
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 8)
+    searchCorner.Parent = sourceSearch
+    
+    local sourceScroll = Instance.new("ScrollingFrame")
+    sourceScroll.Size = UDim2.new(1, -20, 0, 130)
+    sourceScroll.Position = UDim2.new(0, 10, 0, 70)
+    sourceScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    sourceScroll.BackgroundTransparency = 0.3
+    sourceScroll.BorderSizePixel = 1
+    sourceScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
+    sourceScroll.ScrollBarThickness = 6
+    sourceScroll.Parent = skinSourceFrame
+    local scrollCorner2 = Instance.new("UICorner")
+    scrollCorner2.CornerRadius = UDim.new(0, 8)
+    scrollCorner2.Parent = sourceScroll
+    
+    local sourceLayout = Instance.new("UIListLayout")
+    sourceLayout.Padding = UDim.new(0, 3)
+    sourceLayout.Parent = sourceScroll
+    
+    y = y + 215
+    
+    -- DANH SÁCH VŨ KHÍ
+    local weaponFrame = Instance.new("Frame")
+    weaponFrame.Size = UDim2.new(1, -10, 0, 200)
+    weaponFrame.Position = UDim2.new(0, 5, 0, y)
+    weaponFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    weaponFrame.BackgroundTransparency = 0.4
+    weaponFrame.BorderSizePixel = 0
+    weaponFrame.Parent = skinPanel
+    local weaponCorner = Instance.new("UICorner")
+    weaponCorner.CornerRadius = UDim.new(0, 12)
+    weaponCorner.Parent = weaponFrame
+    
+    local weaponLabel = Instance.new("TextLabel")
+    weaponLabel.Size = UDim2.new(1, -20, 0, 25)
+    weaponLabel.Position = UDim2.new(0, 10, 0, 8)
+    weaponLabel.BackgroundTransparency = 1
+    weaponLabel.Text = "🔫 DANH SÁCH VŨ KHÍ"
+    weaponLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    weaponLabel.TextSize = 12
+    weaponLabel.Font = Enum.Font.GothamBold
+    weaponLabel.TextXAlignment = Enum.TextXAlignment.Left
+    weaponLabel.Parent = weaponFrame
+    
+    local weaponSearch = Instance.new("TextBox")
+    weaponSearch.Size = UDim2.new(1, -20, 0, 30)
+    weaponSearch.Position = UDim2.new(0, 10, 0, 35)
+    weaponSearch.PlaceholderText = "🔍 Tìm vũ khí..."
+    weaponSearch.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    weaponSearch.Text = ""
+    weaponSearch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    weaponSearch.TextSize = 12
+    weaponSearch.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+    weaponSearch.BorderSizePixel = 0
+    weaponSearch.Parent = weaponFrame
+    local weaponSearchCorner = Instance.new("UICorner")
+    weaponSearchCorner.CornerRadius = UDim.new(0, 8)
+    weaponSearchCorner.Parent = weaponSearch
+    
+    local weaponScroll = Instance.new("ScrollingFrame")
+    weaponScroll.Size = UDim2.new(1, -20, 0, 130)
+    weaponScroll.Position = UDim2.new(0, 10, 0, 70)
+    weaponScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    weaponScroll.BackgroundTransparency = 0.3
+    weaponScroll.BorderSizePixel = 1
+    weaponScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
+    weaponScroll.ScrollBarThickness = 6
+    weaponScroll.Parent = weaponFrame
+    local weaponScrollCorner = Instance.new("UICorner")
+    weaponScrollCorner.CornerRadius = UDim.new(0, 8)
+    weaponScrollCorner.Parent = weaponScroll
+    
+    local weaponLayout = Instance.new("UIListLayout")
+    weaponLayout.Padding = UDim.new(0, 3)
+    weaponLayout.Parent = weaponScroll
+    
+    y = y + 215
+    
+    -- DANH SÁCH SKIN ĐÃ LƯU
+    local savedFrame = Instance.new("Frame")
+    savedFrame.Size = UDim2.new(1, -10, 0, 150)
+    savedFrame.Position = UDim2.new(0, 5, 0, y)
+    savedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    savedFrame.BackgroundTransparency = 0.4
+    savedFrame.BorderSizePixel = 0
+    savedFrame.Parent = skinPanel
+    local savedCorner = Instance.new("UICorner")
+    savedCorner.CornerRadius = UDim.new(0, 12)
+    savedCorner.Parent = savedFrame
+    
+    local savedLabel = Instance.new("TextLabel")
+    savedLabel.Size = UDim2.new(0.7, -20, 0, 25)
+    savedLabel.Position = UDim2.new(0, 10, 0, 8)
+    savedLabel.BackgroundTransparency = 1
+    savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+    savedLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    savedLabel.TextSize = 12
+    savedLabel.Font = Enum.Font.GothamBold
+    savedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    savedLabel.Parent = savedFrame
+    
+    local applyAllSavedBtn = Instance.new("TextButton")
+    applyAllSavedBtn.Size = UDim2.new(0, 80, 0, 28)
+    applyAllSavedBtn.Position = UDim2.new(1, -170, 0, 6)
+    applyAllSavedBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    applyAllSavedBtn.Text = "✨ APPLY ALL"
+    applyAllSavedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    applyAllSavedBtn.TextSize = 10
+    applyAllSavedBtn.Font = Enum.Font.GothamBold
+    applyAllSavedBtn.Parent = savedFrame
+    local applyAllCorner = Instance.new("UICorner")
+    applyAllCorner.CornerRadius = UDim.new(0, 6)
+    applyAllCorner.Parent = applyAllSavedBtn
+    
+    local clearAllSavedBtn = Instance.new("TextButton")
+    clearAllSavedBtn.Size = UDim2.new(0, 80, 0, 28)
+    clearAllSavedBtn.Position = UDim2.new(1, -85, 0, 6)
+    clearAllSavedBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+    clearAllSavedBtn.Text = "🗑️ XÓA ALL"
+    clearAllSavedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearAllSavedBtn.TextSize = 10
+    clearAllSavedBtn.Font = Enum.Font.GothamBold
+    clearAllSavedBtn.Parent = savedFrame
+    local clearAllCorner = Instance.new("UICorner")
+    clearAllCorner.CornerRadius = UDim.new(0, 6)
+    clearAllCorner.Parent = clearAllSavedBtn
+    
+    local savedScroll = Instance.new("ScrollingFrame")
+    savedScroll.Size = UDim2.new(1, -20, 0, 90)
+    savedScroll.Position = UDim2.new(0, 10, 0, 40)
+    savedScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    savedScroll.BackgroundTransparency = 0.3
+    savedScroll.BorderSizePixel = 1
+    savedScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
+    savedScroll.ScrollBarThickness = 6
+    savedScroll.Parent = savedFrame
+    local savedScrollCorner = Instance.new("UICorner")
+    savedScrollCorner.CornerRadius = UDim.new(0, 8)
+    savedScrollCorner.Parent = savedScroll
+    
+    local savedLayout = Instance.new("UIListLayout")
+    savedLayout.Padding = UDim.new(0, 3)
+    savedLayout.Parent = savedScroll
+    
+    y = y + 165
+    
+    local infoFrame = Instance.new("Frame")
+    infoFrame.Size = UDim2.new(1, -10, 0, 45)
+    infoFrame.Position = UDim2.new(0, 5, 0, y)
+    infoFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
+    infoFrame.BackgroundTransparency = 0.4
+    infoFrame.BorderSizePixel = 0
+    infoFrame.Parent = skinPanel
+    local infoCorner2 = Instance.new("UICorner")
+    infoCorner2.CornerRadius = UDim.new(0, 10)
+    infoCorner2.Parent = infoFrame
+    
+    local skinStatus = Instance.new("TextLabel")
+    skinStatus.Size = UDim2.new(1, -10, 1, 0)
+    skinStatus.Position = UDim2.new(0, 5, 0, 0)
+    skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+    skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+    skinStatus.TextSize = 10
+    skinStatus.TextWrapped = true
+    skinStatus.BackgroundTransparency = 1
+    skinStatus.Parent = infoFrame
+    
+    -- BIẾN LƯU TRẠNG THÁI
+    local lastAppliedSkinTemp = nil
+    local lastAppliedWeaponTemp = nil
+    
+    -- HÀM RESET SAU KHI APPLY (AUTO CLEAR)
+    local function resetAfterApply()
+        selectedSkin = nil
+        selectedWeapon = nil
+        lastAppliedSkinTemp = nil
+        lastAppliedWeaponTemp = nil
+        updateSelectedDisplay()
+        -- Reset highlight
+        for _, child in pairs(sourceScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+        for _, child in pairs(weaponScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+        -- Refresh danh sách đã lưu
+        displaySavedSkins()
+        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+    end
+    
+    -- HIỂN THỊ SKIN
+    -- HIỂN THỊ SKIN
+    local function displaySkins(searchText)
+        for _, child in pairs(sourceScroll:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+        
+        local filtered = {}
+        local searchLower = string.lower(searchText or "")
+        
+        for _, skin in ipairs(allSkins) do
+            if searchLower == "" or string.find(string.lower(skin.name), searchLower, 1, true) then
+                table.insert(filtered, skin)
+            end
+        end
+        
+        if #filtered == 0 then
+            local empty = Instance.new("TextLabel")
+            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Text = "❌ Không tìm thấy"
+            empty.TextColor3 = Color3.fromRGB(255, 150, 150)
+            empty.TextSize = 12
+            empty.BackgroundTransparency = 1
+            empty.Parent = sourceScroll
+            return
+        end
+        
+        for _, skin in ipairs(filtered) do
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 35)
+            btn.Text = "🎨 " .. skin.name
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextSize = 11
+            btn.Font = Enum.Font.Gotham
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            btn.BorderSizePixel = 1
+            btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
+            btn.Parent = sourceScroll
+            
+            local subText = Instance.new("TextLabel")
+            subText.Size = UDim2.new(1, -10, 0, 12)
+            subText.Position = UDim2.new(0, 35, 0, 22)
+            subText.Text = skin.folderName
+            subText.TextColor3 = Color3.fromRGB(180, 180, 220)
+            subText.TextSize = 8
+            subText.TextXAlignment = Enum.TextXAlignment.Left
+            subText.BackgroundTransparency = 1
+            subText.Parent = btn
+            
+            local btnCorner = Instance.new("UICorner")
+            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.Parent = btn
+            
+            btn.MouseButton1Click:Connect(function()
+                -- QUAN TRỌNG: KHI CHỌN SKIN MỚI, TỰ ĐỘNG BỎ CHỌN VŨ KHÍ CŨ
+                if selectedWeapon then
+                    selectedWeapon = nil
+                    -- Reset highlight vũ khí
+                    for _, child in pairs(weaponScroll:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                        end
+                    end
+                    skinStatus.Text = "🔄 Đã bỏ chọn vũ khí cũ - Hãy chọn vũ khí mới"
+                    skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+                end
+                
+                selectedSkin = skin
+                updateSelectedDisplay()
+                
+                -- Highlight skin được chọn
+                for _, child in pairs(sourceScroll:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        if child.Text == "🎨 " .. skin.name then
+                            child.BackgroundColor3 = Color3.fromRGB(80, 130, 80)
+                        else
+                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                        end
+                    end
+                end
+                
+                -- CHỈ APPLY KHI CÓ ĐỦ CẢ SKIN VÀ VŨ KHÍ
+                if selectedSkin and selectedWeapon then
+                    local success, err = AutoApplySkin()
+                    if success then
+                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. selectedWeapon.name
+                        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                        displaySavedSkins()
+                        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+                        -- AUTO CLEAR SAU KHI APPLY
+                        task.wait(0.8)
+                        selectedSkin = nil
+                        selectedWeapon = nil
+                        updateSelectedDisplay()
+                        -- Reset highlight
+                        for _, child in pairs(sourceScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                            end
+                        end
+                        for _, child in pairs(weaponScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                            end
+                        end
+                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng cho cặp mới"
+                    else
+                        skinStatus.Text = "❌ Lỗi: " .. tostring(err)
+                        skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    end
+                elseif selectedSkin and not selectedWeapon then
+                    skinStatus.Text = "✅ Đã chọn skin: " .. skin.name .. " - Chọn vũ khí để apply"
+                    skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                end
+            end)
+        end
+        
+        local function updateCanvas()
+            sourceScroll.CanvasSize = UDim2.new(0, 0, 0, sourceLayout.AbsoluteContentSize.Y + 10)
+        end
+        sourceLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.wait(0.05)
+        updateCanvas()
+    end
+    
+    -- HIỂN THỊ VŨ KHÍ
+    local function displayWeapons(searchText)
+        for _, child in pairs(weaponScroll:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+        
+        local filtered = {}
+        local searchLower = string.lower(searchText or "")
+        
+        for _, weapon in ipairs(allWeapons) do
+            if searchLower == "" or string.find(string.lower(weapon.name), searchLower, 1, true) then
+                table.insert(filtered, weapon)
+            end
+        end
+        
+        if #filtered == 0 then
+            local empty = Instance.new("TextLabel")
+            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Text = "❌ Không tìm thấy"
+            empty.TextColor3 = Color3.fromRGB(255, 150, 150)
+            empty.TextSize = 12
+            empty.BackgroundTransparency = 1
+            empty.Parent = weaponScroll
+            return
+        end
+        
+        for _, weapon in ipairs(filtered) do
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 35)
+            btn.Text = "🔫 " .. weapon.name
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextSize = 11
+            btn.Font = Enum.Font.Gotham
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            btn.BorderSizePixel = 1
+            btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
+            btn.Parent = weaponScroll
+            
+            local btnCorner = Instance.new("UICorner")
+            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.Parent = btn
+            
+            btn.MouseButton1Click:Connect(function()
+                -- QUAN TRỌNG: KHI CHỌN VŨ KHÍ MỚI, TỰ ĐỘNG BỎ CHỌN SKIN CŨ
+                if selectedSkin then
+                    selectedSkin = nil
+                    -- Reset highlight skin
+                    for _, child in pairs(sourceScroll:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                        end
+                    end
+                    skinStatus.Text = "🔄 Đã bỏ chọn skin cũ - Hãy chọn skin mới"
+                    skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
+                end
+                
+                selectedWeapon = weapon
+                updateSelectedDisplay()
+                
+                -- Highlight vũ khí được chọn
+                for _, child in pairs(weaponScroll:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        if child.Text == "🔫 " .. weapon.name then
+                            child.BackgroundColor3 = Color3.fromRGB(80, 130, 80)
+                        else
+                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                        end
+                    end
+                end
+                
+                -- CHỈ APPLY KHI CÓ ĐỦ CẢ SKIN VÀ VŨ KHÍ
+                if selectedSkin and selectedWeapon then
+                    local success, err = AutoApplySkin()
+                    if success then
+                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. selectedWeapon.name
+                        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                        displaySavedSkins()
+                        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+                        -- AUTO CLEAR SAU KHI APPLY
+                        task.wait(0.8)
+                        selectedSkin = nil
+                        selectedWeapon = nil
+                        updateSelectedDisplay()
+                        -- Reset highlight
+                        for _, child in pairs(sourceScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                            end
+                        end
+                        for _, child in pairs(weaponScroll:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                            end
+                        end
+                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng cho cặp mới"
+                    else
+                        skinStatus.Text = "❌ Lỗi: " .. tostring(err)
+                        skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    end
+                elseif selectedWeapon and not selectedSkin then
+                    skinStatus.Text = "✅ Đã chọn vũ khí: " .. weapon.name .. " - Chọn skin để apply"
+                    skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                end
+            end)
+        end
+        
+        local function updateCanvas()
+            weaponScroll.CanvasSize = UDim2.new(0, 0, 0, weaponLayout.AbsoluteContentSize.Y + 10)
+        end
+        weaponLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.wait(0.05)
+        updateCanvas()
+    end
+    
+    -- HIỂN THỊ VŨ KHÍ
+    local function displayWeapons(searchText)
+        for _, child in pairs(weaponScroll:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+        
+        local filtered = {}
+        local searchLower = string.lower(searchText or "")
+        
+        for _, weapon in ipairs(allWeapons) do
+            if searchLower == "" or string.find(string.lower(weapon.name), searchLower, 1, true) then
+                table.insert(filtered, weapon)
+            end
+        end
+        
+        if #filtered == 0 then
+            local empty = Instance.new("TextLabel")
+            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Text = "❌ Không tìm thấy"
+            empty.TextColor3 = Color3.fromRGB(255, 150, 150)
+            empty.TextSize = 12
+            empty.BackgroundTransparency = 1
+            empty.Parent = weaponScroll
+            return
+        end
+        
+        for _, weapon in ipairs(filtered) do
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 35)
+            btn.Text = "🔫 " .. weapon.name
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextSize = 11
+            btn.Font = Enum.Font.Gotham
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            btn.BorderSizePixel = 1
+            btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
+            btn.Parent = weaponScroll
+            
+            local btnCorner = Instance.new("UICorner")
+            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.Parent = btn
+            
+            btn.MouseButton1Click:Connect(function()
+                selectedWeapon = weapon
+                updateSelectedDisplay()
+                
+                for _, child in pairs(weaponScroll:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+                    end
+                end
+                btn.BackgroundColor3 = Color3.fromRGB(80, 130, 80)
+                
+                if selectedSkin then
+                    local success, err = AutoApplySkin()
+                    if success then
+                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. weapon.name
+                        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                        -- AUTO REFRESH DANH SÁCH
+                        displaySavedSkins()
+                        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+                        -- AUTO CLEAR SAU KHI APPLY
+                        task.wait(0.5)
+                        resetAfterApply()
+                    else
+                        skinStatus.Text = "❌ Lỗi: " .. tostring(err)
+                        skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    end
+                else
+                    skinStatus.Text = "✅ Đã chọn vũ khí: " .. weapon.name .. " - Chọn skin"
+                    skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                end
+            end)
+        end
+        
+        local function updateCanvas()
+            weaponScroll.CanvasSize = UDim2.new(0, 0, 0, weaponLayout.AbsoluteContentSize.Y + 10)
+        end
+        weaponLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+        task.wait(0.05)
+        updateCanvas()
+    end
+    
+    -- HIỂN THỊ SKIN ĐÃ LƯU
+    local function displaySavedSkins()
+        for _, child in pairs(savedScroll:GetChildren()) do
+            if child:IsA("Frame") then child:Destroy() end
+        end
+        
+        local scrollY = 0
+        for weaponName, skinName in pairs(savedSkinList) do
+            local itemFrame = Instance.new("Frame")
+            itemFrame.Size = UDim2.new(1, -10, 0, 35)
+            itemFrame.Position = UDim2.new(0, 5, 0, scrollY)
+            itemFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+            itemFrame.BackgroundTransparency = 0.3
+            itemFrame.BorderSizePixel = 0
+            itemFrame.Parent = savedScroll
+            local itemCorner = Instance.new("UICorner")
+            itemCorner.CornerRadius = UDim.new(0, 6)
+            itemCorner.Parent = itemFrame
+            
+            local infoLabel = Instance.new("TextLabel")
+            infoLabel.Size = UDim2.new(0.6, -10, 0, 25)
+            infoLabel.Position = UDim2.new(0, 8, 0, 5)
+            infoLabel.BackgroundTransparency = 1
+            infoLabel.Text = "🎨 " .. skinName .. "  →  🔫 " .. weaponName
+            infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            infoLabel.TextSize = 9
+            infoLabel.Font = Enum.Font.Gotham
+            infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+            infoLabel.Parent = itemFrame
+            
+            local removeBtn = Instance.new("TextButton")
+            removeBtn.Size = UDim2.new(0, 50, 0, 25)
+            removeBtn.Position = UDim2.new(1, -55, 0, 5)
+            removeBtn.BackgroundColor3 = Color3.fromRGB(100, 40, 40)
+            removeBtn.Text = "XÓA"
+            removeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            removeBtn.TextSize = 9
+            removeBtn.Font = Enum.Font.GothamBold
+            removeBtn.Parent = itemFrame
+            local removeCorner = Instance.new("UICorner")
+            removeCorner.CornerRadius = UDim.new(0, 4)
+            removeCorner.Parent = removeBtn
+            
+            removeBtn.MouseButton1Click:Connect(function()
+                playClickSound()
+                savedSkinList[weaponName] = nil
+                displaySavedSkins()
+                savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
+                skinStatus.Text = "✅ Đã xóa: " .. weaponName
+                skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                task.wait(1.5)
+                skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+            end)
+            
+            scrollY = scrollY + 42
+        end
+        
+        savedScroll.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 90))
+    end
+    
+    -- SỰ KIỆN CHO NÚT
+    applyAllSavedBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        local count = ApplyAllSavedSkins()
+        skinStatus.Text = "✅ Đã apply lại " .. count .. " skin đã lưu"
+        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+        task.wait(2)
+        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+    end)
+    
+    clearAllSavedBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        savedSkinList = {}
+        displaySavedSkins()
+        savedLabel.Text = "📋 SKIN ĐÃ LƯU (0)"
+        skinStatus.Text = "✅ Đã xóa tất cả skin đã lưu"
+        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+        task.wait(2)
+        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+    end)
+    
+    sourceSearch:GetPropertyChangedSignal("Text"):Connect(function()
+        displaySkins(sourceSearch.Text)
+    end)
+    
+    weaponSearch:GetPropertyChangedSignal("Text"):Connect(function()
+        displayWeapons(weaponSearch.Text)
+    end)
+    
+    displaySkins("")
+    displayWeapons("")
+    displaySavedSkins()
+    updateSelectedDisplay()
+    
+    local function refreshSkinData()
+        ScanAllSkins()
+        ScanWeapons()
+        displaySkins(sourceSearch.Text or "")
+        displayWeapons(weaponSearch.Text or "")
+        displaySavedSkins()
+    end
+    
+    local refreshSkinBtn = Instance.new("TextButton")
+    refreshSkinBtn.Size = UDim2.new(0.9, 0, 0, 40)
+    refreshSkinBtn.Position = UDim2.new(0.05, 0, 0, y + 60)
+    refreshSkinBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    refreshSkinBtn.Text = "🔄 LÀM MỚI DANH SÁCH"
+    refreshSkinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshSkinBtn.TextSize = 13
+    refreshSkinBtn.Font = Enum.Font.GothamBold
+    refreshSkinBtn.Parent = skinPanel
+    local refreshBtnCorner = Instance.new("UICorner")
+    refreshBtnCorner.CornerRadius = UDim.new(0, 10)
+    refreshBtnCorner.Parent = refreshSkinBtn
+    
+    refreshSkinBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        refreshSkinData()
+        local notif = Drawing.new("Text")
+        notif.Text = "✅ Đã làm mới danh sách! Tổng skin: " .. #allSkins .. " | Vũ khí: " .. #allWeapons
+        notif.Size = 13
+        notif.Color = Color3.fromRGB(0, 255, 0)
+        notif.Center = true
+        notif.Outline = true
+        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+        notif.Visible = true
+        task.wait(2)
+        notif.Visible = false
+        notif:Remove()
+    end)
+    
+    refreshSkinBtn.MouseEnter:Connect(function()
+        TweenService:Create(refreshSkinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 170, 220)}):Play()
+    end)
+    refreshSkinBtn.MouseLeave:Connect(function()
+        TweenService:Create(refreshSkinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 150, 200)}):Play()
+    end)
+end
+
+-- KHỞI TẠO DỮ LIỆU SKIN
+task.spawn(function()
+    task.wait(1)
+    ScanAllSkins()
+    ScanWeapons()
+end)
+
+-- ============ INFO PANEL ==========
 local function refreshInfoPanel()
     for _, child in pairs(infoPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -2426,7 +3433,7 @@ local function refreshInfoPanel()
     titleLabel.Size = UDim2.new(1, -20, 0, 40)
     titleLabel.Position = UDim2.new(0, 10, 0, 10)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "ℹ️ PLAYER INFORMATION"
+    titleLabel.Text = "ℹ️ THÔNG TIN Player"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
     titleLabel.TextSize = 16
     titleLabel.Font = Enum.Font.GothamBold
@@ -2435,7 +3442,6 @@ local function refreshInfoPanel()
     
     y = y + 70
     
-    -- Avatar Frame
     local avatarFrame = Instance.new("Frame")
     avatarFrame.Size = UDim2.new(0, 90, 0, 90)
     avatarFrame.Position = UDim2.new(0.5, -45, 0, y)
@@ -2518,7 +3524,6 @@ local function refreshInfoPanel()
     local region = getPlayerRegion()
     local kd = deaths > 0 and string.format("%.2f", kills / deaths) or kills
     
-    -- Row 1
     local stat1Frame = Instance.new("Frame")
     stat1Frame.Size = UDim2.new(0.5, -10, 0, 80)
     stat1Frame.Position = UDim2.new(0, 5, 0, 10)
@@ -2544,7 +3549,7 @@ local function refreshInfoPanel()
     stat1Label.Size = UDim2.new(1, -60, 0, 25)
     stat1Label.Position = UDim2.new(0, 55, 0, 15)
     stat1Label.BackgroundTransparency = 1
-    stat1Label.Text = "HEALTH"
+    stat1Label.Text = "MÁU"
     stat1Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat1Label.TextSize = 11
     stat1Label.Font = Enum.Font.Gotham
@@ -2587,7 +3592,7 @@ local function refreshInfoPanel()
     stat2Label.Size = UDim2.new(1, -60, 0, 25)
     stat2Label.Position = UDim2.new(0, 55, 0, 15)
     stat2Label.BackgroundTransparency = 1
-    stat2Label.Text = "LEVEL"
+    stat2Label.Text = "CẤP ĐỘ"
     stat2Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat2Label.TextSize = 11
     stat2Label.Font = Enum.Font.Gotham
@@ -2605,7 +3610,6 @@ local function refreshInfoPanel()
     stat2Value.TextXAlignment = Enum.TextXAlignment.Left
     stat2Value.Parent = stat2Frame
     
-    -- Row 2
     local stat3Frame = Instance.new("Frame")
     stat3Frame.Size = UDim2.new(0.5, -10, 0, 80)
     stat3Frame.Position = UDim2.new(0, 5, 0, 100)
@@ -2631,7 +3635,7 @@ local function refreshInfoPanel()
     stat3Label.Size = UDim2.new(1, -60, 0, 25)
     stat3Label.Position = UDim2.new(0, 55, 0, 15)
     stat3Label.BackgroundTransparency = 1
-    stat3Label.Text = "KILLS"
+    stat3Label.Text = "HẠ GỤC"
     stat3Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat3Label.TextSize = 11
     stat3Label.Font = Enum.Font.Gotham
@@ -2674,7 +3678,7 @@ local function refreshInfoPanel()
     stat4Label.Size = UDim2.new(1, -60, 0, 25)
     stat4Label.Position = UDim2.new(0, 55, 0, 15)
     stat4Label.BackgroundTransparency = 1
-    stat4Label.Text = "DEATHS"
+    stat4Label.Text = "CHẾT"
     stat4Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat4Label.TextSize = 11
     stat4Label.Font = Enum.Font.Gotham
@@ -2692,7 +3696,6 @@ local function refreshInfoPanel()
     stat4Value.TextXAlignment = Enum.TextXAlignment.Left
     stat4Value.Parent = stat4Frame
     
-    -- Row 3
     local stat5Frame = Instance.new("Frame")
     stat5Frame.Size = UDim2.new(0.5, -10, 0, 80)
     stat5Frame.Position = UDim2.new(0, 5, 0, 190)
@@ -2718,7 +3721,7 @@ local function refreshInfoPanel()
     stat5Label.Size = UDim2.new(1, -60, 0, 25)
     stat5Label.Position = UDim2.new(0, 55, 0, 15)
     stat5Label.BackgroundTransparency = 1
-    stat5Label.Text = "K/D RATIO"
+    stat5Label.Text = "TỶ LỆ K/D"
     stat5Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat5Label.TextSize = 11
     stat5Label.Font = Enum.Font.Gotham
@@ -2761,7 +3764,7 @@ local function refreshInfoPanel()
     stat6Label.Size = UDim2.new(1, -60, 0, 25)
     stat6Label.Position = UDim2.new(0, 55, 0, 15)
     stat6Label.BackgroundTransparency = 1
-    stat6Label.Text = "WIN STREAK"
+    stat6Label.Text = "CHUỖI THẮNG"
     stat6Label.TextColor3 = Color3.fromRGB(180, 180, 220)
     stat6Label.TextSize = 11
     stat6Label.Font = Enum.Font.Gotham
@@ -2796,7 +3799,7 @@ local function refreshInfoPanel()
     posTitle.Size = UDim2.new(1, -20, 0, 30)
     posTitle.Position = UDim2.new(0, 10, 0, 8)
     posTitle.BackgroundTransparency = 1
-    posTitle.Text = "📍 CURRENT POSITION"
+    posTitle.Text = "📍 VỊ TRÍ HIỆN TẠI"
     posTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
     posTitle.TextSize = 13
     posTitle.Font = Enum.Font.GothamBold
@@ -2831,7 +3834,7 @@ local function refreshInfoPanel()
     eloTitle.Size = UDim2.new(1, -20, 0, 30)
     eloTitle.Position = UDim2.new(0, 10, 0, 8)
     eloTitle.BackgroundTransparency = 1
-    eloTitle.Text = "🏆 RANK & REGION"
+    eloTitle.Text = "🏆 HẠNG & KHU VỰC"
     eloTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
     eloTitle.TextSize = 13
     eloTitle.Font = Enum.Font.GothamBold
@@ -2860,20 +3863,53 @@ local function refreshInfoPanel()
     regionValue.Size = UDim2.new(0.5, -15, 0, 40)
     regionValue.Position = UDim2.new(0.5, 5, 0, 40)
     regionValue.BackgroundTransparency = 1
-    regionValue.Text = "🌍 Region: " .. region
+    regionValue.Text = "🌍 Khu vực: " .. region
     regionValue.TextColor3 = Color3.fromRGB(200, 200, 230)
     regionValue.TextSize = 14
     regionValue.Font = Enum.Font.Gotham
     regionValue.TextXAlignment = Enum.TextXAlignment.Left
     regionValue.Parent = eloFrame
+    y = y + 105
     
+    local keyFrame2 = Instance.new("Frame")
+    keyFrame2.Size = UDim2.new(1, -10, 0, 55)
+    keyFrame2.Position = UDim2.new(0, 5, 0, y)
+    keyFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    keyFrame2.BackgroundTransparency = 0.4
+    keyFrame2.BorderSizePixel = 0
+    keyFrame2.Parent = infoPanel
+    local keyCorner2 = Instance.new("UICorner")
+    keyCorner2.CornerRadius = UDim.new(0, 12)
+    keyCorner2.Parent = keyFrame2
+    
+    local keyTitle2 = Instance.new("TextLabel")
+    keyTitle2.Size = UDim2.new(1, -20, 0, 25)
+    keyTitle2.Position = UDim2.new(0, 10, 0, 8)
+    keyTitle2.BackgroundTransparency = 1
+    keyTitle2.Text = "🔑 KEY ĐANG SỬ DỤNG"
+    keyTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
+    keyTitle2.TextSize = 12
+    keyTitle2.Font = Enum.Font.GothamBold
+    keyTitle2.TextXAlignment = Enum.TextXAlignment.Left
+    keyTitle2.Parent = keyFrame2
+    
+    local keyValue2 = Instance.new("TextLabel")
+    keyValue2.Size = UDim2.new(1, -20, 0, 25)
+    keyValue2.Position = UDim2.new(0, 10, 0, 30)
+    keyValue2.BackgroundTransparency = 1
+    keyValue2.Text = currentKey
+    keyValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
+    keyValue2.TextSize = 13
+    keyValue2.Font = Enum.Font.GothamBold
+    keyValue2.TextXAlignment = Enum.TextXAlignment.Left
+    keyValue2.Parent = keyFrame2
     y = y + 105
     
     local refreshBtn = Instance.new("TextButton")
     refreshBtn.Size = UDim2.new(0.9, 0, 0, 45)
     refreshBtn.Position = UDim2.new(0.05, 0, 0, y)
     refreshBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-    refreshBtn.Text = "🔄 REFRESH INFO"
+    refreshBtn.Text = "🔄 LÀM MỚI"
     refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     refreshBtn.TextSize = 14
     refreshBtn.Font = Enum.Font.GothamBold
@@ -2895,16 +3931,212 @@ local function refreshInfoPanel()
     end)
 end
 
--- ============ BUILD UI ==========
+-- ============ ADMIN PANEL ==========
+local function refreshAdminPanel()
+    for _, child in pairs(adminPanel:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    local y = 10
+    
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Position = UDim2.new(0, 5, 0, y)
+    titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    titleFrame.BackgroundTransparency = 0.4
+    titleFrame.BorderSizePixel = 0
+    titleFrame.Parent = adminPanel
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.Parent = titleFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "👑 QUẢN TRỊ / CHỦ SỞ HỮU"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = titleFrame
+    
+    y = y + 70
+    
+    local adminCard = Instance.new("Frame")
+    adminCard.Size = UDim2.new(1, -10, 0, 210)
+    adminCard.Position = UDim2.new(0, 5, 0, y)
+    adminCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    adminCard.BackgroundTransparency = 0.4
+    adminCard.BorderSizePixel = 1
+    adminCard.BorderColor3 = Color3.fromRGB(255, 215, 0)
+    adminCard.Parent = adminPanel
+    local adminCorner = Instance.new("UICorner")
+    adminCorner.CornerRadius = UDim.new(0, 12)
+    adminCorner.Parent = adminCard
+    
+    local adminAvatarFrame = Instance.new("Frame")
+    adminAvatarFrame.Size = UDim2.new(0, 100, 0, 100)
+    adminAvatarFrame.Position = UDim2.new(0.5, -50, 0, 15)
+    adminAvatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    adminAvatarFrame.BackgroundTransparency = 0.3
+    adminAvatarFrame.BorderSizePixel = 3
+    adminAvatarFrame.BorderColor3 = Color3.fromRGB(255, 215, 0)
+    adminAvatarFrame.Parent = adminCard
+    
+    local adminAvatarCorner = Instance.new("UICorner")
+    adminAvatarCorner.CornerRadius = UDim.new(0, 50)
+    adminAvatarCorner.Parent = adminAvatarFrame
+    
+    local adminAvatarImage = Instance.new("ImageLabel")
+    adminAvatarImage.Size = UDim2.new(1, -6, 1, -6)
+    adminAvatarImage.Position = UDim2.new(0, 3, 0, 3)
+    adminAvatarImage.BackgroundTransparency = 1
+    adminAvatarImage.Parent = adminAvatarFrame
+    local avatarImgCorner = Instance.new("UICorner")
+    avatarImgCorner.CornerRadius = UDim.new(0, 47)
+    avatarImgCorner.Parent = adminAvatarImage
+    
+    task.spawn(function()
+        local success, avatarUrl = pcall(function()
+            return Players:GetUserThumbnailAsync(ADMIN_ID, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+        end)
+        if success and avatarUrl and avatarUrl ~= "" then
+            adminAvatarImage.Image = avatarUrl
+        else
+            adminAvatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        end
+    end)
+    
+    local adminNameLabel = Instance.new("TextLabel")
+    adminNameLabel.Size = UDim2.new(1, -20, 0, 35)
+    adminNameLabel.Position = UDim2.new(0, 10, 0, 125)
+    adminNameLabel.BackgroundTransparency = 1
+    adminNameLabel.Text = ADMIN_DISPLAY_NAME .. " (" .. ADMIN_NAME .. ")"
+    adminNameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+    adminNameLabel.TextSize = 18
+    adminNameLabel.Font = Enum.Font.GothamBold
+    adminNameLabel.TextXAlignment = Enum.TextXAlignment.Center
+    adminNameLabel.Parent = adminCard
+    
+    local adminStatus = Instance.new("TextLabel")
+    adminStatus.Size = UDim2.new(1, -20, 0, 30)
+    adminStatus.Position = UDim2.new(0, 10, 0, 165)
+    adminStatus.BackgroundTransparency = 1
+    adminStatus.Text = isAdminOnline and "🟢 ĐANG TRUY CẬP" or "🔴 NGOẠI TUYẾN"
+    adminStatus.TextColor3 = isAdminOnline and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+    adminStatus.TextSize = 14
+    adminStatus.Font = Enum.Font.GothamBold
+    adminStatus.TextXAlignment = Enum.TextXAlignment.Center
+    adminStatus.Parent = adminCard
+    
+    y = y + 230
+    
+    local joinBtn = Instance.new("TextButton")
+    joinBtn.Size = UDim2.new(0.9, 0, 0, 55)
+    joinBtn.Position = UDim2.new(0.05, 0, 0, y)
+    joinBtn.BackgroundColor3 = isAdminOnline and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(80, 80, 80)
+    joinBtn.Text = isAdminOnline and "🚀 VÀO SERVER CỦA ADMIN" or "⛔ ADMIN ĐANG OFFLINE"
+    joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    joinBtn.TextSize = 14
+    joinBtn.Font = Enum.Font.GothamBold
+    joinBtn.Parent = adminPanel
+    local joinCorner = Instance.new("UICorner")
+    joinCorner.CornerRadius = UDim.new(0, 10)
+    joinCorner.Parent = joinBtn
+    
+    joinBtn.MouseButton1Click:Connect(function()
+        playClickSound()
+        if not isAdminOnline then
+            local notif = Drawing.new("Text")
+            notif.Text = "❌ Admin hiện không trực tuyến!"
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(255, 0, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 50)
+            notif.Visible = true
+            task.wait(1.5)
+            notif.Visible = false
+            notif:Remove()
+            return
+        end
+        
+        joinBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        local success, msg = joinAdminServer()
+        if not success then
+            joinBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+            local notif = Drawing.new("Text")
+            notif.Text = msg
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(255, 200, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 50)
+            notif.Visible = true
+            task.wait(1.5)
+            notif.Visible = false
+            notif:Remove()
+        end
+    end)
+    
+    joinBtn.MouseEnter:Connect(function()
+        if isAdminOnline then
+            TweenService:Create(joinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 170, 220)}):Play()
+        end
+    end)
+    joinBtn.MouseLeave:Connect(function()
+        if isAdminOnline then
+            TweenService:Create(joinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 150, 200)}):Play()
+        end
+    end)
+    
+    y = y + 75
+    
+    local infoCard = Instance.new("Frame")
+    infoCard.Size = UDim2.new(1, -10, 0, 130)
+    infoCard.Position = UDim2.new(0, 5, 0, y)
+    infoCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    infoCard.BackgroundTransparency = 0.4
+    infoCard.BorderSizePixel = 0
+    infoCard.Parent = adminPanel
+    local infoCorner = Instance.new("UICorner")
+    infoCorner.CornerRadius = UDim.new(0, 12)
+    infoCorner.Parent = infoCard
+    
+    local infoTitle = Instance.new("TextLabel")
+    infoTitle.Size = UDim2.new(1, -20, 0, 30)
+    infoTitle.Position = UDim2.new(0, 10, 0, 8)
+    infoTitle.BackgroundTransparency = 1
+    infoTitle.Text = "ℹ️ THÔNG TIN VỀ ADMIN"
+    infoTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+    infoTitle.TextSize = 13
+    infoTitle.Font = Enum.Font.GothamBold
+    infoTitle.TextXAlignment = Enum.TextXAlignment.Left
+    infoTitle.Parent = infoCard
+    
+    local infoDesc = Instance.new("TextLabel")
+    infoDesc.Size = UDim2.new(1, -20, 0, 85)
+    infoDesc.Position = UDim2.new(0, 10, 0, 40)
+    infoDesc.BackgroundTransparency = 1
+    infoDesc.Text = "👑 Chủ sở hữu & Phát triển: " .. ADMIN_NAME .. "\n🔧 Người tạo ra KHANHGD CHEAT\n⚡ Vào server cùng admin để chơi chung!\n💸 Bản cheat này được cung cấp miễn phí"
+    infoDesc.TextColor3 = Color3.fromRGB(180, 180, 210)
+    infoDesc.TextSize = 12
+    infoDesc.Font = Enum.Font.Gotham
+    infoDesc.TextXAlignment = Enum.TextXAlignment.Left
+    infoDesc.Parent = infoCard
+end
 
+-- ============ BUILD UI CÁC PANEL KHÁC ==========
 -- AIMBOT PANEL
 local y = 10
-createModernToggle(aimbotPanel, y, "⚡ ENABLE AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
+createModernToggle(aimbotPanel, y, "⚡ BẬT AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
 y = y + 60
-createModernToggle(aimbotPanel, y, "🤝 IGNORE TEAMMATES", function() return settings.aimbot.ignoreTeam end, function(v) settings.aimbot.ignoreTeam = v end)
+createModernToggle(aimbotPanel, y, "🤝 BỎ QUA ĐỒNG ĐỘI", function() return settings.aimbot.ignoreTeam end, function(v) settings.aimbot.ignoreTeam = v end)
 y = y + 60
 
--- AIM MODE
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(1, -10, 0, 52)
 frame.Position = UDim2.new(0, 5, 0, y)
@@ -2919,7 +4151,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 180, 0, 25)
 label.Position = UDim2.new(0, 15, 0, 14)
 label.BackgroundTransparency = 1
-label.Text = "🎯 AIM MODE"
+label.Text = "🎯 CHẾ ĐỘ AIM"
 label.TextColor3 = Color3.fromRGB(230, 230, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -2983,21 +4215,20 @@ btn.MouseButton1Click:Connect(function()
 end)
 
 y = y + 60
-createModernSlider(aimbotPanel, y, "🎯 FOV RADIUS", 50, 400, settings.aimbot.fovRadius, "px", function(v) settings.aimbot.fovRadius = v end)
+createModernSlider(aimbotPanel, y, "🎯 BÁN KÍNH FOV", 50, 400, settings.aimbot.fovRadius, "px", function(v) settings.aimbot.fovRadius = v end)
 y = y + 80
-createModernSlider(aimbotPanel, y, "⚡ SMOOTHNESS", 1, 15, settings.aimbot.smoothness, "", function(v) settings.aimbot.smoothness = v end)
+createModernSlider(aimbotPanel, y, "⚡ ĐỘ MỊN", 1, 15, settings.aimbot.smoothness, "", function(v) settings.aimbot.smoothness = v end)
 y = y + 80
-createModernSlider(aimbotPanel, y, "📏 MAX DISTANCE", 50, 400, settings.aimbot.maxDistance, "m", function(v) settings.aimbot.maxDistance = v end)
+createModernSlider(aimbotPanel, y, "📏 KHOẢNG CÁCH TỐI ĐA", 50, 400, settings.aimbot.maxDistance, "m", function(v) settings.aimbot.maxDistance = v end)
 y = y + 80
-createModernToggle(aimbotPanel, y, "🔫 AUTO SHOT", function() return settings.aimbot.autoShot end, function(v) settings.aimbot.autoShot = v end)
+createModernToggle(aimbotPanel, y, "🔫 BẮN TỰ ĐỘNG", function() return settings.aimbot.autoShot end, function(v) settings.aimbot.autoShot = v end)
 y = y + 60
-createModernToggle(aimbotPanel, y, "👁️ SHOW FOV", function() return settings.aimbot.showFOV end, function(v) settings.aimbot.showFOV = v end)
+createModernToggle(aimbotPanel, y, "👁️ HIỂN THỊ FOV", function() return settings.aimbot.showFOV end, function(v) settings.aimbot.showFOV = v end)
 y = y + 60
-createModernToggle(aimbotPanel, y, "📏 SHOW AIM LINE (ALWAYS)", function() return settings.aimbot.showLine end, function(v) settings.aimbot.showLine = v end)
+createModernToggle(aimbotPanel, y, "📏 HIỂN THỊ ĐƯỜNG AIM", function() return settings.aimbot.showLine end, function(v) settings.aimbot.showLine = v end)
 y = y + 60
 
--- FOV Color Picker
-createColorPicker(aimbotPanel, y, "🎨 FOV COLOR", 
+createColorPicker(aimbotPanel, y, "🎨 MÀU FOV", 
     function() return settings.aimbot.fovColorR or 0 end,
     function() return settings.aimbot.fovColorG or 200 end,
     function() return settings.aimbot.fovColorB or 255 end,
@@ -3008,8 +4239,7 @@ createColorPicker(aimbotPanel, y, "🎨 FOV COLOR",
 )
 
 y = y + 140
--- LINE Color Picker
-createColorPicker(aimbotPanel, y, "🎨 LINE COLOR",
+createColorPicker(aimbotPanel, y, "🎨 MÀU ĐƯỜNG AIM",
     function() return settings.aimbot.lineColorR or 255 end,
     function() return settings.aimbot.lineColorG or 0 end,
     function() return settings.aimbot.lineColorB or 0 end,
@@ -3021,20 +4251,20 @@ createColorPicker(aimbotPanel, y, "🎨 LINE COLOR",
 
 -- ESP PANEL
 y = 10
-createModernToggle(espPanel, y, "✨ ENABLE ESP", function() return settings.esp.enabled end, function(v) settings.esp.enabled = v end)
+createModernToggle(espPanel, y, "✨ BẬT ESP", function() return settings.esp.enabled end, function(v) settings.esp.enabled = v end)
 y = y + 60
-createModernToggle(espPanel, y, "📦 SHOW BOX", function() return settings.esp.box end, function(v) settings.esp.box = v end)
+createModernToggle(espPanel, y, "📦 HIỂN THỊ KHUNG", function() return settings.esp.box end, function(v) settings.esp.box = v end)
 y = y + 60
-createModernSlider(espPanel, y, "📏 ESP DISTANCE", 50, 500, settings.esp.maxDistance, "m", function(v) settings.esp.maxDistance = v end)
+createModernSlider(espPanel, y, "📏 KHOẢNG CÁCH ESP", 50, 500, settings.esp.maxDistance, "m", function(v) settings.esp.maxDistance = v end)
 y = y + 80
-createModernToggle(espPanel, y, "🏷️ SHOW NAME", function() return settings.esp.name end, function(v) settings.esp.name = v end)
+createModernToggle(espPanel, y, "🏷️ HIỂN THỊ TÊN", function() return settings.esp.name end, function(v) settings.esp.name = v end)
 y = y + 60
-createModernToggle(espPanel, y, "📐 SHOW DISTANCE", function() return settings.esp.distance end, function(v) settings.esp.distance = v end)
+createModernToggle(espPanel, y, "📐 HIỂN THỊ KHOẢNG CÁCH", function() return settings.esp.distance end, function(v) settings.esp.distance = v end)
 y = y + 60
-createModernToggle(espPanel, y, "💚 SHOW HEALTH", function() return settings.esp.health end, function(v) settings.esp.health = v end)
+createModernToggle(espPanel, y, "💚 HIỂN THỊ MÁU", function() return settings.esp.health end, function(v) settings.esp.health = v end)
 y = y + 60
 
-createColorPicker(espPanel, y, "🎨 BOX COLOR",
+createColorPicker(espPanel, y, "🎨 MÀU KHUNG",
     function() return settings.esp.boxColorR or 255 end,
     function() return settings.esp.boxColorG or 70 end,
     function() return settings.esp.boxColorB or 70 end,
@@ -3045,7 +4275,7 @@ createColorPicker(espPanel, y, "🎨 BOX COLOR",
 )
 
 y = y + 140
-createColorPicker(espPanel, y, "🎨 SKELETON COLOR",
+createColorPicker(espPanel, y, "🎨 MÀU BỘ XƯƠNG",
     function() return settings.esp.skeletonColorR or 0 end,
     function() return settings.esp.skeletonColorG or 200 end,
     function() return settings.esp.skeletonColorB or 255 end,
@@ -3056,7 +4286,7 @@ createColorPicker(espPanel, y, "🎨 SKELETON COLOR",
 )
 
 y = y + 140
-createColorPicker(espPanel, y, "🎨 NPC COLOR",
+createColorPicker(espPanel, y, "🎨 MÀU NPC",
     function() return settings.esp.npcColorR or 255 end,
     function() return settings.esp.npcColorG or 200 end,
     function() return settings.esp.npcColorB or 50 end,
@@ -3068,91 +4298,252 @@ createColorPicker(espPanel, y, "🎨 NPC COLOR",
 
 -- SKELETON PANEL
 y = 10
-createModernToggle(skeletonPanel, y, "🦴 ENABLE SKELETON", function() return settings.esp.skeleton end, function(v) settings.esp.skeleton = v end)
+createModernToggle(skeletonPanel, y, "🦴 BẬT BỘ XƯƠNG", function() return settings.esp.skeleton end, function(v) settings.esp.skeleton = v end)
 
 -- VALUE PANEL
-y = 10
-local currentFrame = Instance.new("Frame")
-currentFrame.Size = UDim2.new(1, -10, 0, 60)
-currentFrame.Position = UDim2.new(0, 5, 0, y)
-currentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-currentFrame.BackgroundTransparency = 0.4
-currentFrame.BorderSizePixel = 0
-currentFrame.Parent = setValuePanel
-local currentCorner = Instance.new("UICorner")
-currentCorner.CornerRadius = UDim.new(0, 12)
-currentCorner.Parent = currentFrame
-local currentLabel = Instance.new("TextLabel")
-currentLabel.Size = UDim2.new(1, -20, 0, 40)
-currentLabel.Position = UDim2.new(0, 10, 0, 10)
-currentLabel.BackgroundTransparency = 1
-currentLabel.Text = "🏆 Current Win Streak: " .. getCurrentWinStreak()
-currentLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-currentLabel.TextSize = 14
-currentLabel.Font = Enum.Font.GothamBold
-currentLabel.TextXAlignment = Enum.TextXAlignment.Center
-currentLabel.Parent = currentFrame
+local y = 10
 
-y = y + 70
-local inputFrame = Instance.new("Frame")
-inputFrame.Size = UDim2.new(1, -10, 0, 55)
-inputFrame.Position = UDim2.new(0, 5, 0, y)
-inputFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-inputFrame.BackgroundTransparency = 0.4
-inputFrame.BorderSizePixel = 0
-inputFrame.Parent = setValuePanel
-local inputCorner = Instance.new("UICorner")
-inputCorner.CornerRadius = UDim.new(0, 12)
-inputCorner.Parent = inputFrame
-local valueInput = Instance.new("TextBox")
-valueInput.Size = UDim2.new(1, -90, 0, 35)
-valueInput.Position = UDim2.new(0, 10, 0, 10)
-valueInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-valueInput.Text = tostring(getCurrentWinStreak())
-valueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-valueInput.TextSize = 14
-valueInput.Font = Enum.Font.Gotham
-valueInput.TextXAlignment = Enum.TextXAlignment.Center
-valueInput.Parent = inputFrame
-local inputBoxCorner = Instance.new("UICorner")
-inputBoxCorner.CornerRadius = UDim.new(0, 8)
-inputBoxCorner.Parent = valueInput
-local applyBtn = Instance.new("TextButton")
-applyBtn.Size = UDim2.new(0, 60, 0, 35)
-applyBtn.Position = UDim2.new(1, -70, 0, 10)
-applyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
-applyBtn.Text = "SET"
-applyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-applyBtn.TextSize = 13
-applyBtn.Font = Enum.Font.GothamBold
-applyBtn.Parent = inputFrame
-local applyCorner = Instance.new("UICorner")
-applyCorner.CornerRadius = UDim.new(0, 8)
-applyCorner.Parent = applyBtn
+local winStreakFrame = Instance.new("Frame")
+winStreakFrame.Size = UDim2.new(1, -10, 0, 80)
+winStreakFrame.Position = UDim2.new(0, 5, 0, y)
+winStreakFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+winStreakFrame.BackgroundTransparency = 0.4
+winStreakFrame.BorderSizePixel = 0
+winStreakFrame.Parent = setValuePanel
+local winStreakCorner = Instance.new("UICorner")
+winStreakCorner.CornerRadius = UDim.new(0, 12)
+winStreakCorner.Parent = winStreakFrame
 
-applyBtn.MouseEnter:Connect(function()
-    TweenService:Create(applyBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 210, 100)}):Play()
-end)
-applyBtn.MouseLeave:Connect(function()
-    TweenService:Create(applyBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 180, 90)}):Play()
-end)
+local winStreakTitle = Instance.new("TextLabel")
+winStreakTitle.Size = UDim2.new(1, -20, 0, 25)
+winStreakTitle.Position = UDim2.new(0, 10, 0, 8)
+winStreakTitle.BackgroundTransparency = 1
+winStreakTitle.Text = "🏆 CHUỖI THẮNG"
+winStreakTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
+winStreakTitle.TextSize = 13
+winStreakTitle.Font = Enum.Font.GothamBold
+winStreakTitle.TextXAlignment = Enum.TextXAlignment.Left
+winStreakTitle.Parent = winStreakFrame
 
-local function refreshWinStreakDisplay()
-    local newValue = getCurrentWinStreak()
-    currentLabel.Text = "🏆 Current Win Streak: " .. tostring(newValue)
-    valueInput.Text = tostring(newValue)
+local winStreakValue = Instance.new("TextLabel")
+winStreakValue.Size = UDim2.new(0.5, -15, 0, 30)
+winStreakValue.Position = UDim2.new(0, 10, 0, 38)
+winStreakValue.BackgroundTransparency = 1
+winStreakValue.Text = tostring(getCurrentWinStreak())
+winStreakValue.TextColor3 = Color3.fromRGB(255, 215, 0)
+winStreakValue.TextSize = 18
+winStreakValue.Font = Enum.Font.GothamBold
+winStreakValue.TextXAlignment = Enum.TextXAlignment.Left
+winStreakValue.Parent = winStreakFrame
+
+local winStreakInput = Instance.new("TextBox")
+winStreakInput.Size = UDim2.new(0.4, -15, 0, 35)
+winStreakInput.Position = UDim2.new(0.6, 0, 0, 38)
+winStreakInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+winStreakInput.PlaceholderText = "Nhập số..."
+winStreakInput.Text = ""
+winStreakInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+winStreakInput.TextSize = 13
+winStreakInput.Font = Enum.Font.Gotham
+winStreakInput.TextXAlignment = Enum.TextXAlignment.Center
+winStreakInput.Parent = winStreakFrame
+local winStreakInputCorner = Instance.new("UICorner")
+winStreakInputCorner.CornerRadius = UDim.new(0, 8)
+winStreakInputCorner.Parent = winStreakInput
+
+local winStreakBtn = Instance.new("TextButton")
+winStreakBtn.Size = UDim2.new(0, 55, 0, 35)
+winStreakBtn.Position = UDim2.new(1, -65, 0, 38)
+winStreakBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+winStreakBtn.Text = "ĐẶT"
+winStreakBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+winStreakBtn.TextSize = 12
+winStreakBtn.Font = Enum.Font.GothamBold
+winStreakBtn.Parent = winStreakFrame
+local winStreakBtnCorner = Instance.new("UICorner")
+winStreakBtnCorner.CornerRadius = UDim.new(0, 8)
+winStreakBtnCorner.Parent = winStreakBtn
+
+y = y + 90
+
+local eloFrame2 = Instance.new("Frame")
+eloFrame2.Size = UDim2.new(1, -10, 0, 80)
+eloFrame2.Position = UDim2.new(0, 5, 0, y)
+eloFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+eloFrame2.BackgroundTransparency = 0.4
+eloFrame2.BorderSizePixel = 0
+eloFrame2.Parent = setValuePanel
+local eloCorner2 = Instance.new("UICorner")
+eloCorner2.CornerRadius = UDim.new(0, 12)
+eloCorner2.Parent = eloFrame2
+
+local eloTitle2 = Instance.new("TextLabel")
+eloTitle2.Size = UDim2.new(1, -20, 0, 25)
+eloTitle2.Position = UDim2.new(0, 10, 0, 8)
+eloTitle2.BackgroundTransparency = 1
+eloTitle2.Text = "⭐ CURRENT ELO"
+eloTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
+eloTitle2.TextSize = 13
+eloTitle2.Font = Enum.Font.GothamBold
+eloTitle2.TextXAlignment = Enum.TextXAlignment.Left
+eloTitle2.Parent = eloFrame2
+
+local eloValue2 = Instance.new("TextLabel")
+eloValue2.Size = UDim2.new(0.5, -15, 0, 30)
+eloValue2.Position = UDim2.new(0, 10, 0, 38)
+eloValue2.BackgroundTransparency = 1
+eloValue2.Text = tostring(getPlayerELO())
+eloValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
+eloValue2.TextSize = 18
+eloValue2.Font = Enum.Font.GothamBold
+eloValue2.TextXAlignment = Enum.TextXAlignment.Left
+eloValue2.Parent = eloFrame2
+
+local eloInput2 = Instance.new("TextBox")
+eloInput2.Size = UDim2.new(0.4, -15, 0, 35)
+eloInput2.Position = UDim2.new(0.6, 0, 0, 38)
+eloInput2.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+eloInput2.PlaceholderText = "Nhập số..."
+eloInput2.Text = ""
+eloInput2.TextColor3 = Color3.fromRGB(255, 255, 255)
+eloInput2.TextSize = 13
+eloInput2.Font = Enum.Font.Gotham
+eloInput2.TextXAlignment = Enum.TextXAlignment.Center
+eloInput2.Parent = eloFrame2
+local eloInputCorner2 = Instance.new("UICorner")
+eloInputCorner2.CornerRadius = UDim.new(0, 8)
+eloInputCorner2.Parent = eloInput2
+
+local eloBtn2 = Instance.new("TextButton")
+eloBtn2.Size = UDim2.new(0, 55, 0, 35)
+eloBtn2.Position = UDim2.new(1, -65, 0, 38)
+eloBtn2.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+eloBtn2.Text = "ĐẶT"
+eloBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+eloBtn2.TextSize = 12
+eloBtn2.Font = Enum.Font.GothamBold
+eloBtn2.Parent = eloFrame2
+local eloBtnCorner2 = Instance.new("UICorner")
+eloBtnCorner2.CornerRadius = UDim.new(0, 8)
+eloBtnCorner2.Parent = eloBtn2
+
+y = y + 90
+
+local levelFrame2 = Instance.new("Frame")
+levelFrame2.Size = UDim2.new(1, -10, 0, 80)
+levelFrame2.Position = UDim2.new(0, 5, 0, y)
+levelFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+levelFrame2.BackgroundTransparency = 0.4
+levelFrame2.BorderSizePixel = 0
+levelFrame2.Parent = setValuePanel
+local levelCorner2 = Instance.new("UICorner")
+levelCorner2.CornerRadius = UDim.new(0, 12)
+levelCorner2.Parent = levelFrame2
+
+local levelTitle2 = Instance.new("TextLabel")
+levelTitle2.Size = UDim2.new(1, -20, 0, 25)
+levelTitle2.Position = UDim2.new(0, 10, 0, 8)
+levelTitle2.BackgroundTransparency = 1
+levelTitle2.Text = "📊 LEVEL"
+levelTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
+levelTitle2.TextSize = 13
+levelTitle2.Font = Enum.Font.GothamBold
+levelTitle2.TextXAlignment = Enum.TextXAlignment.Left
+levelTitle2.Parent = levelFrame2
+
+local levelValue2 = Instance.new("TextLabel")
+levelValue2.Size = UDim2.new(0.5, -15, 0, 30)
+levelValue2.Position = UDim2.new(0, 10, 0, 38)
+levelValue2.BackgroundTransparency = 1
+levelValue2.Text = tostring(getPlayerLevel())
+levelValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
+levelValue2.TextSize = 18
+levelValue2.Font = Enum.Font.GothamBold
+levelValue2.TextXAlignment = Enum.TextXAlignment.Left
+levelValue2.Parent = levelFrame2
+
+local levelInput2 = Instance.new("TextBox")
+levelInput2.Size = UDim2.new(0.4, -15, 0, 35)
+levelInput2.Position = UDim2.new(0.6, 0, 0, 38)
+levelInput2.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+levelInput2.PlaceholderText = "Nhập số..."
+levelInput2.Text = ""
+levelInput2.TextColor3 = Color3.fromRGB(255, 255, 255)
+levelInput2.TextSize = 13
+levelInput2.Font = Enum.Font.Gotham
+levelInput2.TextXAlignment = Enum.TextXAlignment.Center
+levelInput2.Parent = levelFrame2
+local levelInputCorner2 = Instance.new("UICorner")
+levelInputCorner2.CornerRadius = UDim.new(0, 8)
+levelInputCorner2.Parent = levelInput2
+
+local levelBtn2 = Instance.new("TextButton")
+levelBtn2.Size = UDim2.new(0, 55, 0, 35)
+levelBtn2.Position = UDim2.new(1, -65, 0, 38)
+levelBtn2.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+levelBtn2.Text = "ĐẶT"
+levelBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+levelBtn2.TextSize = 12
+levelBtn2.Font = Enum.Font.GothamBold
+levelBtn2.Parent = levelFrame2
+local levelBtnCorner2 = Instance.new("UICorner")
+levelBtnCorner2.CornerRadius = UDim.new(0, 8)
+levelBtnCorner2.Parent = levelBtn2
+
+local function refreshStreakPanel()
+    winStreakValue.Text = tostring(getCurrentWinStreak())
+    eloValue2.Text = tostring(getPlayerELO())
+    levelValue2.Text = tostring(getPlayerLevel())
 end
 
-applyBtn.MouseButton1Click:Connect(function()
+local function setELO(value)
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local elo = customStats:FindFirstChild("Current ELO")
+        if elo then 
+            elo.Value = value
+            return true
+        end
+        local rank = customStats:FindFirstChild("Rank")
+        if rank then 
+            rank.Value = value
+            return true
+        end
+    end
+    return false
+end
+
+local function setLevel(value)
+    local customStats = LocalPlayer:FindFirstChild("CustomLeaderstats")
+    if customStats then
+        local level = customStats:FindFirstChild("Level")
+        if level then 
+            level.Value = value
+            return true
+        end
+    end
+    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+    if leaderstats then
+        local level = leaderstats:FindFirstChild("Level")
+        if level then 
+            level.Value = value
+            return true
+        end
+    end
+    return false
+end
+
+winStreakBtn.MouseButton1Click:Connect(function()
     playClickSound()
-    local newValue = tonumber(valueInput.Text)
+    local newValue = tonumber(winStreakInput.Text)
     if newValue then
         local success = setWinStreak(newValue)
         if success then
-            refreshWinStreakDisplay()
+            refreshStreakPanel()
             refreshLocalPlayerUI()
+            winStreakInput.Text = ""
             local notif = Drawing.new("Text")
-            notif.Text = "✅ Win Streak changed to " .. newValue
+            notif.Text = "✅ Đã đặt chuỗi thắng thành " .. newValue
             notif.Size = 14
             notif.Color = Color3.fromRGB(0, 255, 0)
             notif.Center = true
@@ -3164,7 +4555,79 @@ applyBtn.MouseButton1Click:Connect(function()
             notif:Remove()
         else
             local notif = Drawing.new("Text")
-            notif.Text = "❌ Win Streak not found!"
+            notif.Text = "❌ Không tìm thấy chuỗi thắng!"
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(255, 0, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            notif.Visible = true
+            task.wait(1)
+            notif.Visible = false
+            notif:Remove()
+        end
+    end
+end)
+
+eloBtn2.MouseButton1Click:Connect(function()
+    playClickSound()
+    local newValue = tonumber(eloInput2.Text)
+    if newValue then
+        local success = setELO(newValue)
+        if success then
+            refreshStreakPanel()
+            refreshLocalPlayerUI()
+            eloInput2.Text = ""
+            local notif = Drawing.new("Text")
+            notif.Text = "✅ Đã đặt ELO thành " .. newValue
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(0, 255, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            notif.Visible = true
+            task.wait(1)
+            notif.Visible = false
+            notif:Remove()
+        else
+            local notif = Drawing.new("Text")
+            notif.Text = "❌ Không tìm thấy ELO!"
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(255, 0, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            notif.Visible = true
+            task.wait(1)
+            notif.Visible = false
+            notif:Remove()
+        end
+    end
+end)
+
+levelBtn2.MouseButton1Click:Connect(function()
+    playClickSound()
+    local newValue = tonumber(levelInput2.Text)
+    if newValue then
+        local success = setLevel(newValue)
+        if success then
+            refreshStreakPanel()
+            refreshLocalPlayerUI()
+            levelInput2.Text = ""
+            local notif = Drawing.new("Text")
+            notif.Text = "✅ Đã đặt Level thành " .. newValue
+            notif.Size = 14
+            notif.Color = Color3.fromRGB(0, 255, 0)
+            notif.Center = true
+            notif.Outline = true
+            notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            notif.Visible = true
+            task.wait(1)
+            notif.Visible = false
+            notif:Remove()
+        else
+            local notif = Drawing.new("Text")
+            notif.Text = "❌ Không tìm thấy Level!"
             notif.Size = 14
             notif.Color = Color3.fromRGB(255, 0, 0)
             notif.Center = true
@@ -3184,7 +4647,7 @@ local deviceTitle = Instance.new("TextLabel")
 deviceTitle.Size = UDim2.new(1, -20, 0, 40)
 deviceTitle.Position = UDim2.new(0, 10, 0, y)
 deviceTitle.BackgroundTransparency = 1
-deviceTitle.Text = "🎮 SELECT YOUR DEVICE"
+deviceTitle.Text = "🎮 CHỌN THIẾT BỊ"
 deviceTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
 deviceTitle.TextSize = 14
 deviceTitle.Font = Enum.Font.GothamBold
@@ -3192,11 +4655,11 @@ deviceTitle.TextXAlignment = Enum.TextXAlignment.Center
 deviceTitle.Parent = devicePanel
 
 y = y + 50
-createDeviceButton(devicePanel, y, "🖱️ MOUSE & KEYBOARD", "MouseKeyboard", Color3.fromRGB(45, 45, 65))
+createDeviceButton(devicePanel, y, "🖱️ CHUỘT & BÀN PHÍM", "MouseKeyboard", Color3.fromRGB(45, 45, 65))
 y = y + 55
-createDeviceButton(devicePanel, y, "🎮 GAMEPAD", "Gamepad", Color3.fromRGB(45, 65, 45))
+createDeviceButton(devicePanel, y, "🎮 TAY CẦM", "Gamepad", Color3.fromRGB(45, 65, 45))
 y = y + 55
-createDeviceButton(devicePanel, y, "📱 TOUCH (MOBILE)", "Touch", Color3.fromRGB(65, 45, 65))
+createDeviceButton(devicePanel, y, "📱 CẢM ỨNG", "Touch", Color3.fromRGB(65, 45, 65))
 y = y + 55
 createDeviceButton(devicePanel, y, "🥽 VR", "VR", Color3.fromRGB(65, 65, 45))
 
@@ -3205,7 +4668,7 @@ local infoText = Instance.new("TextLabel")
 infoText.Size = UDim2.new(1, -20, 0, 50)
 infoText.Position = UDim2.new(0, 10, 0, y)
 infoText.BackgroundTransparency = 1
-infoText.Text = "⚠️ Note: Device spoofing changes how\nthe game detects your input method"
+infoText.Text = "⚠️ Lưu ý: Spoof thiết bị sẽ thay đổi cách\ntrò chơi nhận diện phương thức nhập"
 infoText.TextColor3 = Color3.fromRGB(150, 150, 200)
 infoText.TextSize = 11
 infoText.Font = Enum.Font.Gotham
@@ -3214,7 +4677,7 @@ infoText.Parent = devicePanel
 
 -- TP PANEL
 y = 10
-createModernToggle(tpPanel, y, "🌀 ENABLE TELEPORT", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
+createModernToggle(tpPanel, y, "🌀 BẬT DỊCH CHUYỂN", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
 y = y + 70
 local guideCard = Instance.new("Frame")
 guideCard.Size = UDim2.new(1, -10, 0, 100)
@@ -3230,7 +4693,7 @@ local guideLabel = Instance.new("TextLabel")
 guideLabel.Size = UDim2.new(1, -20, 0, 80)
 guideLabel.Position = UDim2.new(0, 10, 0, 10)
 guideLabel.BackgroundTransparency = 1
-guideLabel.Text = "📌 HOW TO USE TELEPORT:\n\n   Press [X] to teleport to where you're looking\n   Make sure you have a clear view of the ground"
+guideLabel.Text = "📌 CÁCH DÙNG DỊCH CHUYỂN:\n\n   Nhấn [X] để dịch chuyển đến nơi bạn đang nhìn\n   Đảm bảo có tầm nhìn rõ xuống đất"
 guideLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
 guideLabel.TextSize = 12
 guideLabel.TextXAlignment = Enum.TextXAlignment.Center
@@ -3238,7 +4701,7 @@ guideLabel.Parent = guideCard
 
 -- AFK PANEL
 y = 10
-createModernToggle(afkPanel, y, "💤 ENABLE ANTI AFK", 
+createModernToggle(afkPanel, y, "💤 BẬT AFK", 
     function() return settings.afk.enabled end, 
     function(v) 
         settings.afk.enabled = v 
@@ -3247,7 +4710,7 @@ createModernToggle(afkPanel, y, "💤 ENABLE ANTI AFK",
 )
 
 y = y + 70
-createModernSlider(afkPanel, y, "⏱️ AFK INTERVAL (seconds)", 10, 300, settings.afk.interval, "s", 
+createModernSlider(afkPanel, y, "⏱️ KHOẢNG THỜI GIAN", 10, 300, settings.afk.interval, "s", 
     function(v) 
         settings.afk.interval = v 
         updateAFK()
@@ -3270,7 +4733,7 @@ local statusTitle = Instance.new("TextLabel")
 statusTitle.Size = UDim2.new(1, -20, 0, 30)
 statusTitle.Position = UDim2.new(0, 10, 0, 8)
 statusTitle.BackgroundTransparency = 1
-statusTitle.Text = "📊 AFK STATUS"
+statusTitle.Text = "📊 TRẠNG THÁI AFK"
 statusTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
 statusTitle.TextSize = 13
 statusTitle.Font = Enum.Font.GothamBold
@@ -3281,7 +4744,7 @@ local statusValue = Instance.new("TextLabel")
 statusValue.Size = UDim2.new(1, -20, 0, 30)
 statusValue.Position = UDim2.new(0, 10, 0, 40)
 statusValue.BackgroundTransparency = 1
-statusValue.Text = settings.afk.enabled and "✅ ACTIVE" or "❌ DISABLED"
+statusValue.Text = settings.afk.enabled and "✅ ĐANG BẬT" or "❌ ĐANG TẮT"
 statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
 statusValue.TextSize = 14
 statusValue.Font = Enum.Font.GothamBold
@@ -3292,7 +4755,7 @@ local intervalValue = Instance.new("TextLabel")
 intervalValue.Size = UDim2.new(1, -20, 0, 30)
 intervalValue.Position = UDim2.new(0, 10, 0, 65)
 intervalValue.BackgroundTransparency = 1
-intervalValue.Text = "⏱️ Interval: " .. settings.afk.interval .. " seconds"
+intervalValue.Text = "⏱️ Khoảng: " .. settings.afk.interval .. " giây"
 intervalValue.TextColor3 = Color3.fromRGB(200, 200, 230)
 intervalValue.TextSize = 12
 intervalValue.Font = Enum.Font.Gotham
@@ -3300,9 +4763,9 @@ intervalValue.TextXAlignment = Enum.TextXAlignment.Left
 intervalValue.Parent = statusCard
 
 local function updateAFKStatus()
-    statusValue.Text = settings.afk.enabled and "✅ ACTIVE" or "❌ DISABLED"
+    statusValue.Text = settings.afk.enabled and "✅ ĐANG BẬT" or "❌ ĐANG TẮT"
     statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    intervalValue.Text = "⏱️ Interval: " .. settings.afk.interval .. " seconds"
+    intervalValue.Text = "⏱️ Khoảng: " .. settings.afk.interval .. " giây"
 end
 
 local originalUpdateAFK = updateAFK
@@ -3312,38 +4775,38 @@ updateAFK = function()
 end
 
 y = y + 115
-local infoCard = Instance.new("Frame")
-infoCard.Size = UDim2.new(1, -10, 0, 120)
-infoCard.Position = UDim2.new(0, 5, 0, y)
-infoCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-infoCard.BackgroundTransparency = 0.4
-infoCard.BorderSizePixel = 0
-infoCard.Parent = afkPanel
-local infoCorner = Instance.new("UICorner")
-infoCorner.CornerRadius = UDim.new(0, 12)
-infoCorner.Parent = infoCard
+local infoCard2 = Instance.new("Frame")
+infoCard2.Size = UDim2.new(1, -10, 0, 120)
+infoCard2.Position = UDim2.new(0, 5, 0, y)
+infoCard2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+infoCard2.BackgroundTransparency = 0.4
+infoCard2.BorderSizePixel = 0
+infoCard2.Parent = afkPanel
+local infoCorner2 = Instance.new("UICorner")
+infoCorner2.CornerRadius = UDim.new(0, 12)
+infoCorner2.Parent = infoCard2
 
-local infoTitle = Instance.new("TextLabel")
-infoTitle.Size = UDim2.new(1, -20, 0, 30)
-infoTitle.Position = UDim2.new(0, 10, 0, 8)
-infoTitle.BackgroundTransparency = 1
-infoTitle.Text = "ℹ️ HOW ANTI AFK WORKS"
-infoTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-infoTitle.TextSize = 13
-infoTitle.Font = Enum.Font.GothamBold
-infoTitle.TextXAlignment = Enum.TextXAlignment.Left
-infoTitle.Parent = infoCard
+local infoTitle2 = Instance.new("TextLabel")
+infoTitle2.Size = UDim2.new(1, -20, 0, 30)
+infoTitle2.Position = UDim2.new(0, 10, 0, 8)
+infoTitle2.BackgroundTransparency = 1
+infoTitle2.Text = "ℹ️ CÁCH AFK HOẠT ĐỘNG"
+infoTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
+infoTitle2.TextSize = 13
+infoTitle2.Font = Enum.Font.GothamBold
+infoTitle2.TextXAlignment = Enum.TextXAlignment.Left
+infoTitle2.Parent = infoCard2
 
-local infoDesc = Instance.new("TextLabel")
-infoDesc.Size = UDim2.new(1, -20, 0, 80)
-infoDesc.Position = UDim2.new(0, 10, 0, 35)
-infoDesc.BackgroundTransparency = 1
-infoDesc.Text = "• Simulates random inputs every interval\n• Prevents game from kicking you for inactivity\n• Works with: Mouse movement, small jumps,\n  camera wiggle, key presses, and more"
-infoDesc.TextColor3 = Color3.fromRGB(180, 180, 210)
-infoDesc.TextSize = 11
-infoDesc.Font = Enum.Font.Gotham
-infoDesc.TextXAlignment = Enum.TextXAlignment.Left
-infoDesc.Parent = infoCard
+local infoDesc2 = Instance.new("TextLabel")
+infoDesc2.Size = UDim2.new(1, -20, 0, 80)
+infoDesc2.Position = UDim2.new(0, 10, 0, 35)
+infoDesc2.BackgroundTransparency = 1
+infoDesc2.Text = "• Mô phỏng các thao tác ngẫu nhiên mỗi khoảng\n• Ngăn game đá bạn vì không hoạt động\n• Hoạt động với: Di chuột, nhảy nhẹ,\n  lắc camera, nhấn phím,..."
+infoDesc2.TextColor3 = Color3.fromRGB(180, 180, 210)
+infoDesc2.TextSize = 11
+infoDesc2.Font = Enum.Font.Gotham
+infoDesc2.TextXAlignment = Enum.TextXAlignment.Left
+infoDesc2.Parent = infoCard2
 
 updateAFKStatus()
 
@@ -3372,7 +4835,7 @@ local function refreshPlayersList()
     titleLabel.Size = UDim2.new(1, -20, 0, 40)
     titleLabel.Position = UDim2.new(0, 10, 0, 10)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "👥 PLAYERS IN SERVER"
+    titleLabel.Text = "👥 Player TRONG SERVER"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
     titleLabel.TextSize = 16
     titleLabel.Font = Enum.Font.GothamBold
@@ -3404,7 +4867,7 @@ local function refreshPlayersList()
     statsLabel.Size = UDim2.new(1, -20, 0, 30)
     statsLabel.Position = UDim2.new(0, 10, 0, 5)
     statsLabel.BackgroundTransparency = 1
-    statsLabel.Text = "📊 Total: " .. playerCount .. " players  |  🤝 Team: " .. teamCount .. " players"
+    statsLabel.Text = "📊 Tổng: " .. playerCount .. " người  |  🤝 Đồng đội: " .. teamCount .. " người"
     statsLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
     statsLabel.TextSize = 13
     statsLabel.Font = Enum.Font.Gotham
@@ -3440,7 +4903,7 @@ local function refreshPlayersList()
     searchBox.Position = UDim2.new(0, 48, 0, 5)
     searchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     searchBox.BackgroundTransparency = 0.2
-    searchBox.PlaceholderText = "🔎 Search player by name..."
+    searchBox.PlaceholderText = "🔎 Tìm kiếm Player..."
     searchBox.Text = ""
     searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     searchBox.TextSize = 12
@@ -3458,7 +4921,7 @@ local function refreshPlayersList()
     clearTeamBtn.Size = UDim2.new(0.9, 0, 0, 40)
     clearTeamBtn.Position = UDim2.new(0.05, 0, 0, yPos)
     clearTeamBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearTeamBtn.Text = "🗑️ CLEAR ALL TEAMMATES"
+    clearTeamBtn.Text = "🗑️ XÓA TẤT CẢ ĐỒNG ĐỘI"
     clearTeamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     clearTeamBtn.TextSize = 13
     clearTeamBtn.Font = Enum.Font.GothamBold
@@ -3472,7 +4935,7 @@ local function refreshPlayersList()
         clearAllTeammates()
         refreshPlayersList()
         local notif = Drawing.new("Text")
-        notif.Text = "✅ Cleared all teammates!"
+        notif.Text = "✅ Đã xóa tất cả đồng đội!"
         notif.Size = 14
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
@@ -3490,7 +4953,7 @@ local function refreshPlayersList()
     listTitle.Size = UDim2.new(1, -20, 0, 30)
     listTitle.Position = UDim2.new(0, 10, 0, yPos)
     listTitle.BackgroundTransparency = 1
-    listTitle.Text = "👥 PLAYER LIST"
+    listTitle.Text = "👥 DANH SÁCH Player"
     listTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
     listTitle.TextSize = 14
     listTitle.Font = Enum.Font.GothamBold
@@ -3584,7 +5047,7 @@ local function refreshPlayersList()
             statusLabel.Size = UDim2.new(0, 80, 0, 20)
             statusLabel.Position = UDim2.new(0, 60, 0, 30)
             statusLabel.BackgroundTransparency = 1
-            statusLabel.Text = isTeam and "🤝 TEAMMATE" or "⚔️ ENEMY"
+            statusLabel.Text = isTeam and "🤝 ĐỒNG ĐỘI" or "⚔️ KẺ ĐỊCH"
             statusLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 100, 100)
             statusLabel.TextSize = 10
             statusLabel.Font = Enum.Font.Gotham
@@ -3595,7 +5058,7 @@ local function refreshPlayersList()
             teamBtn.Size = UDim2.new(0, 100, 0, 36)
             teamBtn.Position = UDim2.new(1, -215, 0, 10)
             teamBtn.BackgroundColor3 = isTeam and Color3.fromRGB(100, 60, 60) or Color3.fromRGB(0, 150, 200)
-            teamBtn.Text = isTeam and "❌ REMOVE TEAM" or "🤝 MARK TEAM"
+            teamBtn.Text = isTeam and "❌ XÓA" or "🤝 THÊM"
             teamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             teamBtn.TextSize = 11
             teamBtn.Font = Enum.Font.GothamBold
@@ -3618,7 +5081,7 @@ local function refreshPlayersList()
             specBtn.Size = UDim2.new(0, 80, 0, 36)
             specBtn.Position = UDim2.new(1, -110, 0, 10)
             specBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-            specBtn.Text = "👁️ SPECTATE"
+            specBtn.Text = "👁️ QUAN SÁT"
             specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             specBtn.TextSize = 11
             specBtn.Font = Enum.Font.GothamBold
@@ -3633,7 +5096,7 @@ local function refreshPlayersList()
                     Camera.CameraSubject = player.Character.Humanoid
                     Camera.CameraType = Enum.CameraType.Attach
                     local notif = Drawing.new("Text")
-                    notif.Text = "👁️ Spectating: " .. player.Name
+                    notif.Text = "👁️ Đang quan sát: " .. player.Name
                     notif.Size = 14
                     notif.Color = Color3.fromRGB(0, 200, 255)
                     notif.Center = true
@@ -3675,7 +5138,7 @@ local function refreshPlayersList()
         localNameLabel.Size = UDim2.new(0, 150, 0, 25)
         localNameLabel.Position = UDim2.new(0, 60, 0, 8)
         localNameLabel.BackgroundTransparency = 1
-        localNameLabel.Text = LocalPlayer.Name .. " (YOU)"
+        localNameLabel.Text = LocalPlayer.Name .. " (BẠN)"
         localNameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
         localNameLabel.TextSize = 14
         localNameLabel.Font = Enum.Font.GothamBold
@@ -3686,7 +5149,7 @@ local function refreshPlayersList()
         localStatus.Size = UDim2.new(0, 80, 0, 20)
         localStatus.Position = UDim2.new(0, 60, 0, 30)
         localStatus.BackgroundTransparency = 1
-        localStatus.Text = "👑 YOU"
+        localStatus.Text = "👑 BẠN"
         localStatus.TextColor3 = Color3.fromRGB(255, 215, 0)
         localStatus.TextSize = 10
         localStatus.Font = Enum.Font.Gotham
@@ -3731,7 +5194,7 @@ local function refreshConfigList()
     titleLabel.Size = UDim2.new(1, -20, 0, 40)
     titleLabel.Position = UDim2.new(0, 10, 0, 10)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "⚙️ CONFIG MANAGEMENT"
+    titleLabel.Text = "⚙️ QUẢN LÝ CẤU HÌNH"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
     titleLabel.TextSize = 16
     titleLabel.Font = Enum.Font.GothamBold
@@ -3755,7 +5218,7 @@ local function refreshConfigList()
     autoLoadLabel.Size = UDim2.new(1, -20, 0, 25)
     autoLoadLabel.Position = UDim2.new(0, 10, 0, 8)
     autoLoadLabel.BackgroundTransparency = 1
-    autoLoadLabel.Text = "🔄 AUTO LOAD CONFIG"
+    autoLoadLabel.Text = "🔄 TỰ ĐỘNG TẢI CẤU HÌNH"
     autoLoadLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
     autoLoadLabel.TextSize = 13
     autoLoadLabel.Font = Enum.Font.GothamBold
@@ -3767,7 +5230,7 @@ local function refreshConfigList()
     autoLoadStatus.Size = UDim2.new(1, -20, 0, 25)
     autoLoadStatus.Position = UDim2.new(0, 10, 0, 35)
     autoLoadStatus.BackgroundTransparency = 1
-    autoLoadStatus.Text = currentAutoLoad and "📌 Current auto-load: " .. currentAutoLoad or "📌 No config set for auto-load"
+    autoLoadStatus.Text = currentAutoLoad and "📌 Tự động tải: " .. currentAutoLoad or "📌 Chưa cài đặt auto-load"
     autoLoadStatus.TextColor3 = currentAutoLoad and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 200, 100)
     autoLoadStatus.TextSize = 12
     autoLoadStatus.Font = Enum.Font.Gotham
@@ -3778,7 +5241,7 @@ local function refreshConfigList()
     clearAutoLoadBtn.Size = UDim2.new(0, 100, 0, 32)
     clearAutoLoadBtn.Position = UDim2.new(1, -110, 0, 55)
     clearAutoLoadBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearAutoLoadBtn.Text = "🗑️ CLEAR"
+    clearAutoLoadBtn.Text = "🗑️ XÓA"
     clearAutoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     clearAutoLoadBtn.TextSize = 11
     clearAutoLoadBtn.Font = Enum.Font.GothamBold
@@ -3790,11 +5253,11 @@ local function refreshConfigList()
     clearAutoLoadBtn.MouseButton1Click:Connect(function()
         playClickSound()
         clearAutoLoadConfig()
-        autoLoadStatus.Text = "📌 No config set for auto-load"
+        autoLoadStatus.Text = "📌 Chưa cài đặt auto-load"
         autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
         refreshConfigList()
         local notif = Drawing.new("Text")
-        notif.Text = "✅ Auto-load cleared!"
+        notif.Text = "✅ Đã xóa auto-load!"
         notif.Size = 14
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
@@ -3822,7 +5285,7 @@ local function refreshConfigList()
     createLabel.Size = UDim2.new(1, -20, 0, 25)
     createLabel.Position = UDim2.new(0, 10, 0, 8)
     createLabel.BackgroundTransparency = 1
-    createLabel.Text = "📝 CREATE NEW CONFIG"
+    createLabel.Text = "📝 TẠO CẤU HÌNH MỚI"
     createLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
     createLabel.TextSize = 13
     createLabel.Font = Enum.Font.GothamBold
@@ -3832,7 +5295,7 @@ local function refreshConfigList()
     configNameInput.Size = UDim2.new(0.6, -10, 0, 38)
     configNameInput.Position = UDim2.new(0, 10, 0, 40)
     configNameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    configNameInput.PlaceholderText = "Enter config name..."
+    configNameInput.PlaceholderText = "Nhập tên config..."
     configNameInput.Text = ""
     configNameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
     configNameInput.TextSize = 13
@@ -3845,7 +5308,7 @@ local function refreshConfigList()
     createConfigBtn.Size = UDim2.new(0.35, -10, 0, 38)
     createConfigBtn.Position = UDim2.new(0.65, 0, 0, 40)
     createConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-    createConfigBtn.Text = "💾 CREATE & SAVE"
+    createConfigBtn.Text = "💾 TẠO & LƯU"
     createConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     createConfigBtn.TextSize = 11
     createConfigBtn.Font = Enum.Font.GothamBold
@@ -3870,7 +5333,7 @@ local function refreshConfigList()
     listLabel.Size = UDim2.new(0.6, -10, 0, 25)
     listLabel.Position = UDim2.new(0, 10, 0, 8)
     listLabel.BackgroundTransparency = 1
-    listLabel.Text = "📋 SAVED CONFIGS"
+    listLabel.Text = "📋 CẤU HÌNH ĐÃ LƯU"
     listLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
     listLabel.TextSize = 13
     listLabel.Font = Enum.Font.GothamBold
@@ -3881,7 +5344,7 @@ local function refreshConfigList()
     refreshBtn.Size = UDim2.new(0, 80, 0, 28)
     refreshBtn.Position = UDim2.new(1, -90, 0, 6)
     refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    refreshBtn.Text = "🔄 REFRESH"
+    refreshBtn.Text = "🔄 LÀM MỚI"
     refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     refreshBtn.TextSize = 11
     refreshBtn.Font = Enum.Font.GothamBold
@@ -3952,7 +5415,7 @@ local function refreshConfigList()
             loadCfgBtn.Size = UDim2.new(0, 70, 0, 32)
             loadCfgBtn.Position = UDim2.new(0.5, -95, 0, 12)
             loadCfgBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-            loadCfgBtn.Text = "📂 LOAD"
+            loadCfgBtn.Text = "📂 TẢI"
             loadCfgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             loadCfgBtn.TextSize = 11
             loadCfgBtn.Font = Enum.Font.GothamBold
@@ -3965,7 +5428,7 @@ local function refreshConfigList()
             autoLoadBtn.Size = UDim2.new(0, 85, 0, 32)
             autoLoadBtn.Position = UDim2.new(0.5, -15, 0, 12)
             autoLoadBtn.BackgroundColor3 = (autoLoadName == cfgName) and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(60, 60, 85)
-            autoLoadBtn.Text = (autoLoadName == cfgName) and "✅ AUTO" or "⭐ SET AUTO"
+            autoLoadBtn.Text = (autoLoadName == cfgName) and "✅ AUTO" or "⭐ ĐẶT AUTO"
             autoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             autoLoadBtn.TextSize = 10
             autoLoadBtn.Font = Enum.Font.GothamBold
@@ -3991,10 +5454,11 @@ local function refreshConfigList()
                 playClickSound()
                 local success, msg = loadConfig(cfgName)
                 if success then
-                    refreshWinStreakDisplay()
+                    refreshStreakPanel()
                     updateAFKStatus()
                     refreshPlayersList()
                     refreshInfoPanel()
+                    refreshSkinPanel()
                 end
                 local notif = Drawing.new("Text")
                 notif.Text = msg
@@ -4013,11 +5477,11 @@ local function refreshConfigList()
                 playClickSound()
                 local success = saveAutoLoadConfig(cfgName)
                 if success then
-                    autoLoadStatus.Text = "📌 Current auto-load: " .. cfgName
+                    autoLoadStatus.Text = "📌 Tự động tải: " .. cfgName
                     autoLoadStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
                     updateConfigList()
                     local notif = Drawing.new("Text")
-                    notif.Text = "✅ Auto-load set to: " .. cfgName
+                    notif.Text = "✅ Đã đặt auto-load: " .. cfgName
                     notif.Size = 14
                     notif.Color = Color3.fromRGB(0, 255, 0)
                     notif.Center = true
@@ -4029,7 +5493,7 @@ local function refreshConfigList()
                     notif:Remove()
                 else
                     local notif = Drawing.new("Text")
-                    notif.Text = "❌ Cannot set auto-load"
+                    notif.Text = "❌ Không thể đặt auto-load"
                     notif.Size = 14
                     notif.Color = Color3.fromRGB(255, 0, 0)
                     notif.Center = true
@@ -4048,7 +5512,7 @@ local function refreshConfigList()
                 if success then
                     if autoLoadName == cfgName then
                         clearAutoLoadConfig()
-                        autoLoadStatus.Text = "📌 No config set for auto-load"
+                        autoLoadStatus.Text = "📌 Chưa cài đặt auto-load"
                         autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
                     end
                     updateConfigList()
@@ -4100,33 +5564,30 @@ end
 
 refreshConfigList()
 refreshInfoPanel()
+refreshAdminPanel()
+refreshSkinPanel()
+checkAdminOnline()
 
-local function doAutoLoadOnStart()
-    ensureConfigFolder()
-    local success, msg = autoLoadConfigOnStart()
-    if success then
-        refreshWinStreakDisplay()
-        updateAFKStatus()
-        refreshPlayersList()
-        refreshInfoPanel()
-        local notif = Drawing.new("Text")
-        notif.Text = "🔧 " .. msg
-        notif.Size = 14
-        notif.Color = Color3.fromRGB(0, 255, 0)
-        notif.Center = true
-        notif.Outline = true
-        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 80)
-        notif.Visible = true
-        task.wait(2)
-        notif.Visible = false
-        notif:Remove()
-    end
+local autoSuccess, autoMsg = autoLoadConfigOnStart()
+if autoSuccess then
+    refreshStreakPanel()
+    updateAFKStatus()
+    refreshPlayersList()
+    refreshInfoPanel()
+    refreshSkinPanel()
+    print(autoMsg)
 end
 
-doAutoLoadOnStart()
+Players.PlayerAdded:Connect(function()
+    checkAdminOnline()
+    refreshAdminPanel()
+end)
+Players.PlayerRemoving:Connect(function()
+    checkAdminOnline()
+    refreshAdminPanel()
+end)
 
--- Tab switching
-local panels = {aimbotPanel, espPanel, skeletonPanel, setValuePanel, devicePanel, tpPanel, afkPanel, playersPanel, infoPanel, configPanel}
+local panels = {aimbotPanel, espPanel, skeletonPanel, skinPanel, setValuePanel, devicePanel, tpPanel, afkPanel, playersPanel, infoPanel, adminPanel, configPanel}
 local function switchTab(tabIndex, panel, btn)
     TweenService:Create(contentArea, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
     task.wait(0.1)
@@ -4134,11 +5595,16 @@ local function switchTab(tabIndex, panel, btn)
         if p then p.Visible = false end
     end
     panel.Visible = true
-    if tabIndex == 4 then refreshWinStreakDisplay() end
-    if tabIndex == 7 then updateAFKStatus() end
-    if tabIndex == 8 then refreshPlayersList() end
-    if tabIndex == 9 then refreshInfoPanel() end
-    if tabIndex == 10 then refreshConfigList() end
+    if tabIndex == 5 then refreshStreakPanel() end
+    if tabIndex == 8 then updateAFKStatus() end
+    if tabIndex == 9 then refreshPlayersList() end
+    if tabIndex == 10 then refreshInfoPanel() end
+    if tabIndex == 11 then 
+        checkAdminOnline()
+        refreshAdminPanel() 
+    end
+    if tabIndex == 12 then refreshConfigList() end
+    if tabIndex == 4 then refreshSkinPanel() end
     for i, b in ipairs(tabs) do
         TweenService:Create(b, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 160, 200), Font = Enum.Font.GothamSemibold}):Play()
     end
@@ -4154,7 +5620,6 @@ for i, btn in ipairs(tabs) do
     end)
 end
 
--- Menu animation
 local menuVisible = false
 local function openMenu()
     menuVisible = true
@@ -4190,7 +5655,6 @@ closeBtn.MouseButton1Click:Connect(function()
     closeMenu()
 end)
 
--- Drag menu
 local dragStart, menuStart, isDragging = nil, nil, false
 header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -4211,7 +5675,6 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end
 end)
 
--- Open menu with Right Shift
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
@@ -4220,7 +5683,6 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- Particle animation
 task.spawn(function()
     while true do
         if menuVisible and particle then
@@ -4230,9 +5692,8 @@ task.spawn(function()
     end
 end)
 
--- Welcome notification
 local successNotif = Drawing.new("Text")
-successNotif.Text = "✅ Welcome " .. playerName .. "!"
+successNotif.Text = "✅ Chào mừng " .. playerName .. "!"
 successNotif.Size = 18
 successNotif.Color = Color3.fromRGB(0, 255, 0)
 successNotif.Center = true
@@ -4250,7 +5711,7 @@ subNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y
 subNotif.Visible = true
 
 local deviceNotif = Drawing.new("Text")
-deviceNotif.Text = "🎮 Device Spoofer | 🔫 Aimbot | 📏 LINE ALWAYS ON | ⚡ AUTO SHOT | 💤 ANTI AFK | 👥 TEAM SYSTEM | ℹ️ INFO"
+deviceNotif.Text = "🎮 Spoof Thiết Bị | 🔫 Aimbot (NHANH) | 📏 Line Luôn Bật | ⚡ Auto Shot | 💤 AFK | 👥 Team System | 👑 Quản Trị | ℹ️ Thông Tin | 🎨 Skin Changer (Auto Save + Auto Clear)"
 deviceNotif.Size = 12
 deviceNotif.Color = Color3.fromRGB(200, 200, 100)
 deviceNotif.Center = true
@@ -4267,27 +5728,29 @@ subNotif:Remove()
 deviceNotif:Remove()
 
 print("========================================")
-print("     ✦ KHANHGD CHEAT v13.0 ✦")
+print("     ✦ KHANHGD CHEAT v15.0 ✦")
 print("========================================")
-print("  VERIFIED KEY: " .. currentKey)
-print("  PLAYER: " .. playerName)
+print("  KEY ĐÃ XÁC THỰC: " .. currentKey)
+print("  Player: " .. playerName)
 print("========================================")
-print("  RIGHT SHIFT = MENU")
-print("  HOLD RIGHT CLICK = AIMBOT")
-print("  X = TELEPORT")
+print("  RIGHT SHIFT = MỞ MENU")
+print("  GIỮ CHUỘT PHẢI = AIMBOT (NHANH HƠN)")
+print("  X = DỊCH CHUYỂN")
 print("========================================")
 print("  📏 LINE LUÔN HIỆN (CÓ THỂ TẮT/BẬT)")
 print("  ⚡ AUTO SHOT BẮN NGAY KHI TÂM CHẠM ĐẦU")
-print("  💤 ANTI AFK TỰ ĐỘNG (CÀI TRONG TAB AFK)")
+print("  💤 AFK TỰ ĐỘNG (CÀI TRONG TAB AFK)")
 print("  👥 TEAM SYSTEM - ĐÁNH DẤU ĐỒNG ĐỘI KHÔNG AIM")
-print("  🔍 SEARCH PLAYER - LỌC DANH SÁCH THEO TÊN")
+print("  🔍 TÌM KIẾM Player - LỌC DANH SÁCH THEO TÊN")
 print("  ℹ️ INFO TAB - XEM TẤT CẢ THÔNG TIN + AVATAR THẬT")
+print("  👑 QUẢN TRỊ TAB - THÔNG TIN VÀ VÀO SERVER CỦA ADMIN")
+print("  🎨 SKIN TAB - AUTO SAVE + AUTO CLEAR SAU KHI APPLY")
 print("========================================")
 local autoCfg = getAutoLoadConfig()
 if autoCfg then
-    print("  🔄 AUTO LOAD: " .. autoCfg)
+    print("  🔄 TỰ ĐỘNG TẢI: " .. autoCfg)
 else
-    print("  🔄 AUTO LOAD: Not set")
+    print("  🔄 TỰ ĐỘNG TẢI: Chưa cài đặt")
 end
 print("========================================")
 end
