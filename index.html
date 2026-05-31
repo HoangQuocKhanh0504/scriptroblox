@@ -391,7 +391,7 @@
         <div id="statusMsg" class="status-msg">✨ Nhập key hợp lệ để tiếp tục</div>
         <div class="btn-group">
             <button id="submitKeyBtn" class="btn-primary"><i class="fas fa-check"></i> XÁC THỰC</button>
-            <button id="getKeyBtn" class="btn-secondary"><i class="fas fa-copy"></i> 🔑 LẤY KEY</button>
+            <button id="getKeyBtn" class="btn-secondary"><i class="fas fa-external-link-alt"></i> 🔑 LẤY KEY</button>
         </div>
     </div>
 </div>
@@ -450,7 +450,7 @@
 </div>
 
 <script>
-    // ==================== LẤY KEY TỪ GITHUB ====================
+    // ==================== LẤY KEY TỪ GITHUB (TỰ ĐỘNG CẬP NHẬT) ====================
     let VALID_KEYS_SET = new Set();
     let keysLoaded = false;
     let currentActiveKey = localStorage.getItem("KHANHGD_KEY") || "";
@@ -461,6 +461,7 @@
             if (!response.ok) throw new Error('Không thể tải keys.json');
             const data = await response.json();
             if (data.keys && Array.isArray(data.keys)) {
+                VALID_KEYS_SET.clear();
                 data.keys.forEach(key => VALID_KEYS_SET.add(key.trim().toUpperCase()));
                 console.log(`✅ Đã tải ${VALID_KEYS_SET.size} key từ GitHub`);
                 keysLoaded = true;
@@ -595,20 +596,10 @@
         });
     }
 
+    // Nút LẤY KEY - Mở link key-system
     if (getKeyBtn) {
-        getKeyBtn.addEventListener('click', async () => {
-            const keyLink = "https://github.com/HoangQuocKhanh0504/key-system";
-            try {
-                await navigator.clipboard.writeText(keyLink);
-                statusMsg.innerHTML = '✅ ĐÃ SAO CHÉP LINK GITHUB LẤY KEY!';
-                statusMsg.style.color = '#88ff88';
-                setTimeout(() => {
-                    if (!isUnlocked) statusMsg.innerHTML = '✨ Nhập key hợp lệ để tiếp tục';
-                }, 2500);
-            } catch (err) {
-                statusMsg.innerHTML = '⚠️ Sao chép thủ công: ' + keyLink;
-                statusMsg.style.color = '#ffaa66';
-            }
+        getKeyBtn.addEventListener('click', () => {
+            window.open('https://hoangquockhanh0504.github.io/key-system/', '_blank');
         });
     }
 
