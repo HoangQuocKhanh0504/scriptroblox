@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>KHANHGD CHEAT | Key System & Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0c12;
+            font-family: 'Inter', sans-serif;
+            color: #eef5ff;
+            overflow-x: hidden;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 10%, rgba(0, 200, 255, 0.08), rgba(10, 12, 18, 1));
+            z-index: -2;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 2rem 4rem;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0c12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #2a3a55;
+            border-top-color: #0cf;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Key System Modal */
+        .key-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key-modal {
+            background: rgba(15, 20, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .key-modal h2 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .key-input {
+            width: 100%;
+            padding: 1rem;
+            background: #0f1420;
+            border: 1px solid #2a3a55;
+            border-radius: 40px;
+            color: white;
+            font-family: monospace;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .key-input:focus {
+            outline: none;
+            border-color: #0cf;
+            box-shadow: 0 0 12px rgba(0, 200, 255, 0.3);
+        }
+
+        .status-msg {
+            text-align: center;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            min-height: 40px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: #0cf;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 40px;
+            font-weight: 700;
+            color: #0a0c12;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #2a3a55;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-danger {
+            flex: 1;
+            background: #8b2c2c;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        /* Main content */
+        .hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(0, 200, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            border-radius: 100px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #0cf;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFFFFF, #0cf, #7a2eff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .admin-area {
+            background: linear-gradient(135deg, rgba(0, 150, 200, 0.2), rgba(100, 50, 200, 0.1));
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-avatar {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(145deg, #0cf, #7a2eff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .admin-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-avatar i { font-size: 2rem; color: white; }
+
+        .join-button, .copy-script-btn {
+            background: #0cf;
+            border: none;
+            padding: 0.7rem 1.7rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            color: #0a0c12;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+
+        .copy-script-btn {
+            background: #7a2eff;
+        }
+
+        .join-button:hover {
+            background: #7a2eff;
+            color: white;
+        }
+
+        .copy-script-btn:hover {
+            background: #0cf;
+            color: #0a0c12;
+        }
+
+        .revoke-button {
+            background: #8b2c2c;
+            border: none;
+            padding: 0.7rem 1.7rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            margin-left: 1rem;
+        }
+
+        .revoke-button:hover {
+            background: #b22222;
+            transform: scale(1.02);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(12, 15, 28, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            transition: 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: #0cf;
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 1.8rem;
+            color: #0cf;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #1e2a3a;
+            font-size: 0.75rem;
+            color: #6c7a9e;
+        }
+
+        .hidden { display: none; }
+
+        .key-info-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .current-key-badge {
+            background: rgba(0, 200, 255, 0.2);
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e2a3a;
+            color: #0cf;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1500;
+            backdrop-filter: blur(8px);
+            border: 1px solid #0cf;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @media (max-width: 700px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            .admin-area { flex-direction: column; text-align: center; }
+            .admin-info { flex-direction: column; }
+            .key-info-bar { justify-content: center; }
+            .button-group { flex-direction: column; width: 100%; }
+            .join-button, .copy-script-btn { width: 100%; text-align: center; }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- Loading Screen -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <div>Đang tải danh sách key từ GitHub...</div>
+</div>
+
+<!-- Key System Modal -->
+<div id="keyModal" class="key-overlay" style="display: none;">
+    <div class="key-modal">
+        <h2><i class="fas fa-key"></i> 🔐 XÁC THỰC KEY</h2>
+        <div class="sub" style="text-align:center; margin-bottom:1rem;">Nhập key để kích hoạt KHANHGD CHEAT</div>
+        <input type="text" id="keyInput" class="key-input" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off">
+        <div id="statusMsg" class="status-msg">✨ Nhập key hợp lệ để tiếp tục</div>
+        <div class="btn-group">
+            <button id="submitKeyBtn" class="btn-primary"><i class="fas fa-check"></i> XÁC THỰC</button>
+            <button id="getKeyBtn" class="btn-secondary"><i class="fas fa-copy"></i> 🔑 LẤY KEY</button>
+        </div>
+    </div>
+</div>
+
+<!-- Nội dung chính -->
+<div id="mainContent" style="display: none;">
+    <div class="container">
+        <!-- Thanh hiển thị key hiện tại + nút huỷ -->
+        <div class="key-info-bar">
+            <span class="current-key-badge" id="currentKeyDisplay">
+                <i class="fas fa-key"></i> <span id="currentKeyText">Đã kích hoạt</span>
+            </span>
+            <button id="revokeKeyBtn" class="revoke-button">
+                <i class="fas fa-trash-alt"></i> HUỶ KÍCH HOẠT KEY
+            </button>
+        </div>
+
+        <div class="hero">
+            <div class="badge"><i class="fas fa-skull"></i> KHANHGD CHEAT | ĐÃ KÍCH HOẠT <i class="fas fa-check-circle" style="color:#0cf;"></i></div>
+            <h1>✦ KHANHGD CHEAT ✦</h1>
+            <div class="sub">ESP • XƯƠNG • AIMBOT • AUTO SHOT • SKIN SAVE • AFK • CONFIG • TEAM SYSTEM</div>
+        </div>
+
+        <!-- ADMIN CARD -->
+        <div class="admin-area">
+            <div class="admin-info">
+                <div class="admin-avatar" id="adminAvatar">
+                    <i class="fas fa-user-secret"></i>
+                </div>
+                <div class="admin-text">
+                    <h3><i class="fas fa-shield-alt"></i> Quản trị viên / Chủ sở hữu</h3>
+                    <p><strong>hoangquockhanh0504</strong> (DonkVN) • ID: 10917708647<br>Trạng thái: <span style="color:#0cf">🟢 Đang hoạt động</span></p>
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="joinAdminBtn" class="join-button"><i class="fas fa-rocket"></i> 🚀 VÀO CÙNG ADMIN</button>
+                <button id="copyScriptBtn" class="copy-script-btn"><i class="fas fa-code"></i> 📋 COPY SCRIPT</button>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-eye"></i></div><div class="feature-title">ESP + Skeleton</div><div>Box, tên, khoảng cách, thanh máu, xương 3D.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-crosshairs"></i></div><div class="feature-title">Aimbot Pro</div><div>FOV circle, lock mục tiêu, auto-shot siêu nhanh.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-chart-line"></i></div><div class="feature-title">Set Value / Streak</div><div>Chỉnh Win Streak, ELO, Level realtime.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-mobile-alt"></i></div><div class="feature-title">Device Spoofer</div><div>MouseKeyboard, Gamepad, Touch, VR.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-database"></i></div><div class="feature-title">Config System</div><div>Lưu/tải cấu hình, auto-load.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-bed"></i></div><div class="feature-title">Anti AFK Persistent</div><div>Mô phỏng hành động, không bị kick.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-users"></i></div><div class="feature-title">Players + Team Tab</div><div>Danh sách player, thêm/xóa đồng đội.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-palette"></i></div><div class="feature-title">Skin Changer Full</div><div>Tự động quét skin, auto-save & clear.</div></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-location-dot"></i></div><div class="feature-title">Teleport (X)</div><div>Nhấn X để dịch chuyển.</div></div>
+        </div>
+        <div class="footer">
+            <i class="fas fa-code-branch"></i> KHANHGD CHEAT v15.0 | Key đã kích hoạt | © hoangquockhanh0504
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== LẤY KEY TỪ GITHUB ====================
+    let VALID_KEYS_SET = new Set();
+    let keysLoaded = false;
+    let currentActiveKey = localStorage.getItem("KHANHGD_KEY") || "";
+
+    async function loadKeysFromGitHub() {
+        try {
+            const response = await fetch('https://raw.githubusercontent.com/HoangQuocKhanh0504/key-system/root/keys.json');
+            if (!response.ok) throw new Error('Không thể tải keys.json');
+            const data = await response.json();
+            if (data.keys && Array.isArray(data.keys)) {
+                data.keys.forEach(key => VALID_KEYS_SET.add(key.trim().toUpperCase()));
+                console.log(`✅ Đã tải ${VALID_KEYS_SET.size} key từ GitHub`);
+                keysLoaded = true;
+                return true;
+            }
+            throw new Error('Định dạng keys.json không hợp lệ');
+        } catch (error) {
+            console.error('Lỗi tải key:', error);
+            keysLoaded = true;
+            return false;
+        }
+    }
+
+    // ==================== HIỂN THỊ AVATAR ROBLOX THẬT ====================
+    async function loadRobloxAvatar(userId, elementId) {
+        try {
+            const url = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=false`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.data && data.data[0] && data.data[0].imageUrl) {
+                const img = document.createElement('img');
+                img.src = data.data[0].imageUrl;
+                img.alt = "Avatar";
+                const container = document.getElementById(elementId);
+                if (container) {
+                    container.innerHTML = '';
+                    container.appendChild(img);
+                }
+            }
+        } catch (e) {
+            console.warn("Không thể tải avatar:", e);
+        }
+    }
+
+    loadRobloxAvatar(10917708647, 'adminAvatar');
+
+    // ==================== HỆ THỐNG KEY ====================
+    let isUnlocked = false;
+
+    function validateKey(key) {
+        const normalized = key.trim().toUpperCase().replace(/\s/g, '');
+        return VALID_KEYS_SET.has(normalized);
+    }
+
+    function saveKey(key) {
+        if (key) {
+            localStorage.setItem("KHANHGD_KEY", key);
+            currentActiveKey = key;
+        } else {
+            localStorage.removeItem("KHANHGD_KEY");
+            currentActiveKey = "";
+        }
+    }
+
+    function updateKeyDisplay() {
+        const keyTextSpan = document.getElementById('currentKeyText');
+        if (keyTextSpan && currentActiveKey) {
+            if (currentActiveKey.length > 12) {
+                const start = currentActiveKey.substring(0, 4);
+                const end = currentActiveKey.substring(currentActiveKey.length - 4);
+                keyTextSpan.textContent = `${start}****${end}`;
+            } else {
+                keyTextSpan.textContent = currentActiveKey.substring(0, 6) + '***';
+            }
+        }
+    }
+
+    function revokeKey() {
+        if (confirm('⚠️ Bạn có chắc chắn muốn huỷ kích hoạt key?\nSau khi huỷ, trang sẽ tải lại và yêu cầu nhập key mới.')) {
+            saveKey(null);
+            localStorage.removeItem("KHANHGD_KEY");
+            window.location.reload();
+        }
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.innerHTML = message;
+        toast.style.color = isError ? '#ff8888' : '#88ff88';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    function unlockUI() {
+        document.getElementById('keyModal').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        isUnlocked = true;
+        updateKeyDisplay();
+    }
+
+    // Kiểm tra key đã lưu sau khi tải keys xong
+    async function checkSavedKey() {
+        await loadKeysFromGitHub();
+        document.getElementById('loadingScreen').style.display = 'none';
+        
+        if (currentActiveKey && validateKey(currentActiveKey)) {
+            unlockUI();
+        } else {
+            if (currentActiveKey) saveKey(null);
+            document.getElementById('keyModal').style.display = 'flex';
+        }
+    }
+
+    // Xử lý nhập key
+    const keyInput = document.getElementById('keyInput');
+    const statusMsg = document.getElementById('statusMsg');
+    const submitBtn = document.getElementById('submitKeyBtn');
+    const getKeyBtn = document.getElementById('getKeyBtn');
+    const revokeBtn = document.getElementById('revokeKeyBtn');
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            const enteredKey = keyInput.value;
+            if (!enteredKey) {
+                statusMsg.innerHTML = '❌ Vui lòng nhập key!';
+                statusMsg.style.color = '#ff8888';
+                return;
+            }
+            if (validateKey(enteredKey)) {
+                statusMsg.innerHTML = '✅ KEY HỢP LỆ! Đang kích hoạt menu...';
+                statusMsg.style.color = '#88ff88';
+                saveKey(enteredKey);
+                setTimeout(() => { unlockUI(); }, 800);
+            } else {
+                statusMsg.innerHTML = '❌ KEY KHÔNG HỢP LỆ! Vui lòng thử lại.';
+                statusMsg.style.color = '#ff8888';
+            }
+        });
+    }
+
+    if (getKeyBtn) {
+        getKeyBtn.addEventListener('click', async () => {
+            const keyLink = "https://github.com/HoangQuocKhanh0504/key-system";
+            try {
+                await navigator.clipboard.writeText(keyLink);
+                statusMsg.innerHTML = '✅ ĐÃ SAO CHÉP LINK GITHUB LẤY KEY!';
+                statusMsg.style.color = '#88ff88';
+                setTimeout(() => {
+                    if (!isUnlocked) statusMsg.innerHTML = '✨ Nhập key hợp lệ để tiếp tục';
+                }, 2500);
+            } catch (err) {
+                statusMsg.innerHTML = '⚠️ Sao chép thủ công: ' + keyLink;
+                statusMsg.style.color = '#ffaa66';
+            }
+        });
+    }
+
+    if (keyInput) {
+        keyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitBtn.click();
+        });
+    }
+
+    if (revokeBtn) {
+        revokeBtn.addEventListener('click', revokeKey);
+    }
+
+    // ==================== NÚT VÀO ADMIN - MỞ LINK TRỰC TIẾP ====================
+    const joinAdminBtn = document.getElementById('joinAdminBtn');
+    const ADMIN_SERVER_URL = "https://www.roblox.com/share?code=a549b6c491ad704a93cfb2081fb6a336&type=Server";
+    
+    if (joinAdminBtn) {
+        joinAdminBtn.addEventListener('click', () => {
+            window.open(ADMIN_SERVER_URL, '_blank');
+        });
+    }
+
+    // ==================== NÚT COPY SCRIPT ====================
+    const copyScriptBtn = document.getElementById('copyScriptBtn');
+    const SCRIPT_CODE = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/HoangQuocKhanh0504/scriptroblox/root/index.lua"))()';
+    
+    if (copyScriptBtn) {
+        copyScriptBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(SCRIPT_CODE);
+                showToast('✅ Đã sao chép script! Dán vào executor (Krnl, Synapse, Fluxus...) để chạy.');
+            } catch (err) {
+                showToast('❌ Không thể sao chép tự động. Hãy copy thủ công: ' + SCRIPT_CODE, true);
+            }
+        });
+    }
+
+    // Bắt đầu
+    checkSavedKey();
+</script>
+</body>
+</html>
