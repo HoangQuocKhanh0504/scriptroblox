@@ -1,4 +1,6 @@
 -- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB + ADMIN TAB + SKIN TAB (FULL)
+-- UI NANG CAP: TAB DOC BEN TRAI, GIAO DIEN NHO GON, HIEN DAI
+-- DA THAY NUT SPEC THANH NUT TP TRONG PLAYERS TAB
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -10,6 +12,7 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
 
 -- ============ SKIN CHANGER SETUP ==========
 local ViewModels = LocalPlayer.PlayerScripts.Assets.ViewModels
@@ -555,7 +558,7 @@ local function playClickSound()
     local sound = Instance.new("Sound")
     sound.SoundId = "rbxassetid://9120386436"
     sound.Volume = 0.3
-    sound.Parent = game:GetService("CoreGui")
+    sound.Parent = CoreGui
     sound:Play()
     task.wait(0.2)
     sound:Destroy()
@@ -1094,7 +1097,7 @@ local settings = {
     aimbot = {
         enabled = true,
         fovRadius = 200,
-        smoothness = 1,  -- TĂNG TỐC (từ 2 xuống 1)
+        smoothness = 1,
         maxDistance = 150,
         lockTarget = true,
         showFOV = true,
@@ -1496,9 +1499,9 @@ local function drawSkeleton(skelLines, parts, color)
     end
 end
 
--- AIMBOT NHANH HƠN (giảm delay)
+-- AIMBOT NHANH HƠN
 local lastShotTime = 0
-local SHOT_DELAY = 0.01  -- GIẢM TỪ 0.03 XUỐNG 0.01
+local SHOT_DELAY = 0.01
 
 local function shoot()
     local currentTime = tick()
@@ -1532,7 +1535,6 @@ local function getBestTarget()
     return bestTarget
 end
 
--- DI CHUYỂN CHUỘT NHANH HƠN
 local function moveToTarget(targetData)
     if not targetData or not targetData.part then return false end
     local targetPos, onScreen = Camera:WorldToViewportPoint(targetData.part.Position)
@@ -1540,10 +1542,9 @@ local function moveToTarget(targetData)
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local delta = Vector2.new(targetPos.X, targetPos.Y) - centerScreen
     if delta.Magnitude < 1 then return true end
-    -- TĂNG TỐC ĐỘ DI CHUYỂN (giảm smoothness hoặc tăng move)
     local moveX = delta.X / math.max(settings.aimbot.smoothness, 0.5)
     local moveY = delta.Y / math.max(settings.aimbot.smoothness, 0.5)
-    moveX = math.clamp(moveX, -30, 30)  -- Tăng giới hạn
+    moveX = math.clamp(moveX, -30, 30)
     moveY = math.clamp(moveY, -30, 30)
     if mousemoverel then
         mousemoverel(moveX, moveY)
@@ -1580,7 +1581,7 @@ UserInputService.InputEnded:Connect(function(input, gp)
     end
 end)
 
--- RENDER STEP CHÍNH (TĂNG TỐC RENDER)
+-- RENDER STEP CHÍNH
 RunService.RenderStepped:Connect(function()
     local centerScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local bestTarget = getBestTarget()
@@ -1625,7 +1626,7 @@ RunService.RenderStepped:Connect(function()
         local isOnTarget = false
         if onScreen then
             local delta = (Vector2.new(targetPos.X, targetPos.Y) - centerScreen).Magnitude
-            isOnTarget = delta < 1  -- Tăng độ nhạy
+            isOnTarget = delta < 1
         end
         
         moveToTarget(targetData)
@@ -1640,7 +1641,7 @@ end)
 
 RunService.RenderStepped:Connect(function()
     if settings.aimbot.enabled and isAiming then
-        local pulseValue = (math.sin(tick() * 15) + 1) / 2  -- Tăng tốc animation
+        local pulseValue = (math.sin(tick() * 15) + 1) / 2
         aimbotFOV.Transparency = 0.2 + (pulseValue * 0.3)
         aimbotFOV.Thickness = 2 + (pulseValue * 2)
     else
@@ -1777,7 +1778,7 @@ if workspace:FindFirstChild("ShootingRangeEntities") then
 end
 
 local lastRenderTime = 0
-local RENDER_INTERVAL = 1/60  -- Tăng từ 30 lên 60 FPS cho ESP
+local RENDER_INTERVAL = 1/60
 
 RunService.RenderStepped:Connect(function()
     local currentTime = tick()
@@ -1945,7 +1946,7 @@ local function refreshLocalPlayerUI()
     end
 end
 
--- ============ MENU CHÍNH ==========
+-- ============ UI NÂNG CẤP - TAB DỌC BÊN TRÁI ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuroraMenu"
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -1961,8 +1962,8 @@ overlay.Visible = false
 overlay.Parent = screenGui
 
 local menu = Instance.new("Frame")
-menu.Size = UDim2.new(0, 750, 0, 950)
-menu.Position = UDim2.new(0.5, -375, 0.5, -475)
+menu.Size = UDim2.new(0, 1100, 0, 720)
+menu.Position = UDim2.new(0.5, -550, 0.5, -360)
 menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 menu.BackgroundTransparency = 0.08
 menu.BorderSizePixel = 0
@@ -1971,7 +1972,7 @@ menu.ClipsDescendants = true
 menu.Parent = screenGui
 
 local menuCorner = Instance.new("UICorner")
-menuCorner.CornerRadius = UDim.new(0, 20)
+menuCorner.CornerRadius = UDim.new(0, 16)
 menuCorner.Parent = menu
 
 local shadow = Instance.new("Frame")
@@ -1983,7 +1984,7 @@ shadow.ZIndex = -1
 shadow.Parent = menu
 
 local shadowCorner = Instance.new("UICorner")
-shadowCorner.CornerRadius = UDim.new(0, 20)
+shadowCorner.CornerRadius = UDim.new(0, 16)
 shadowCorner.Parent = shadow
 
 local blur = Instance.new("BlurEffect")
@@ -1998,7 +1999,7 @@ glassBg.BorderSizePixel = 0
 glassBg.Parent = menu
 
 local glassCorner = Instance.new("UICorner")
-glassCorner.CornerRadius = UDim.new(0, 20)
+glassCorner.CornerRadius = UDim.new(0, 16)
 glassCorner.Parent = glassBg
 
 local borderGradient = Instance.new("Frame")
@@ -2011,18 +2012,19 @@ borderGradient.BorderMode = Enum.BorderMode.Inset
 borderGradient.Parent = menu
 
 local borderCorner = Instance.new("UICorner")
-borderCorner.CornerRadius = UDim.new(0, 22)
+borderCorner.CornerRadius = UDim.new(0, 18)
 borderCorner.Parent = borderGradient
 
+-- HEADER
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 80)
+header.Size = UDim2.new(1, 0, 0, 70)
 header.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 header.BackgroundTransparency = 0.4
 header.BorderSizePixel = 0
 header.Parent = menu
 
 local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 20)
+headerCorner.CornerRadius = UDim.new(0, 16)
 headerCorner.Parent = header
 
 local headerGradient = Instance.new("UIGradient")
@@ -2042,37 +2044,37 @@ glowLine.BorderSizePixel = 0
 glowLine.Parent = header
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -100, 0, 40)
-title.Position = UDim2.new(0, 20, 0, 15)
+title.Size = UDim2.new(1, -80, 0, 30)
+title.Position = UDim2.new(0, 20, 0, 12)
 title.BackgroundTransparency = 1
 title.Text = "✦ KHANHGD CHEAT ✦"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 24
+title.TextSize = 20
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextYAlignment = Enum.TextYAlignment.Center
 title.Parent = header
 
 local subTitle = Instance.new("TextLabel")
-subTitle.Size = UDim2.new(1, -100, 0, 20)
-subTitle.Position = UDim2.new(0, 22, 0, 52)
+subTitle.Size = UDim2.new(1, -80, 0, 20)
+subTitle.Position = UDim2.new(0, 22, 0, 42)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "ESP • XƯƠNG • AIMBOT • LINE AIM • BẮN TỰ ĐỘNG • Streak • THIẾT BỊ • TP • AFK • Player • Info • QUẢN TRỊ • CẤU HÌNH • SKIN (AUTO SAVE)"
+subTitle.Text = "ESP • Skeleton • Aimbot • Auto Shot • Streak • TP • AFK • Skin • Config"
 subTitle.TextColor3 = Color3.fromRGB(150, 200, 255)
-subTitle.TextSize = 11
+subTitle.TextSize = 10
 subTitle.Font = Enum.Font.Gotham
 subTitle.TextXAlignment = Enum.TextXAlignment.Left
 subTitle.TextYAlignment = Enum.TextYAlignment.Center
 subTitle.Parent = header
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 42, 0, 42)
-closeBtn.Position = UDim2.new(1, -56, 0, 19)
+closeBtn.Size = UDim2.new(0, 38, 0, 38)
+closeBtn.Position = UDim2.new(1, -52, 0, 16)
 closeBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
 closeBtn.BackgroundTransparency = 0.5
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-closeBtn.TextSize = 20
+closeBtn.TextSize = 18
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.BorderSizePixel = 0
 closeBtn.AutoButtonColor = false
@@ -2092,68 +2094,97 @@ closeBtn.MouseLeave:Connect(function()
     TweenService:Create(closeBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 100, 100)}):Play()
 end)
 
+-- TAB DỌC BÊN TRÁI
 local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(1, 0, 0, 55)
+tabBar.Size = UDim2.new(0, 180, 1, -80)
 tabBar.Position = UDim2.new(0, 0, 0, 80)
 tabBar.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 tabBar.BackgroundTransparency = 0.3
 tabBar.BorderSizePixel = 0
 tabBar.Parent = menu
 
-local tabs = {}
-local tabNames = {"🎯 AIM", "🎨 ESP", "🦴 XƯƠNG", "🎨 SKIN", "⚡ Streak", "🎮 THIẾT BỊ", "🌀 TP", "💤 AFK", "👥 Player", "ℹ️ Info", "👑 ADMIN", "⚙️ CONFIG"}
-local tabWidth = 750 / #tabNames
+local tabList = Instance.new("ScrollingFrame")
+tabList.Size = UDim2.new(1, 0, 1, 0)
+tabList.BackgroundTransparency = 1
+tabList.BorderSizePixel = 0
+tabList.CanvasSize = UDim2.new(0, 0, 0, 500)
+tabList.ScrollBarThickness = 2
+tabList.Parent = tabBar
 
-for i, name in ipairs(tabNames) do
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.Padding = UDim.new(0, 5)
+tabLayout.Parent = tabList
+
+-- Danh sách tab với icon
+local tabItems = {
+    {name = "AIMBOT", icon = "🎯", color = Color3.fromRGB(0, 200, 255)},
+    {name = "ESP", icon = "👁️", color = Color3.fromRGB(0, 200, 255)},
+    {name = "SKELETON", icon = "🦴", color = Color3.fromRGB(0, 200, 255)},
+    {name = "SKIN", icon = "🎨", color = Color3.fromRGB(0, 200, 255)},
+    {name = "STREAK", icon = "⚡", color = Color3.fromRGB(0, 200, 255)},
+    {name = "DEVICE", icon = "🎮", color = Color3.fromRGB(0, 200, 255)},
+    {name = "TELEPORT", icon = "🌀", color = Color3.fromRGB(0, 200, 255)},
+    {name = "AFK", icon = "💤", color = Color3.fromRGB(0, 200, 255)},
+    {name = "PLAYERS", icon = "👥", color = Color3.fromRGB(0, 200, 255)},
+    {name = "INFO", icon = "ℹ️", color = Color3.fromRGB(0, 200, 255)},
+    {name = "ADMIN", icon = "👑", color = Color3.fromRGB(0, 200, 255)},
+    {name = "CONFIG", icon = "⚙️", color = Color3.fromRGB(0, 200, 255)}
+}
+
+local tabButtons = {}
+local activeTab = 1
+
+local function createTabButton(item, index)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, tabWidth, 1, 0)
-    btn.Position = UDim2.new(0, (i-1) * tabWidth, 0, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(160, 160, 200)
-    btn.TextSize = 11
+    btn.Size = UDim2.new(1, -20, 0, 48)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    btn.BackgroundTransparency = 0.5
+    btn.BorderSizePixel = 0
+    btn.Text = item.icon .. "  " .. item.name
+    btn.TextColor3 = Color3.fromRGB(180, 180, 220)
+    btn.TextSize = 12
     btn.Font = Enum.Font.GothamSemibold
+    btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.AutoButtonColor = false
-    btn.Parent = tabBar
-    tabs[i] = btn
+    btn.Parent = tabList
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = btn
+    
+    local btnGlow = Instance.new("Frame")
+    btnGlow.Size = UDim2.new(0, 3, 1, -8)
+    btnGlow.Position = UDim2.new(0, 0, 0, 4)
+    btnGlow.BackgroundColor3 = item.color
+    btnGlow.BackgroundTransparency = 1
+    btnGlow.BorderSizePixel = 0
+    btnGlow.Parent = btn
+    
     btn.MouseEnter:Connect(function()
-        if btn.TextColor3 ~= Color3.fromRGB(255, 255, 255) then
-            TweenService:Create(btn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(220, 220, 255)}):Play()
+        if activeTab ~= index then
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2, TextColor3 = Color3.fromRGB(230, 230, 255)}):Play()
+            TweenService:Create(btnGlow, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
         end
     end)
     btn.MouseLeave:Connect(function()
-        if btn.TextColor3 ~= Color3.fromRGB(255, 255, 255) then
-            TweenService:Create(btn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 160, 200)}):Play()
+        if activeTab ~= index then
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.5, TextColor3 = Color3.fromRGB(180, 180, 220)}):Play()
+            TweenService:Create(btnGlow, TweenInfo.new(0.15), {BackgroundTransparency = 1}):Play()
         end
     end)
+    
+    return btn
 end
 
-local indicator = Instance.new("Frame")
-indicator.Size = UDim2.new(0, tabWidth, 0, 3)
-indicator.Position = UDim2.new(0, 0, 1, -3)
-indicator.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-indicator.BorderSizePixel = 0
-indicator.Parent = tabs[1]
+for i, item in ipairs(tabItems) do
+    local btn = createTabButton(item, i)
+    tabButtons[i] = btn
+end
 
-local indicatorCorner = Instance.new("UICorner")
-indicatorCorner.CornerRadius = UDim.new(0, 3)
-indicatorCorner.Parent = indicator
-
-local particle = Instance.new("Frame")
-particle.Size = UDim2.new(0, 4, 0, 4)
-particle.Position = UDim2.new(0, -2, 0.5, -2)
-particle.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-particle.BackgroundTransparency = 0.5
-particle.BorderSizePixel = 0
-particle.Parent = indicator
-
-local particleCorner = Instance.new("UICorner")
-particleCorner.CornerRadius = UDim.new(1, 0)
-particleCorner.Parent = particle
-
+-- Content Area (bên phải)
 local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, -40, 1, -135)
-contentArea.Position = UDim2.new(0, 20, 0, 145)
+contentArea.Size = UDim2.new(1, -200, 1, -90)
+contentArea.Position = UDim2.new(0, 190, 0, 85)
 contentArea.BackgroundTransparency = 1
 contentArea.Parent = menu
 
@@ -2162,7 +2193,7 @@ local aimbotPanel = Instance.new("ScrollingFrame")
 aimbotPanel.Size = UDim2.new(1, 0, 1, 0)
 aimbotPanel.BackgroundTransparency = 1
 aimbotPanel.BorderSizePixel = 0
-aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 1050)
+aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 900)
 aimbotPanel.ScrollBarThickness = 4
 aimbotPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 aimbotPanel.Parent = contentArea
@@ -2171,7 +2202,7 @@ local espPanel = Instance.new("ScrollingFrame")
 espPanel.Size = UDim2.new(1, 0, 1, 0)
 espPanel.BackgroundTransparency = 1
 espPanel.BorderSizePixel = 0
-espPanel.CanvasSize = UDim2.new(0, 0, 0, 1050)
+espPanel.CanvasSize = UDim2.new(0, 0, 0, 750)
 espPanel.ScrollBarThickness = 4
 espPanel.Parent = contentArea
 espPanel.Visible = false
@@ -2180,7 +2211,7 @@ local skeletonPanel = Instance.new("ScrollingFrame")
 skeletonPanel.Size = UDim2.new(1, 0, 1, 0)
 skeletonPanel.BackgroundTransparency = 1
 skeletonPanel.BorderSizePixel = 0
-skeletonPanel.CanvasSize = UDim2.new(0, 0, 0, 300)
+skeletonPanel.CanvasSize = UDim2.new(0, 0, 0, 200)
 skeletonPanel.ScrollBarThickness = 4
 skeletonPanel.Parent = contentArea
 skeletonPanel.Visible = false
@@ -2198,7 +2229,7 @@ local devicePanel = Instance.new("ScrollingFrame")
 devicePanel.Size = UDim2.new(1, 0, 1, 0)
 devicePanel.BackgroundTransparency = 1
 devicePanel.BorderSizePixel = 0
-devicePanel.CanvasSize = UDim2.new(0, 0, 0, 450)
+devicePanel.CanvasSize = UDim2.new(0, 0, 0, 400)
 devicePanel.ScrollBarThickness = 4
 devicePanel.Parent = contentArea
 devicePanel.Visible = false
@@ -2272,46 +2303,52 @@ skinPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 skinPanel.Parent = contentArea
 skinPanel.Visible = false
 
--- Helper Functions
-local function createModernToggle(parent, y, name, getValue, setValue)
+-- Helper Functions cho UI mới
+local function createModernToggle(parent, y, name, getValue, setValue, category)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 52)
+    frame.Size = UDim2.new(1, -10, 0, 48)
     frame.Position = UDim2.new(0, 5, 0, y)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     frame.BackgroundTransparency = 0.4
     frame.BorderSizePixel = 0
     frame.Parent = parent
+    
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = frame
+    
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0, 200, 0, 25)
-    label.Position = UDim2.new(0, 15, 0, 14)
+    label.Position = UDim2.new(0, 15, 0, 12)
     label.BackgroundTransparency = 1
     label.Text = name
     label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
+    label.TextSize = 12
+    label.Font = Enum.Font.GothamSemibold
     label.Parent = frame
+    
     local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 80, 0, 32)
-    toggleBtn.Position = UDim2.new(1, -95, 0, 10)
+    toggleBtn.Size = UDim2.new(0, 70, 0, 28)
+    toggleBtn.Position = UDim2.new(1, -85, 0, 10)
     toggleBtn.BorderSizePixel = 0
-    toggleBtn.Text = getValue() and "BẬT" or "TẮT"
+    toggleBtn.Text = getValue() and "ON" or "OFF"
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 12
+    toggleBtn.TextSize = 10
     toggleBtn.Font = Enum.Font.GothamBold
     toggleBtn.Parent = frame
+    
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = toggleBtn
+    
     local function update()
         local val = getValue()
         local targetColor = val and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(60, 60, 85)
         TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-        toggleBtn.Text = val and "BẬT" or "TẮT"
+        toggleBtn.Text = val and "ON" or "OFF"
     end
     update()
+    
     toggleBtn.MouseButton1Click:Connect(function()
         playClickSound()
         setValue(not getValue())
@@ -2323,67 +2360,79 @@ local function createModernToggle(parent, y, name, getValue, setValue)
     toggleBtn.MouseLeave:Connect(function()
         TweenService:Create(toggleBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
     end)
+    
     return frame
 end
 
 local function createModernSlider(parent, y, name, minVal, maxVal, defaultValue, suffix, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 72)
+    frame.Size = UDim2.new(1, -10, 0, 70)
     frame.Position = UDim2.new(0, 5, 0, y)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     frame.BackgroundTransparency = 0.4
     frame.BorderSizePixel = 0
     frame.Parent = parent
+    
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = frame
+    
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 180, 0, 25)
-    label.Position = UDim2.new(0, 15, 0, 10)
+    label.Size = UDim2.new(0, 160, 0, 20)
+    label.Position = UDim2.new(0, 15, 0, 8)
     label.BackgroundTransparency = 1
     label.Text = name
     label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
+    label.TextSize = 12
+    label.Font = Enum.Font.GothamSemibold
     label.Parent = frame
+    
     local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0, 70, 0, 25)
-    valueLabel.Position = UDim2.new(1, -85, 0, 10)
+    valueLabel.Size = UDim2.new(0, 60, 0, 20)
+    valueLabel.Position = UDim2.new(1, -75, 0, 8)
     valueLabel.BackgroundTransparency = 1
     valueLabel.Text = tostring(defaultValue) .. suffix
     valueLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    valueLabel.TextSize = 13
+    valueLabel.TextSize = 11
     valueLabel.Font = Enum.Font.GothamBold
     valueLabel.Parent = frame
+    
     local sliderBg = Instance.new("Frame")
-    sliderBg.Size = UDim2.new(1, -200, 0, 6)
-    sliderBg.Position = UDim2.new(0, 190, 0, 48)
+    sliderBg.Size = UDim2.new(1, -170, 0, 4)
+    sliderBg.Position = UDim2.new(0, 160, 0, 40)
     sliderBg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
     sliderBg.BorderSizePixel = 0
     sliderBg.Parent = frame
+    
     local sliderBgCorner = Instance.new("UICorner")
-    sliderBgCorner.CornerRadius = UDim.new(0, 3)
+    sliderBgCorner.CornerRadius = UDim.new(0, 2)
     sliderBgCorner.Parent = sliderBg
+    
     local sliderFill = Instance.new("Frame")
     sliderFill.Size = UDim2.new((defaultValue - minVal) / (maxVal - minVal), 0, 1, 0)
     sliderFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
     sliderFill.BorderSizePixel = 0
     sliderFill.Parent = sliderBg
+    
     local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 3)
+    fillCorner.CornerRadius = UDim.new(0, 2)
     fillCorner.Parent = sliderFill
+    
     local handle = Instance.new("TextButton")
-    handle.Size = UDim2.new(0, 20, 0, 20)
-    handle.Position = UDim2.new((defaultValue - minVal) / (maxVal - minVal), -10, 0.5, -10)
+    handle.Size = UDim2.new(0, 16, 0, 16)
+    handle.Position = UDim2.new((defaultValue - minVal) / (maxVal - minVal), -8, 0.5, -8)
     handle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     handle.BorderSizePixel = 0
     handle.Text = ""
     handle.Parent = sliderBg
+    
     local handleCorner = Instance.new("UICorner")
-    handleCorner.CornerRadius = UDim.new(0, 10)
+    handleCorner.CornerRadius = UDim.new(0, 8)
     handleCorner.Parent = handle
+    
     local dragging = false
     handle.MouseButton1Down:Connect(function() dragging = true end)
+    
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local mousePos = LocalPlayer:GetMouse()
@@ -2393,19 +2442,21 @@ local function createModernSlider(parent, y, name, minVal, maxVal, defaultValue,
             local value = math.floor(minVal + (maxVal - minVal) * percent)
             valueLabel.Text = tostring(value) .. suffix
             sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-            handle.Position = UDim2.new(percent, -10, 0.5, -10)
+            handle.Position = UDim2.new(percent, -8, 0.5, -8)
             callback(value)
         end
     end)
+    
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
+    
     return frame
 end
 
 local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, setB, updateColor)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 130)
+    frame.Size = UDim2.new(1, -10, 0, 160)
     frame.Position = UDim2.new(0, 5, 0, y)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     frame.BackgroundTransparency = 0.4
@@ -2413,23 +2464,23 @@ local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, 
     frame.Parent = parent
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = frame
     
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.5, -10, 0, 25)
-    label.Position = UDim2.new(0, 10, 0, 8)
+    label.Position = UDim2.new(0, 10, 0, 5)
     label.BackgroundTransparency = 1
     label.Text = name
     label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.TextSize = 13
+    label.TextSize = 11
     label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = frame
     
     local preview = Instance.new("Frame")
-    preview.Size = UDim2.new(0, 50, 0, 50)
-    preview.Position = UDim2.new(1, -60, 0, 8)
+    preview.Size = UDim2.new(0, 40, 0, 40)
+    preview.Position = UDim2.new(1, -55, 0, 5)
     preview.BackgroundColor3 = Color3.fromRGB(getR(), getG(), getB())
     preview.BorderSizePixel = 0
     preview.Parent = frame
@@ -2445,34 +2496,34 @@ local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, 
         sliderFrame.Parent = parent
         
         local sliderLabel = Instance.new("TextLabel")
-        sliderLabel.Size = UDim2.new(0, 30, 0, 20)
+        sliderLabel.Size = UDim2.new(0, 25, 0, 18)
         sliderLabel.Position = UDim2.new(0, 0, 0, 0)
         sliderLabel.BackgroundTransparency = 1
         sliderLabel.Text = labelText
         sliderLabel.TextColor3 = color
-        sliderLabel.TextSize = 12
+        sliderLabel.TextSize = 10
         sliderLabel.Font = Enum.Font.GothamBold
         sliderLabel.Parent = sliderFrame
         
         local valueText = Instance.new("TextLabel")
-        valueText.Size = UDim2.new(0, 40, 0, 20)
-        valueText.Position = UDim2.new(1, -40, 0, 0)
+        valueText.Size = UDim2.new(0, 35, 0, 18)
+        valueText.Position = UDim2.new(1, -35, 0, 0)
         valueText.BackgroundTransparency = 1
         valueText.Text = tostring(getVal())
         valueText.TextColor3 = color
-        valueText.TextSize = 11
+        valueText.TextSize = 9
         valueText.Font = Enum.Font.Gotham
         valueText.TextXAlignment = Enum.TextXAlignment.Right
         valueText.Parent = sliderFrame
         
         local sliderBg = Instance.new("Frame")
-        sliderBg.Size = UDim2.new(1, -80, 0, 6)
-        sliderBg.Position = UDim2.new(0, 35, 0, 18)
+        sliderBg.Size = UDim2.new(1, -70, 0, 4)
+        sliderBg.Position = UDim2.new(0, 28, 0, 18)
         sliderBg.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
         sliderBg.BorderSizePixel = 0
         sliderBg.Parent = sliderFrame
         local sliderBgCorner = Instance.new("UICorner")
-        sliderBgCorner.CornerRadius = UDim.new(0, 3)
+        sliderBgCorner.CornerRadius = UDim.new(0, 2)
         sliderBgCorner.Parent = sliderBg
         
         local sliderFill = Instance.new("Frame")
@@ -2481,18 +2532,18 @@ local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, 
         sliderFill.BorderSizePixel = 0
         sliderFill.Parent = sliderBg
         local fillCorner = Instance.new("UICorner")
-        fillCorner.CornerRadius = UDim.new(0, 3)
+        fillCorner.CornerRadius = UDim.new(0, 2)
         fillCorner.Parent = sliderFill
         
         local handle = Instance.new("TextButton")
-        handle.Size = UDim2.new(0, 16, 0, 16)
-        handle.Position = UDim2.new((getVal() - minVal) / (maxVal - minVal), -8, 0.5, -8)
+        handle.Size = UDim2.new(0, 14, 0, 14)
+        handle.Position = UDim2.new((getVal() - minVal) / (maxVal - minVal), -7, 0.5, -7)
         handle.BackgroundColor3 = color
         handle.BorderSizePixel = 0
         handle.Text = ""
         handle.Parent = sliderBg
         local handleCorner = Instance.new("UICorner")
-        handleCorner.CornerRadius = UDim.new(0, 8)
+        handleCorner.CornerRadius = UDim.new(0, 7)
         handleCorner.Parent = handle
         
         local dragging = false
@@ -2508,7 +2559,7 @@ local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, 
                 setVal(value)
                 valueText.Text = tostring(value)
                 sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-                handle.Position = UDim2.new(percent, -8, 0.5, -8)
+                handle.Position = UDim2.new(percent, -7, 0.5, -7)
                 preview.BackgroundColor3 = Color3.fromRGB(getR(), getG(), getB())
                 updateColor()
             end
@@ -2521,26 +2572,26 @@ local function createColorPicker(parent, y, name, getR, getG, getB, setR, setG, 
         return sliderFrame
     end
     
-    createSlider(frame, 10, 45, 200, 40, "R", 0, 255, getR, setR, Color3.fromRGB(255, 80, 80))
-    createSlider(frame, 10, 75, 200, 40, "G", 0, 255, getG, setG, Color3.fromRGB(80, 255, 80))
-    createSlider(frame, 10, 105, 200, 40, "B", 0, 255, getB, setB, Color3.fromRGB(80, 80, 255))
+    createSlider(frame, 10, 45, 200, 35, "R", 0, 255, getR, setR, Color3.fromRGB(255, 80, 80))
+    createSlider(frame, 10, 65, 200, 35, "G", 0, 255, getG, setG, Color3.fromRGB(80, 255, 80))
+    createSlider(frame, 10, 85, 200, 35, "B", 0, 255, getB, setB, Color3.fromRGB(80, 80, 255))
     
     return frame
 end
 
 local function createDeviceButton(parent, y, name, deviceValue, color)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 45)
+    btn.Size = UDim2.new(0.9, 0, 0, 42)
     btn.Position = UDim2.new(0.05, 0, 0, y)
     btn.BackgroundColor3 = color or Color3.fromRGB(45, 45, 65)
     btn.Text = name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 12
     btn.Font = Enum.Font.GothamBold
     btn.Parent = parent
     
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.CornerRadius = UDim.new(0, 8)
     btnCorner.Parent = btn
     
     local glow = Instance.new("Frame")
@@ -2562,7 +2613,7 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
         
         local notif = Drawing.new("Text")
         notif.Text = "✅ Đã chuyển sang " .. name
-        notif.Size = 14
+        notif.Size = 13
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
         notif.Outline = true
@@ -2583,7 +2634,7 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
--- ============ SKIN PANEL UI (FIX AUTO REFRESH & AUTO CLEAR) ==========
+-- ============ SKIN PANEL UI ==========
 local function refreshSkinPanel()
     for _, child in pairs(skinPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -2591,35 +2642,34 @@ local function refreshSkinPanel()
         end
     end
     
-    local y = 10
+    local y = 5
     
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, y)
     titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     titleFrame.BackgroundTransparency = 0.4
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = skinPanel
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleFrame
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 40)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -20, 0, 35)
+    titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = "🎨 SKIN CHANGER - AUTO SAVE"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Center
     titleLabel.Parent = titleFrame
     
-    y = y + 70
+    y = y + 60
     
-    -- KHUNG HIỂN THỊ TRẠNG THÁI ĐÃ CHỌN
     local selectedFrame = Instance.new("Frame")
-    selectedFrame.Size = UDim2.new(1, -10, 0, 70)
+    selectedFrame.Size = UDim2.new(1, -10, 0, 60)
     selectedFrame.Position = UDim2.new(0, 5, 0, y)
     selectedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     selectedFrame.BackgroundTransparency = 0.4
@@ -2627,45 +2677,44 @@ local function refreshSkinPanel()
     selectedFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
     selectedFrame.Parent = skinPanel
     local selectedCorner = Instance.new("UICorner")
-    selectedCorner.CornerRadius = UDim.new(0, 12)
+    selectedCorner.CornerRadius = UDim.new(0, 10)
     selectedCorner.Parent = selectedFrame
     
     local selectedSkinLabel = Instance.new("TextLabel")
-    selectedSkinLabel.Size = UDim2.new(0.5, -10, 0, 25)
-    selectedSkinLabel.Position = UDim2.new(0, 10, 0, 8)
+    selectedSkinLabel.Size = UDim2.new(0.5, -10, 0, 22)
+    selectedSkinLabel.Position = UDim2.new(0, 10, 0, 6)
     selectedSkinLabel.BackgroundTransparency = 1
     selectedSkinLabel.Text = "🎨 Skin: Chưa chọn"
     selectedSkinLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    selectedSkinLabel.TextSize = 12
+    selectedSkinLabel.TextSize = 10
     selectedSkinLabel.Font = Enum.Font.GothamBold
     selectedSkinLabel.TextXAlignment = Enum.TextXAlignment.Left
     selectedSkinLabel.Parent = selectedFrame
     
     local selectedWeaponLabel = Instance.new("TextLabel")
-    selectedWeaponLabel.Size = UDim2.new(0.5, -10, 0, 25)
-    selectedWeaponLabel.Position = UDim2.new(0.5, 5, 0, 8)
+    selectedWeaponLabel.Size = UDim2.new(0.5, -10, 0, 22)
+    selectedWeaponLabel.Position = UDim2.new(0.5, 5, 0, 6)
     selectedWeaponLabel.BackgroundTransparency = 1
     selectedWeaponLabel.Text = "🔫 Vũ khí: Chưa chọn"
     selectedWeaponLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    selectedWeaponLabel.TextSize = 12
+    selectedWeaponLabel.TextSize = 10
     selectedWeaponLabel.Font = Enum.Font.GothamBold
     selectedWeaponLabel.TextXAlignment = Enum.TextXAlignment.Left
     selectedWeaponLabel.Parent = selectedFrame
     
     local clearAllBtn = Instance.new("TextButton")
-    clearAllBtn.Size = UDim2.new(0, 100, 0, 30)
-    clearAllBtn.Position = UDim2.new(1, -110, 0, 35)
+    clearAllBtn.Size = UDim2.new(0, 80, 0, 28)
+    clearAllBtn.Position = UDim2.new(1, -90, 0, 28)
     clearAllBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearAllBtn.Text = "🗑️ BỎ CHỌN"
+    clearAllBtn.Text = "BỎ CHỌN"
     clearAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    clearAllBtn.TextSize = 11
+    clearAllBtn.TextSize = 10
     clearAllBtn.Font = Enum.Font.GothamBold
     clearAllBtn.Parent = selectedFrame
     local clearCorner = Instance.new("UICorner")
-    clearCorner.CornerRadius = UDim.new(0, 6)
+    clearCorner.CornerRadius = UDim.new(0, 5)
     clearCorner.Parent = clearAllBtn
     
-    -- HÀM CẬP NHẬT HIỂN THỊ
     local function updateSelectedDisplay()
         if selectedSkin then
             selectedSkinLabel.Text = "🎨 Skin: " .. selectedSkin.name
@@ -2701,203 +2750,198 @@ local function refreshSkinPanel()
             end
         end
         
-        skinStatus.Text = "✅ Đã bỏ chọn - Chọn skin + vũ khí để apply và auto save"
+        skinStatus.Text = "✅ Đã bỏ chọn"
         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
     end)
     
-    y = y + 85
+    y = y + 75
     
-    -- DANH SÁCH SKIN
-    local skinSourceFrame = Instance.new("Frame")
-    skinSourceFrame.Size = UDim2.new(1, -10, 0, 200)
-    skinSourceFrame.Position = UDim2.new(0, 5, 0, y)
-    skinSourceFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-    skinSourceFrame.BackgroundTransparency = 0.4
-    skinSourceFrame.BorderSizePixel = 0
-    skinSourceFrame.Parent = skinPanel
+    local sourceFrame = Instance.new("Frame")
+    sourceFrame.Size = UDim2.new(0.5, -10, 0, 220)
+    sourceFrame.Position = UDim2.new(0, 5, 0, y)
+    sourceFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    sourceFrame.BackgroundTransparency = 0.4
+    sourceFrame.BorderSizePixel = 0
+    sourceFrame.Parent = skinPanel
     local sourceCorner = Instance.new("UICorner")
-    sourceCorner.CornerRadius = UDim.new(0, 12)
-    sourceCorner.Parent = skinSourceFrame
+    sourceCorner.CornerRadius = UDim.new(0, 10)
+    sourceCorner.Parent = sourceFrame
     
     local sourceLabel = Instance.new("TextLabel")
-    sourceLabel.Size = UDim2.new(1, -20, 0, 25)
-    sourceLabel.Position = UDim2.new(0, 10, 0, 8)
+    sourceLabel.Size = UDim2.new(1, -10, 0, 22)
+    sourceLabel.Position = UDim2.new(0, 8, 0, 5)
     sourceLabel.BackgroundTransparency = 1
-    sourceLabel.Text = "📦 DANH SÁCH SKIN"
+    sourceLabel.Text = "📦 SKIN"
     sourceLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    sourceLabel.TextSize = 12
+    sourceLabel.TextSize = 11
     sourceLabel.Font = Enum.Font.GothamBold
     sourceLabel.TextXAlignment = Enum.TextXAlignment.Left
-    sourceLabel.Parent = skinSourceFrame
+    sourceLabel.Parent = sourceFrame
     
     local sourceSearch = Instance.new("TextBox")
-    sourceSearch.Size = UDim2.new(1, -20, 0, 30)
-    sourceSearch.Position = UDim2.new(0, 10, 0, 35)
+    sourceSearch.Size = UDim2.new(1, -16, 0, 28)
+    sourceSearch.Position = UDim2.new(0, 8, 0, 30)
     sourceSearch.PlaceholderText = "🔍 Tìm skin..."
     sourceSearch.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     sourceSearch.Text = ""
     sourceSearch.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sourceSearch.TextSize = 12
+    sourceSearch.TextSize = 11
     sourceSearch.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
     sourceSearch.BorderSizePixel = 0
-    sourceSearch.Parent = skinSourceFrame
+    sourceSearch.Parent = sourceFrame
     local searchCorner = Instance.new("UICorner")
-    searchCorner.CornerRadius = UDim.new(0, 8)
+    searchCorner.CornerRadius = UDim.new(0, 6)
     searchCorner.Parent = sourceSearch
     
     local sourceScroll = Instance.new("ScrollingFrame")
-    sourceScroll.Size = UDim2.new(1, -20, 0, 130)
-    sourceScroll.Position = UDim2.new(0, 10, 0, 70)
+    sourceScroll.Size = UDim2.new(1, -16, 0, 155)
+    sourceScroll.Position = UDim2.new(0, 8, 0, 62)
     sourceScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     sourceScroll.BackgroundTransparency = 0.3
     sourceScroll.BorderSizePixel = 1
     sourceScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
-    sourceScroll.ScrollBarThickness = 6
-    sourceScroll.Parent = skinSourceFrame
+    sourceScroll.ScrollBarThickness = 4
+    sourceScroll.Parent = sourceFrame
     local scrollCorner2 = Instance.new("UICorner")
-    scrollCorner2.CornerRadius = UDim.new(0, 8)
+    scrollCorner2.CornerRadius = UDim.new(0, 6)
     scrollCorner2.Parent = sourceScroll
     
     local sourceLayout = Instance.new("UIListLayout")
     sourceLayout.Padding = UDim.new(0, 3)
     sourceLayout.Parent = sourceScroll
     
-    y = y + 215
-    
-    -- DANH SÁCH VŨ KHÍ
     local weaponFrame = Instance.new("Frame")
-    weaponFrame.Size = UDim2.new(1, -10, 0, 200)
-    weaponFrame.Position = UDim2.new(0, 5, 0, y)
+    weaponFrame.Size = UDim2.new(0.5, -10, 0, 220)
+    weaponFrame.Position = UDim2.new(0.5, 5, 0, y)
     weaponFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     weaponFrame.BackgroundTransparency = 0.4
     weaponFrame.BorderSizePixel = 0
     weaponFrame.Parent = skinPanel
     local weaponCorner = Instance.new("UICorner")
-    weaponCorner.CornerRadius = UDim.new(0, 12)
+    weaponCorner.CornerRadius = UDim.new(0, 10)
     weaponCorner.Parent = weaponFrame
     
     local weaponLabel = Instance.new("TextLabel")
-    weaponLabel.Size = UDim2.new(1, -20, 0, 25)
-    weaponLabel.Position = UDim2.new(0, 10, 0, 8)
+    weaponLabel.Size = UDim2.new(1, -10, 0, 22)
+    weaponLabel.Position = UDim2.new(0, 8, 0, 5)
     weaponLabel.BackgroundTransparency = 1
-    weaponLabel.Text = "🔫 DANH SÁCH VŨ KHÍ"
+    weaponLabel.Text = "🔫 VŨ KHÍ"
     weaponLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    weaponLabel.TextSize = 12
+    weaponLabel.TextSize = 11
     weaponLabel.Font = Enum.Font.GothamBold
     weaponLabel.TextXAlignment = Enum.TextXAlignment.Left
     weaponLabel.Parent = weaponFrame
     
     local weaponSearch = Instance.new("TextBox")
-    weaponSearch.Size = UDim2.new(1, -20, 0, 30)
-    weaponSearch.Position = UDim2.new(0, 10, 0, 35)
+    weaponSearch.Size = UDim2.new(1, -16, 0, 28)
+    weaponSearch.Position = UDim2.new(0, 8, 0, 30)
     weaponSearch.PlaceholderText = "🔍 Tìm vũ khí..."
     weaponSearch.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     weaponSearch.Text = ""
     weaponSearch.TextColor3 = Color3.fromRGB(255, 255, 255)
-    weaponSearch.TextSize = 12
+    weaponSearch.TextSize = 11
     weaponSearch.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
     weaponSearch.BorderSizePixel = 0
     weaponSearch.Parent = weaponFrame
     local weaponSearchCorner = Instance.new("UICorner")
-    weaponSearchCorner.CornerRadius = UDim.new(0, 8)
+    weaponSearchCorner.CornerRadius = UDim.new(0, 6)
     weaponSearchCorner.Parent = weaponSearch
     
     local weaponScroll = Instance.new("ScrollingFrame")
-    weaponScroll.Size = UDim2.new(1, -20, 0, 130)
-    weaponScroll.Position = UDim2.new(0, 10, 0, 70)
+    weaponScroll.Size = UDim2.new(1, -16, 0, 155)
+    weaponScroll.Position = UDim2.new(0, 8, 0, 62)
     weaponScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     weaponScroll.BackgroundTransparency = 0.3
     weaponScroll.BorderSizePixel = 1
     weaponScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
-    weaponScroll.ScrollBarThickness = 6
+    weaponScroll.ScrollBarThickness = 4
     weaponScroll.Parent = weaponFrame
     local weaponScrollCorner = Instance.new("UICorner")
-    weaponScrollCorner.CornerRadius = UDim.new(0, 8)
+    weaponScrollCorner.CornerRadius = UDim.new(0, 6)
     weaponScrollCorner.Parent = weaponScroll
     
     local weaponLayout = Instance.new("UIListLayout")
     weaponLayout.Padding = UDim.new(0, 3)
     weaponLayout.Parent = weaponScroll
     
-    y = y + 215
+    y = y + 235
     
-    -- DANH SÁCH SKIN ĐÃ LƯU
     local savedFrame = Instance.new("Frame")
-    savedFrame.Size = UDim2.new(1, -10, 0, 150)
+    savedFrame.Size = UDim2.new(1, -10, 0, 140)
     savedFrame.Position = UDim2.new(0, 5, 0, y)
     savedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     savedFrame.BackgroundTransparency = 0.4
     savedFrame.BorderSizePixel = 0
     savedFrame.Parent = skinPanel
     local savedCorner = Instance.new("UICorner")
-    savedCorner.CornerRadius = UDim.new(0, 12)
+    savedCorner.CornerRadius = UDim.new(0, 10)
     savedCorner.Parent = savedFrame
     
     local savedLabel = Instance.new("TextLabel")
-    savedLabel.Size = UDim2.new(0.7, -20, 0, 25)
-    savedLabel.Position = UDim2.new(0, 10, 0, 8)
+    savedLabel.Size = UDim2.new(0.6, -10, 0, 22)
+    savedLabel.Position = UDim2.new(0, 8, 0, 5)
     savedLabel.BackgroundTransparency = 1
     savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
     savedLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    savedLabel.TextSize = 12
+    savedLabel.TextSize = 11
     savedLabel.Font = Enum.Font.GothamBold
     savedLabel.TextXAlignment = Enum.TextXAlignment.Left
     savedLabel.Parent = savedFrame
     
     local applyAllSavedBtn = Instance.new("TextButton")
-    applyAllSavedBtn.Size = UDim2.new(0, 80, 0, 28)
-    applyAllSavedBtn.Position = UDim2.new(1, -170, 0, 6)
+    applyAllSavedBtn.Size = UDim2.new(0, 70, 0, 26)
+    applyAllSavedBtn.Position = UDim2.new(1, -150, 0, 4)
     applyAllSavedBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-    applyAllSavedBtn.Text = "✨ APPLY ALL"
+    applyAllSavedBtn.Text = "APPLY ALL"
     applyAllSavedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    applyAllSavedBtn.TextSize = 10
+    applyAllSavedBtn.TextSize = 9
     applyAllSavedBtn.Font = Enum.Font.GothamBold
     applyAllSavedBtn.Parent = savedFrame
     local applyAllCorner = Instance.new("UICorner")
-    applyAllCorner.CornerRadius = UDim.new(0, 6)
+    applyAllCorner.CornerRadius = UDim.new(0, 5)
     applyAllCorner.Parent = applyAllSavedBtn
     
     local clearAllSavedBtn = Instance.new("TextButton")
-    clearAllSavedBtn.Size = UDim2.new(0, 80, 0, 28)
-    clearAllSavedBtn.Position = UDim2.new(1, -85, 0, 6)
+    clearAllSavedBtn.Size = UDim2.new(0, 70, 0, 26)
+    clearAllSavedBtn.Position = UDim2.new(1, -75, 0, 4)
     clearAllSavedBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearAllSavedBtn.Text = "🗑️ XÓA ALL"
+    clearAllSavedBtn.Text = "XÓA ALL"
     clearAllSavedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    clearAllSavedBtn.TextSize = 10
+    clearAllSavedBtn.TextSize = 9
     clearAllSavedBtn.Font = Enum.Font.GothamBold
     clearAllSavedBtn.Parent = savedFrame
     local clearAllCorner = Instance.new("UICorner")
-    clearAllCorner.CornerRadius = UDim.new(0, 6)
+    clearAllCorner.CornerRadius = UDim.new(0, 5)
     clearAllCorner.Parent = clearAllSavedBtn
     
     local savedScroll = Instance.new("ScrollingFrame")
-    savedScroll.Size = UDim2.new(1, -20, 0, 90)
-    savedScroll.Position = UDim2.new(0, 10, 0, 40)
+    savedScroll.Size = UDim2.new(1, -16, 0, 85)
+    savedScroll.Position = UDim2.new(0, 8, 0, 35)
     savedScroll.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     savedScroll.BackgroundTransparency = 0.3
     savedScroll.BorderSizePixel = 1
     savedScroll.BorderColor3 = Color3.fromRGB(80, 80, 120)
-    savedScroll.ScrollBarThickness = 6
+    savedScroll.ScrollBarThickness = 4
     savedScroll.Parent = savedFrame
     local savedScrollCorner = Instance.new("UICorner")
-    savedScrollCorner.CornerRadius = UDim.new(0, 8)
+    savedScrollCorner.CornerRadius = UDim.new(0, 6)
     savedScrollCorner.Parent = savedScroll
     
     local savedLayout = Instance.new("UIListLayout")
     savedLayout.Padding = UDim.new(0, 3)
     savedLayout.Parent = savedScroll
     
-    y = y + 165
+    y = y + 155
     
     local infoFrame = Instance.new("Frame")
-    infoFrame.Size = UDim2.new(1, -10, 0, 45)
+    infoFrame.Size = UDim2.new(1, -10, 0, 40)
     infoFrame.Position = UDim2.new(0, 5, 0, y)
     infoFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
     infoFrame.BackgroundTransparency = 0.4
     infoFrame.BorderSizePixel = 0
     infoFrame.Parent = skinPanel
     local infoCorner2 = Instance.new("UICorner")
-    infoCorner2.CornerRadius = UDim.new(0, 10)
+    infoCorner2.CornerRadius = UDim.new(0, 8)
     infoCorner2.Parent = infoFrame
     
     local skinStatus = Instance.new("TextLabel")
@@ -2905,40 +2949,11 @@ local function refreshSkinPanel()
     skinStatus.Position = UDim2.new(0, 5, 0, 0)
     skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
     skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
-    skinStatus.TextSize = 10
+    skinStatus.TextSize = 9
     skinStatus.TextWrapped = true
     skinStatus.BackgroundTransparency = 1
     skinStatus.Parent = infoFrame
     
-    -- BIẾN LƯU TRẠNG THÁI
-    local lastAppliedSkinTemp = nil
-    local lastAppliedWeaponTemp = nil
-    
-    -- HÀM RESET SAU KHI APPLY (AUTO CLEAR)
-    local function resetAfterApply()
-        selectedSkin = nil
-        selectedWeapon = nil
-        lastAppliedSkinTemp = nil
-        lastAppliedWeaponTemp = nil
-        updateSelectedDisplay()
-        -- Reset highlight
-        for _, child in pairs(sourceScroll:GetChildren()) do
-            if child:IsA("TextButton") then
-                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-            end
-        end
-        for _, child in pairs(weaponScroll:GetChildren()) do
-            if child:IsA("TextButton") then
-                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-            end
-        end
-        -- Refresh danh sách đã lưu
-        displaySavedSkins()
-        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-    end
-    
-    -- HIỂN THỊ SKIN
-    -- HIỂN THỊ SKIN
     local function displaySkins(searchText)
         for _, child in pairs(sourceScroll:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
@@ -2955,10 +2970,10 @@ local function refreshSkinPanel()
         
         if #filtered == 0 then
             local empty = Instance.new("TextLabel")
-            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Size = UDim2.new(1, 0, 0, 35)
             empty.Text = "❌ Không tìm thấy"
             empty.TextColor3 = Color3.fromRGB(255, 150, 150)
-            empty.TextSize = 12
+            empty.TextSize = 11
             empty.BackgroundTransparency = 1
             empty.Parent = sourceScroll
             return
@@ -2966,10 +2981,10 @@ local function refreshSkinPanel()
         
         for _, skin in ipairs(filtered) do
             local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, -10, 0, 35)
+            btn.Size = UDim2.new(1, -10, 0, 32)
             btn.Text = "🎨 " .. skin.name
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.TextSize = 11
+            btn.TextSize = 10
             btn.Font = Enum.Font.Gotham
             btn.TextXAlignment = Enum.TextXAlignment.Left
             btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
@@ -2978,37 +2993,34 @@ local function refreshSkinPanel()
             btn.Parent = sourceScroll
             
             local subText = Instance.new("TextLabel")
-            subText.Size = UDim2.new(1, -10, 0, 12)
-            subText.Position = UDim2.new(0, 35, 0, 22)
+            subText.Size = UDim2.new(1, -10, 0, 10)
+            subText.Position = UDim2.new(0, 35, 0, 20)
             subText.Text = skin.folderName
             subText.TextColor3 = Color3.fromRGB(180, 180, 220)
-            subText.TextSize = 8
+            subText.TextSize = 7
             subText.TextXAlignment = Enum.TextXAlignment.Left
             subText.BackgroundTransparency = 1
             subText.Parent = btn
             
             local btnCorner = Instance.new("UICorner")
-            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.CornerRadius = UDim.new(0, 5)
             btnCorner.Parent = btn
             
             btn.MouseButton1Click:Connect(function()
-                -- QUAN TRỌNG: KHI CHỌN SKIN MỚI, TỰ ĐỘNG BỎ CHỌN VŨ KHÍ CŨ
                 if selectedWeapon then
                     selectedWeapon = nil
-                    -- Reset highlight vũ khí
                     for _, child in pairs(weaponScroll:GetChildren()) do
                         if child:IsA("TextButton") then
                             child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
                         end
                     end
-                    skinStatus.Text = "🔄 Đã bỏ chọn vũ khí cũ - Hãy chọn vũ khí mới"
+                    skinStatus.Text = "🔄 Đã bỏ chọn vũ khí cũ"
                     skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
                 end
                 
                 selectedSkin = skin
                 updateSelectedDisplay()
                 
-                -- Highlight skin được chọn
                 for _, child in pairs(sourceScroll:GetChildren()) do
                     if child:IsA("TextButton") then
                         if child.Text == "🎨 " .. skin.name then
@@ -3019,20 +3031,17 @@ local function refreshSkinPanel()
                     end
                 end
                 
-                -- CHỈ APPLY KHI CÓ ĐỦ CẢ SKIN VÀ VŨ KHÍ
                 if selectedSkin and selectedWeapon then
                     local success, err = AutoApplySkin()
                     if success then
-                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. selectedWeapon.name
+                        skinStatus.Text = "✅ Đã apply: " .. selectedSkin.name .. " → " .. selectedWeapon.name
                         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                         displaySavedSkins()
                         savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-                        -- AUTO CLEAR SAU KHI APPLY
                         task.wait(0.8)
                         selectedSkin = nil
                         selectedWeapon = nil
                         updateSelectedDisplay()
-                        -- Reset highlight
                         for _, child in pairs(sourceScroll:GetChildren()) do
                             if child:IsA("TextButton") then
                                 child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
@@ -3043,13 +3052,13 @@ local function refreshSkinPanel()
                                 child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
                             end
                         end
-                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng cho cặp mới"
+                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng"
                     else
                         skinStatus.Text = "❌ Lỗi: " .. tostring(err)
                         skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
                     end
                 elseif selectedSkin and not selectedWeapon then
-                    skinStatus.Text = "✅ Đã chọn skin: " .. skin.name .. " - Chọn vũ khí để apply"
+                    skinStatus.Text = "✅ Đã chọn skin: " .. skin.name .. " - Chọn vũ khí"
                     skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                 end
             end)
@@ -3063,7 +3072,6 @@ local function refreshSkinPanel()
         updateCanvas()
     end
     
-    -- HIỂN THỊ VŨ KHÍ
     local function displayWeapons(searchText)
         for _, child in pairs(weaponScroll:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
@@ -3080,10 +3088,10 @@ local function refreshSkinPanel()
         
         if #filtered == 0 then
             local empty = Instance.new("TextLabel")
-            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Size = UDim2.new(1, 0, 0, 35)
             empty.Text = "❌ Không tìm thấy"
             empty.TextColor3 = Color3.fromRGB(255, 150, 150)
-            empty.TextSize = 12
+            empty.TextSize = 11
             empty.BackgroundTransparency = 1
             empty.Parent = weaponScroll
             return
@@ -3091,10 +3099,10 @@ local function refreshSkinPanel()
         
         for _, weapon in ipairs(filtered) do
             local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, -10, 0, 35)
+            btn.Size = UDim2.new(1, -10, 0, 32)
             btn.Text = "🔫 " .. weapon.name
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.TextSize = 11
+            btn.TextSize = 10
             btn.Font = Enum.Font.Gotham
             btn.TextXAlignment = Enum.TextXAlignment.Left
             btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
@@ -3103,27 +3111,24 @@ local function refreshSkinPanel()
             btn.Parent = weaponScroll
             
             local btnCorner = Instance.new("UICorner")
-            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.CornerRadius = UDim.new(0, 5)
             btnCorner.Parent = btn
             
             btn.MouseButton1Click:Connect(function()
-                -- QUAN TRỌNG: KHI CHỌN VŨ KHÍ MỚI, TỰ ĐỘNG BỎ CHỌN SKIN CŨ
                 if selectedSkin then
                     selectedSkin = nil
-                    -- Reset highlight skin
                     for _, child in pairs(sourceScroll:GetChildren()) do
                         if child:IsA("TextButton") then
                             child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
                         end
                     end
-                    skinStatus.Text = "🔄 Đã bỏ chọn skin cũ - Hãy chọn skin mới"
+                    skinStatus.Text = "🔄 Đã bỏ chọn skin cũ"
                     skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
                 end
                 
                 selectedWeapon = weapon
                 updateSelectedDisplay()
                 
-                -- Highlight vũ khí được chọn
                 for _, child in pairs(weaponScroll:GetChildren()) do
                     if child:IsA("TextButton") then
                         if child.Text == "🔫 " .. weapon.name then
@@ -3134,20 +3139,17 @@ local function refreshSkinPanel()
                     end
                 end
                 
-                -- CHỈ APPLY KHI CÓ ĐỦ CẢ SKIN VÀ VŨ KHÍ
                 if selectedSkin and selectedWeapon then
                     local success, err = AutoApplySkin()
                     if success then
-                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. selectedWeapon.name
+                        skinStatus.Text = "✅ Đã apply: " .. selectedSkin.name .. " → " .. selectedWeapon.name
                         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                         displaySavedSkins()
                         savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-                        -- AUTO CLEAR SAU KHI APPLY
                         task.wait(0.8)
                         selectedSkin = nil
                         selectedWeapon = nil
                         updateSelectedDisplay()
-                        -- Reset highlight
                         for _, child in pairs(sourceScroll:GetChildren()) do
                             if child:IsA("TextButton") then
                                 child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
@@ -3158,96 +3160,12 @@ local function refreshSkinPanel()
                                 child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
                             end
                         end
-                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng cho cặp mới"
+                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng"
                     else
                         skinStatus.Text = "❌ Lỗi: " .. tostring(err)
                         skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
                     end
                 elseif selectedWeapon and not selectedSkin then
-                    skinStatus.Text = "✅ Đã chọn vũ khí: " .. weapon.name .. " - Chọn skin để apply"
-                    skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
-                end
-            end)
-        end
-        
-        local function updateCanvas()
-            weaponScroll.CanvasSize = UDim2.new(0, 0, 0, weaponLayout.AbsoluteContentSize.Y + 10)
-        end
-        weaponLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-        task.wait(0.05)
-        updateCanvas()
-    end
-    
-    -- HIỂN THỊ VŨ KHÍ
-    local function displayWeapons(searchText)
-        for _, child in pairs(weaponScroll:GetChildren()) do
-            if child:IsA("TextButton") then child:Destroy() end
-        end
-        
-        local filtered = {}
-        local searchLower = string.lower(searchText or "")
-        
-        for _, weapon in ipairs(allWeapons) do
-            if searchLower == "" or string.find(string.lower(weapon.name), searchLower, 1, true) then
-                table.insert(filtered, weapon)
-            end
-        end
-        
-        if #filtered == 0 then
-            local empty = Instance.new("TextLabel")
-            empty.Size = UDim2.new(1, 0, 0, 40)
-            empty.Text = "❌ Không tìm thấy"
-            empty.TextColor3 = Color3.fromRGB(255, 150, 150)
-            empty.TextSize = 12
-            empty.BackgroundTransparency = 1
-            empty.Parent = weaponScroll
-            return
-        end
-        
-        for _, weapon in ipairs(filtered) do
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, -10, 0, 35)
-            btn.Text = "🔫 " .. weapon.name
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.TextSize = 11
-            btn.Font = Enum.Font.Gotham
-            btn.TextXAlignment = Enum.TextXAlignment.Left
-            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-            btn.BorderSizePixel = 1
-            btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
-            btn.Parent = weaponScroll
-            
-            local btnCorner = Instance.new("UICorner")
-            btnCorner.CornerRadius = UDim.new(0, 6)
-            btnCorner.Parent = btn
-            
-            btn.MouseButton1Click:Connect(function()
-                selectedWeapon = weapon
-                updateSelectedDisplay()
-                
-                for _, child in pairs(weaponScroll:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                    end
-                end
-                btn.BackgroundColor3 = Color3.fromRGB(80, 130, 80)
-                
-                if selectedSkin then
-                    local success, err = AutoApplySkin()
-                    if success then
-                        skinStatus.Text = "✅ Đã apply và lưu: " .. selectedSkin.name .. " → " .. weapon.name
-                        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
-                        -- AUTO REFRESH DANH SÁCH
-                        displaySavedSkins()
-                        savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-                        -- AUTO CLEAR SAU KHI APPLY
-                        task.wait(0.5)
-                        resetAfterApply()
-                    else
-                        skinStatus.Text = "❌ Lỗi: " .. tostring(err)
-                        skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-                    end
-                else
                     skinStatus.Text = "✅ Đã chọn vũ khí: " .. weapon.name .. " - Chọn skin"
                     skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                 end
@@ -3262,7 +3180,6 @@ local function refreshSkinPanel()
         updateCanvas()
     end
     
-    -- HIỂN THỊ SKIN ĐÃ LƯU
     local function displaySavedSkins()
         for _, child in pairs(savedScroll:GetChildren()) do
             if child:IsA("Frame") then child:Destroy() end
@@ -3271,34 +3188,34 @@ local function refreshSkinPanel()
         local scrollY = 0
         for weaponName, skinName in pairs(savedSkinList) do
             local itemFrame = Instance.new("Frame")
-            itemFrame.Size = UDim2.new(1, -10, 0, 35)
+            itemFrame.Size = UDim2.new(1, -10, 0, 32)
             itemFrame.Position = UDim2.new(0, 5, 0, scrollY)
             itemFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
             itemFrame.BackgroundTransparency = 0.3
             itemFrame.BorderSizePixel = 0
             itemFrame.Parent = savedScroll
             local itemCorner = Instance.new("UICorner")
-            itemCorner.CornerRadius = UDim.new(0, 6)
+            itemCorner.CornerRadius = UDim.new(0, 5)
             itemCorner.Parent = itemFrame
             
             local infoLabel = Instance.new("TextLabel")
-            infoLabel.Size = UDim2.new(0.6, -10, 0, 25)
+            infoLabel.Size = UDim2.new(0.6, -10, 0, 22)
             infoLabel.Position = UDim2.new(0, 8, 0, 5)
             infoLabel.BackgroundTransparency = 1
             infoLabel.Text = "🎨 " .. skinName .. "  →  🔫 " .. weaponName
             infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-            infoLabel.TextSize = 9
+            infoLabel.TextSize = 8
             infoLabel.Font = Enum.Font.Gotham
             infoLabel.TextXAlignment = Enum.TextXAlignment.Left
             infoLabel.Parent = itemFrame
             
             local removeBtn = Instance.new("TextButton")
-            removeBtn.Size = UDim2.new(0, 50, 0, 25)
-            removeBtn.Position = UDim2.new(1, -55, 0, 5)
+            removeBtn.Size = UDim2.new(0, 45, 0, 24)
+            removeBtn.Position = UDim2.new(1, -50, 0, 4)
             removeBtn.BackgroundColor3 = Color3.fromRGB(100, 40, 40)
             removeBtn.Text = "XÓA"
             removeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            removeBtn.TextSize = 9
+            removeBtn.TextSize = 8
             removeBtn.Font = Enum.Font.GothamBold
             removeBtn.Parent = itemFrame
             local removeCorner = Instance.new("UICorner")
@@ -3313,23 +3230,22 @@ local function refreshSkinPanel()
                 skinStatus.Text = "✅ Đã xóa: " .. weaponName
                 skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                 task.wait(1.5)
-                skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+                skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
             end)
             
-            scrollY = scrollY + 42
+            scrollY = scrollY + 38
         end
         
-        savedScroll.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 90))
+        savedScroll.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 85))
     end
     
-    -- SỰ KIỆN CHO NÚT
     applyAllSavedBtn.MouseButton1Click:Connect(function()
         playClickSound()
         local count = ApplyAllSavedSkins()
-        skinStatus.Text = "✅ Đã apply lại " .. count .. " skin đã lưu"
+        skinStatus.Text = "✅ Đã apply lại " .. count .. " skin"
         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
         task.wait(2)
-        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
     end)
     
     clearAllSavedBtn.MouseButton1Click:Connect(function()
@@ -3340,7 +3256,7 @@ local function refreshSkinPanel()
         skinStatus.Text = "✅ Đã xóa tất cả skin đã lưu"
         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
         task.wait(2)
-        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
     end)
     
     sourceSearch:GetPropertyChangedSignal("Text"):Connect(function()
@@ -3356,59 +3272,47 @@ local function refreshSkinPanel()
     displaySavedSkins()
     updateSelectedDisplay()
     
-    local function refreshSkinData()
+    local refreshSkinBtn = Instance.new("TextButton")
+    refreshSkinBtn.Size = UDim2.new(0.9, 0, 0, 36)
+    refreshSkinBtn.Position = UDim2.new(0.05, 0, 0, y + 50)
+    refreshSkinBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    refreshSkinBtn.Text = "🔄 LÀM MỚI"
+    refreshSkinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshSkinBtn.TextSize = 11
+    refreshSkinBtn.Font = Enum.Font.GothamBold
+    refreshSkinBtn.Parent = skinPanel
+    local refreshBtnCorner = Instance.new("UICorner")
+    refreshBtnCorner.CornerRadius = UDim.new(0, 8)
+    refreshBtnCorner.Parent = refreshSkinBtn
+    
+    refreshSkinBtn.MouseButton1Click:Connect(function()
+        playClickSound()
         ScanAllSkins()
         ScanWeapons()
         displaySkins(sourceSearch.Text or "")
         displayWeapons(weaponSearch.Text or "")
         displaySavedSkins()
-    end
-    
-    local refreshSkinBtn = Instance.new("TextButton")
-    refreshSkinBtn.Size = UDim2.new(0.9, 0, 0, 40)
-    refreshSkinBtn.Position = UDim2.new(0.05, 0, 0, y + 60)
-    refreshSkinBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-    refreshSkinBtn.Text = "🔄 LÀM MỚI DANH SÁCH"
-    refreshSkinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    refreshSkinBtn.TextSize = 13
-    refreshSkinBtn.Font = Enum.Font.GothamBold
-    refreshSkinBtn.Parent = skinPanel
-    local refreshBtnCorner = Instance.new("UICorner")
-    refreshBtnCorner.CornerRadius = UDim.new(0, 10)
-    refreshBtnCorner.Parent = refreshSkinBtn
-    
-    refreshSkinBtn.MouseButton1Click:Connect(function()
-        playClickSound()
-        refreshSkinData()
         local notif = Drawing.new("Text")
-        notif.Text = "✅ Đã làm mới danh sách! Tổng skin: " .. #allSkins .. " | Vũ khí: " .. #allWeapons
-        notif.Size = 13
+        notif.Text = "✅ Đã làm mới! Skin: " .. #allSkins .. " | Vũ khí: " .. #allWeapons
+        notif.Size = 12
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
         notif.Outline = true
         notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
         notif.Visible = true
-        task.wait(2)
+        task.wait(1.5)
         notif.Visible = false
         notif:Remove()
     end)
-    
-    refreshSkinBtn.MouseEnter:Connect(function()
-        TweenService:Create(refreshSkinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 170, 220)}):Play()
-    end)
-    refreshSkinBtn.MouseLeave:Connect(function()
-        TweenService:Create(refreshSkinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 150, 200)}):Play()
-    end)
 end
 
--- KHỞI TẠO DỮ LIỆU SKIN
 task.spawn(function()
     task.wait(1)
     ScanAllSkins()
     ScanWeapons()
 end)
 
--- ============ INFO PANEL ==========
+-- INFO PANEL
 local function refreshInfoPanel()
     for _, child in pairs(infoPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -3416,35 +3320,35 @@ local function refreshInfoPanel()
         end
     end
     
-    local y = 10
+    local y = 5
     
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, y)
     titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     titleFrame.BackgroundTransparency = 0.4
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = infoPanel
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleFrame
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 40)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -20, 0, 35)
+    titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "ℹ️ THÔNG TIN Player"
+    titleLabel.Text = "ℹ️ THÔNG TIN"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Center
     titleLabel.Parent = titleFrame
     
-    y = y + 70
+    y = y + 60
     
     local avatarFrame = Instance.new("Frame")
-    avatarFrame.Size = UDim2.new(0, 90, 0, 90)
-    avatarFrame.Position = UDim2.new(0.5, -45, 0, y)
+    avatarFrame.Size = UDim2.new(0, 80, 0, 80)
+    avatarFrame.Position = UDim2.new(0.5, -40, 0, y)
     avatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
     avatarFrame.BackgroundTransparency = 0.3
     avatarFrame.BorderSizePixel = 2
@@ -3452,7 +3356,7 @@ local function refreshInfoPanel()
     avatarFrame.Parent = infoPanel
     
     local avatarCorner = Instance.new("UICorner")
-    avatarCorner.CornerRadius = UDim.new(0, 45)
+    avatarCorner.CornerRadius = UDim.new(0, 40)
     avatarCorner.Parent = avatarFrame
     
     local avatarImage = Instance.new("ImageLabel")
@@ -3460,9 +3364,8 @@ local function refreshInfoPanel()
     avatarImage.Position = UDim2.new(0, 2, 0, 2)
     avatarImage.BackgroundTransparency = 1
     avatarImage.Parent = avatarFrame
-    
     local imageCorner = Instance.new("UICorner")
-    imageCorner.CornerRadius = UDim.new(0, 43)
+    imageCorner.CornerRadius = UDim.new(0, 38)
     imageCorner.Parent = avatarImage
     
     local userId = LocalPlayer.UserId
@@ -3477,41 +3380,41 @@ local function refreshInfoPanel()
         end
     end)
     
-    y = y + 105
+    y = y + 95
     
     local nameFrame = Instance.new("Frame")
-    nameFrame.Size = UDim2.new(1, -10, 0, 40)
+    nameFrame.Size = UDim2.new(1, -10, 0, 36)
     nameFrame.Position = UDim2.new(0, 5, 0, y)
     nameFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     nameFrame.BackgroundTransparency = 0.4
     nameFrame.BorderSizePixel = 0
     nameFrame.Parent = infoPanel
     local nameCorner = Instance.new("UICorner")
-    nameCorner.CornerRadius = UDim.new(0, 12)
+    nameCorner.CornerRadius = UDim.new(0, 10)
     nameCorner.Parent = nameFrame
     
     local playerNameLabel = Instance.new("TextLabel")
-    playerNameLabel.Size = UDim2.new(1, -20, 0, 30)
+    playerNameLabel.Size = UDim2.new(1, -20, 0, 26)
     playerNameLabel.Position = UDim2.new(0, 10, 0, 5)
     playerNameLabel.BackgroundTransparency = 1
     playerNameLabel.Text = LocalPlayer.Name
     playerNameLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    playerNameLabel.TextSize = 18
+    playerNameLabel.TextSize = 16
     playerNameLabel.Font = Enum.Font.GothamBold
     playerNameLabel.TextXAlignment = Enum.TextXAlignment.Center
     playerNameLabel.Parent = nameFrame
     
-    y = y + 55
+    y = y + 50
     
     local statsGrid = Instance.new("Frame")
-    statsGrid.Size = UDim2.new(1, -10, 0, 280)
+    statsGrid.Size = UDim2.new(1, -10, 0, 260)
     statsGrid.Position = UDim2.new(0, 5, 0, y)
     statsGrid.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     statsGrid.BackgroundTransparency = 0.4
     statsGrid.BorderSizePixel = 0
     statsGrid.Parent = infoPanel
     local gridCorner = Instance.new("UICorner")
-    gridCorner.CornerRadius = UDim.new(0, 12)
+    gridCorner.CornerRadius = UDim.new(0, 10)
     gridCorner.Parent = statsGrid
     
     local health, maxHealth = getPlayerHealth()
@@ -3524,322 +3427,120 @@ local function refreshInfoPanel()
     local region = getPlayerRegion()
     local kd = deaths > 0 and string.format("%.2f", kills / deaths) or kills
     
-    local stat1Frame = Instance.new("Frame")
-    stat1Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat1Frame.Position = UDim2.new(0, 5, 0, 10)
-    stat1Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat1Frame.BackgroundTransparency = 0.3
-    stat1Frame.BorderSizePixel = 0
-    stat1Frame.Parent = statsGrid
-    local stat1Corner = Instance.new("UICorner")
-    stat1Corner.CornerRadius = UDim.new(0, 10)
-    stat1Corner.Parent = stat1Frame
+    local stats = {
+        {icon = "❤️", label = "MÁU", value = health .. " / " .. maxHealth, color = Color3.fromRGB(255, 80, 80)},
+        {icon = "⭐", label = "CẤP ĐỘ", value = level, color = Color3.fromRGB(255, 215, 0)},
+        {icon = "⚔️", label = "HẠ GỤC", value = kills, color = Color3.fromRGB(255, 100, 100)},
+        {icon = "💀", label = "CHẾT", value = deaths, color = Color3.fromRGB(100, 100, 200)},
+        {icon = "📊", label = "K/D", value = kd, color = Color3.fromRGB(100, 200, 100)},
+        {icon = "🔥", label = "STREAK", value = winStreak, color = winStreak > 0 and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(150, 150, 150)}
+    }
     
-    local stat1Icon = Instance.new("TextLabel")
-    stat1Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat1Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat1Icon.BackgroundTransparency = 1
-    stat1Icon.Text = "❤️"
-    stat1Icon.TextColor3 = Color3.fromRGB(255, 80, 80)
-    stat1Icon.TextSize = 28
-    stat1Icon.Font = Enum.Font.GothamBold
-    stat1Icon.Parent = stat1Frame
+    for i, stat in ipairs(stats) do
+        local row = math.floor((i-1) / 2)
+        local col = (i-1) % 2
+        local statFrame = Instance.new("Frame")
+        statFrame.Size = UDim2.new(0.5, -10, 0, 80)
+        statFrame.Position = UDim2.new(col * 0.5 + 0.005, 5 + (col * 5), 0, 10 + row * 90)
+        statFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+        statFrame.BackgroundTransparency = 0.3
+        statFrame.BorderSizePixel = 0
+        statFrame.Parent = statsGrid
+        local statCorner = Instance.new("UICorner")
+        statCorner.CornerRadius = UDim.new(0, 8)
+        statCorner.Parent = statFrame
+        
+        local statIcon = Instance.new("TextLabel")
+        statIcon.Size = UDim2.new(0, 35, 0, 35)
+        statIcon.Position = UDim2.new(0, 8, 0, 22)
+        statIcon.BackgroundTransparency = 1
+        statIcon.Text = stat.icon
+        statIcon.TextColor3 = stat.color
+        statIcon.TextSize = 24
+        statIcon.Font = Enum.Font.GothamBold
+        statIcon.Parent = statFrame
+        
+        local statLabel = Instance.new("TextLabel")
+        statLabel.Size = UDim2.new(1, -55, 0, 22)
+        statLabel.Position = UDim2.new(0, 48, 0, 10)
+        statLabel.BackgroundTransparency = 1
+        statLabel.Text = stat.label
+        statLabel.TextColor3 = Color3.fromRGB(180, 180, 220)
+        statLabel.TextSize = 10
+        statLabel.Font = Enum.Font.Gotham
+        statLabel.TextXAlignment = Enum.TextXAlignment.Left
+        statLabel.Parent = statFrame
+        
+        local statValue = Instance.new("TextLabel")
+        statValue.Size = UDim2.new(1, -55, 0, 35)
+        statValue.Position = UDim2.new(0, 48, 0, 32)
+        statValue.BackgroundTransparency = 1
+        statValue.Text = stat.value
+        statValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+        statValue.TextSize = 16
+        statValue.Font = Enum.Font.GothamBold
+        statValue.TextXAlignment = Enum.TextXAlignment.Left
+        statValue.Parent = statFrame
+    end
     
-    local stat1Label = Instance.new("TextLabel")
-    stat1Label.Size = UDim2.new(1, -60, 0, 25)
-    stat1Label.Position = UDim2.new(0, 55, 0, 15)
-    stat1Label.BackgroundTransparency = 1
-    stat1Label.Text = "MÁU"
-    stat1Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat1Label.TextSize = 11
-    stat1Label.Font = Enum.Font.Gotham
-    stat1Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat1Label.Parent = stat1Frame
-    
-    local stat1Value = Instance.new("TextLabel")
-    stat1Value.Size = UDim2.new(1, -60, 0, 35)
-    stat1Value.Position = UDim2.new(0, 55, 0, 35)
-    stat1Value.BackgroundTransparency = 1
-    stat1Value.Text = health .. " / " .. maxHealth
-    stat1Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stat1Value.TextSize = 18
-    stat1Value.Font = Enum.Font.GothamBold
-    stat1Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat1Value.Parent = stat1Frame
-    
-    local stat2Frame = Instance.new("Frame")
-    stat2Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat2Frame.Position = UDim2.new(0.5, 5, 0, 10)
-    stat2Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat2Frame.BackgroundTransparency = 0.3
-    stat2Frame.BorderSizePixel = 0
-    stat2Frame.Parent = statsGrid
-    local stat2Corner = Instance.new("UICorner")
-    stat2Corner.CornerRadius = UDim.new(0, 10)
-    stat2Corner.Parent = stat2Frame
-    
-    local stat2Icon = Instance.new("TextLabel")
-    stat2Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat2Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat2Icon.BackgroundTransparency = 1
-    stat2Icon.Text = "⭐"
-    stat2Icon.TextColor3 = Color3.fromRGB(255, 215, 0)
-    stat2Icon.TextSize = 28
-    stat2Icon.Font = Enum.Font.GothamBold
-    stat2Icon.Parent = stat2Frame
-    
-    local stat2Label = Instance.new("TextLabel")
-    stat2Label.Size = UDim2.new(1, -60, 0, 25)
-    stat2Label.Position = UDim2.new(0, 55, 0, 15)
-    stat2Label.BackgroundTransparency = 1
-    stat2Label.Text = "CẤP ĐỘ"
-    stat2Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat2Label.TextSize = 11
-    stat2Label.Font = Enum.Font.Gotham
-    stat2Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat2Label.Parent = stat2Frame
-    
-    local stat2Value = Instance.new("TextLabel")
-    stat2Value.Size = UDim2.new(1, -60, 0, 35)
-    stat2Value.Position = UDim2.new(0, 55, 0, 35)
-    stat2Value.BackgroundTransparency = 1
-    stat2Value.Text = level
-    stat2Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stat2Value.TextSize = 18
-    stat2Value.Font = Enum.Font.GothamBold
-    stat2Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat2Value.Parent = stat2Frame
-    
-    local stat3Frame = Instance.new("Frame")
-    stat3Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat3Frame.Position = UDim2.new(0, 5, 0, 100)
-    stat3Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat3Frame.BackgroundTransparency = 0.3
-    stat3Frame.BorderSizePixel = 0
-    stat3Frame.Parent = statsGrid
-    local stat3Corner = Instance.new("UICorner")
-    stat3Corner.CornerRadius = UDim.new(0, 10)
-    stat3Corner.Parent = stat3Frame
-    
-    local stat3Icon = Instance.new("TextLabel")
-    stat3Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat3Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat3Icon.BackgroundTransparency = 1
-    stat3Icon.Text = "⚔️"
-    stat3Icon.TextColor3 = Color3.fromRGB(255, 100, 100)
-    stat3Icon.TextSize = 28
-    stat3Icon.Font = Enum.Font.GothamBold
-    stat3Icon.Parent = stat3Frame
-    
-    local stat3Label = Instance.new("TextLabel")
-    stat3Label.Size = UDim2.new(1, -60, 0, 25)
-    stat3Label.Position = UDim2.new(0, 55, 0, 15)
-    stat3Label.BackgroundTransparency = 1
-    stat3Label.Text = "HẠ GỤC"
-    stat3Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat3Label.TextSize = 11
-    stat3Label.Font = Enum.Font.Gotham
-    stat3Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat3Label.Parent = stat3Frame
-    
-    local stat3Value = Instance.new("TextLabel")
-    stat3Value.Size = UDim2.new(1, -60, 0, 35)
-    stat3Value.Position = UDim2.new(0, 55, 0, 35)
-    stat3Value.BackgroundTransparency = 1
-    stat3Value.Text = kills
-    stat3Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stat3Value.TextSize = 18
-    stat3Value.Font = Enum.Font.GothamBold
-    stat3Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat3Value.Parent = stat3Frame
-    
-    local stat4Frame = Instance.new("Frame")
-    stat4Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat4Frame.Position = UDim2.new(0.5, 5, 0, 100)
-    stat4Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat4Frame.BackgroundTransparency = 0.3
-    stat4Frame.BorderSizePixel = 0
-    stat4Frame.Parent = statsGrid
-    local stat4Corner = Instance.new("UICorner")
-    stat4Corner.CornerRadius = UDim.new(0, 10)
-    stat4Corner.Parent = stat4Frame
-    
-    local stat4Icon = Instance.new("TextLabel")
-    stat4Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat4Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat4Icon.BackgroundTransparency = 1
-    stat4Icon.Text = "💀"
-    stat4Icon.TextColor3 = Color3.fromRGB(100, 100, 200)
-    stat4Icon.TextSize = 28
-    stat4Icon.Font = Enum.Font.GothamBold
-    stat4Icon.Parent = stat4Frame
-    
-    local stat4Label = Instance.new("TextLabel")
-    stat4Label.Size = UDim2.new(1, -60, 0, 25)
-    stat4Label.Position = UDim2.new(0, 55, 0, 15)
-    stat4Label.BackgroundTransparency = 1
-    stat4Label.Text = "CHẾT"
-    stat4Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat4Label.TextSize = 11
-    stat4Label.Font = Enum.Font.Gotham
-    stat4Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat4Label.Parent = stat4Frame
-    
-    local stat4Value = Instance.new("TextLabel")
-    stat4Value.Size = UDim2.new(1, -60, 0, 35)
-    stat4Value.Position = UDim2.new(0, 55, 0, 35)
-    stat4Value.BackgroundTransparency = 1
-    stat4Value.Text = deaths
-    stat4Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stat4Value.TextSize = 18
-    stat4Value.Font = Enum.Font.GothamBold
-    stat4Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat4Value.Parent = stat4Frame
-    
-    local stat5Frame = Instance.new("Frame")
-    stat5Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat5Frame.Position = UDim2.new(0, 5, 0, 190)
-    stat5Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat5Frame.BackgroundTransparency = 0.3
-    stat5Frame.BorderSizePixel = 0
-    stat5Frame.Parent = statsGrid
-    local stat5Corner = Instance.new("UICorner")
-    stat5Corner.CornerRadius = UDim.new(0, 10)
-    stat5Corner.Parent = stat5Frame
-    
-    local stat5Icon = Instance.new("TextLabel")
-    stat5Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat5Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat5Icon.BackgroundTransparency = 1
-    stat5Icon.Text = "📊"
-    stat5Icon.TextColor3 = Color3.fromRGB(100, 200, 100)
-    stat5Icon.TextSize = 28
-    stat5Icon.Font = Enum.Font.GothamBold
-    stat5Icon.Parent = stat5Frame
-    
-    local stat5Label = Instance.new("TextLabel")
-    stat5Label.Size = UDim2.new(1, -60, 0, 25)
-    stat5Label.Position = UDim2.new(0, 55, 0, 15)
-    stat5Label.BackgroundTransparency = 1
-    stat5Label.Text = "TỶ LỆ K/D"
-    stat5Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat5Label.TextSize = 11
-    stat5Label.Font = Enum.Font.Gotham
-    stat5Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat5Label.Parent = stat5Frame
-    
-    local stat5Value = Instance.new("TextLabel")
-    stat5Value.Size = UDim2.new(1, -60, 0, 35)
-    stat5Value.Position = UDim2.new(0, 55, 0, 35)
-    stat5Value.BackgroundTransparency = 1
-    stat5Value.Text = kd
-    stat5Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-    stat5Value.TextSize = 18
-    stat5Value.Font = Enum.Font.GothamBold
-    stat5Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat5Value.Parent = stat5Frame
-    
-    local stat6Frame = Instance.new("Frame")
-    stat6Frame.Size = UDim2.new(0.5, -10, 0, 80)
-    stat6Frame.Position = UDim2.new(0.5, 5, 0, 190)
-    stat6Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    stat6Frame.BackgroundTransparency = 0.3
-    stat6Frame.BorderSizePixel = 0
-    stat6Frame.Parent = statsGrid
-    local stat6Corner = Instance.new("UICorner")
-    stat6Corner.CornerRadius = UDim.new(0, 10)
-    stat6Corner.Parent = stat6Frame
-    
-    local stat6Icon = Instance.new("TextLabel")
-    stat6Icon.Size = UDim2.new(0, 40, 0, 40)
-    stat6Icon.Position = UDim2.new(0, 10, 0, 20)
-    stat6Icon.BackgroundTransparency = 1
-    stat6Icon.Text = "🔥"
-    stat6Icon.TextColor3 = Color3.fromRGB(255, 150, 50)
-    stat6Icon.TextSize = 28
-    stat6Icon.Font = Enum.Font.GothamBold
-    stat6Icon.Parent = stat6Frame
-    
-    local stat6Label = Instance.new("TextLabel")
-    stat6Label.Size = UDim2.new(1, -60, 0, 25)
-    stat6Label.Position = UDim2.new(0, 55, 0, 15)
-    stat6Label.BackgroundTransparency = 1
-    stat6Label.Text = "CHUỖI THẮNG"
-    stat6Label.TextColor3 = Color3.fromRGB(180, 180, 220)
-    stat6Label.TextSize = 11
-    stat6Label.Font = Enum.Font.Gotham
-    stat6Label.TextXAlignment = Enum.TextXAlignment.Left
-    stat6Label.Parent = stat6Frame
-    
-    local stat6Value = Instance.new("TextLabel")
-    stat6Value.Size = UDim2.new(1, -60, 0, 35)
-    stat6Value.Position = UDim2.new(0, 55, 0, 35)
-    stat6Value.BackgroundTransparency = 1
-    stat6Value.Text = winStreak
-    stat6Value.TextColor3 = winStreak > 0 and Color3.fromRGB(255, 150, 50) or Color3.fromRGB(150, 150, 150)
-    stat6Value.TextSize = 18
-    stat6Value.Font = Enum.Font.GothamBold
-    stat6Value.TextXAlignment = Enum.TextXAlignment.Left
-    stat6Value.Parent = stat6Frame
-    
-    y = y + 295
+    y = y + 275
     
     local posFrame = Instance.new("Frame")
-    posFrame.Size = UDim2.new(1, -10, 0, 90)
+    posFrame.Size = UDim2.new(1, -10, 0, 70)
     posFrame.Position = UDim2.new(0, 5, 0, y)
     posFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     posFrame.BackgroundTransparency = 0.4
     posFrame.BorderSizePixel = 0
     posFrame.Parent = infoPanel
     local posCorner = Instance.new("UICorner")
-    posCorner.CornerRadius = UDim.new(0, 12)
+    posCorner.CornerRadius = UDim.new(0, 10)
     posCorner.Parent = posFrame
     
     local posTitle = Instance.new("TextLabel")
-    posTitle.Size = UDim2.new(1, -20, 0, 30)
-    posTitle.Position = UDim2.new(0, 10, 0, 8)
+    posTitle.Size = UDim2.new(1, -20, 0, 25)
+    posTitle.Position = UDim2.new(0, 10, 0, 5)
     posTitle.BackgroundTransparency = 1
-    posTitle.Text = "📍 VỊ TRÍ HIỆN TẠI"
+    posTitle.Text = "📍 VỊ TRÍ"
     posTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-    posTitle.TextSize = 13
+    posTitle.TextSize = 11
     posTitle.Font = Enum.Font.GothamBold
     posTitle.TextXAlignment = Enum.TextXAlignment.Left
     posTitle.Parent = posFrame
     
     local posValue = Instance.new("TextLabel")
-    posValue.Size = UDim2.new(1, -20, 0, 40)
-    posValue.Position = UDim2.new(0, 10, 0, 40)
+    posValue.Size = UDim2.new(1, -20, 0, 30)
+    posValue.Position = UDim2.new(0, 10, 0, 32)
     posValue.BackgroundTransparency = 1
-    posValue.Text = "X: " .. position
+    posValue.Text = position
     posValue.TextColor3 = Color3.fromRGB(200, 200, 230)
-    posValue.TextSize = 14
+    posValue.TextSize = 12
     posValue.Font = Enum.Font.Gotham
     posValue.TextXAlignment = Enum.TextXAlignment.Left
     posValue.Parent = posFrame
     
-    y = y + 105
+    y = y + 85
     
-    local eloFrame = Instance.new("Frame")
-    eloFrame.Size = UDim2.new(1, -10, 0, 90)
-    eloFrame.Position = UDim2.new(0, 5, 0, y)
-    eloFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-    eloFrame.BackgroundTransparency = 0.4
-    eloFrame.BorderSizePixel = 0
-    eloFrame.Parent = infoPanel
-    local eloCorner = Instance.new("UICorner")
-    eloCorner.CornerRadius = UDim.new(0, 12)
-    eloCorner.Parent = eloFrame
+    local eloFrame2 = Instance.new("Frame")
+    eloFrame2.Size = UDim2.new(1, -10, 0, 70)
+    eloFrame2.Position = UDim2.new(0, 5, 0, y)
+    eloFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    eloFrame2.BackgroundTransparency = 0.4
+    eloFrame2.BorderSizePixel = 0
+    eloFrame2.Parent = infoPanel
+    local eloCorner2 = Instance.new("UICorner")
+    eloCorner2.CornerRadius = UDim.new(0, 10)
+    eloCorner2.Parent = eloFrame2
     
-    local eloTitle = Instance.new("TextLabel")
-    eloTitle.Size = UDim2.new(1, -20, 0, 30)
-    eloTitle.Position = UDim2.new(0, 10, 0, 8)
-    eloTitle.BackgroundTransparency = 1
-    eloTitle.Text = "🏆 HẠNG & KHU VỰC"
-    eloTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-    eloTitle.TextSize = 13
-    eloTitle.Font = Enum.Font.GothamBold
-    eloTitle.TextXAlignment = Enum.TextXAlignment.Left
-    eloTitle.Parent = eloFrame
+    local eloTitle2 = Instance.new("TextLabel")
+    eloTitle2.Size = UDim2.new(1, -20, 0, 25)
+    eloTitle2.Position = UDim2.new(0, 10, 0, 5)
+    eloTitle2.BackgroundTransparency = 1
+    eloTitle2.Text = "🏆 HẠNG & KHU VỰC"
+    eloTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
+    eloTitle2.TextSize = 11
+    eloTitle2.Font = Enum.Font.GothamBold
+    eloTitle2.TextXAlignment = Enum.TextXAlignment.Left
+    eloTitle2.Parent = eloFrame2
     
     local function getEloColor(elo)
         if elo >= 2000 then return Color3.fromRGB(255, 215, 0) end
@@ -3848,28 +3549,29 @@ local function refreshInfoPanel()
         return Color3.fromRGB(100, 100, 100)
     end
     
-    local eloValue = Instance.new("TextLabel")
-    eloValue.Size = UDim2.new(0.5, -15, 0, 40)
-    eloValue.Position = UDim2.new(0, 10, 0, 40)
-    eloValue.BackgroundTransparency = 1
-    eloValue.Text = "ELO: " .. elo
-    eloValue.TextColor3 = getEloColor(elo)
-    eloValue.TextSize = 16
-    eloValue.Font = Enum.Font.GothamBold
-    eloValue.TextXAlignment = Enum.TextXAlignment.Left
-    eloValue.Parent = eloFrame
+    local eloValue2 = Instance.new("TextLabel")
+    eloValue2.Size = UDim2.new(0.5, -15, 0, 30)
+    eloValue2.Position = UDim2.new(0, 10, 0, 32)
+    eloValue2.BackgroundTransparency = 1
+    eloValue2.Text = "ELO: " .. elo
+    eloValue2.TextColor3 = getEloColor(elo)
+    eloValue2.TextSize = 14
+    eloValue2.Font = Enum.Font.GothamBold
+    eloValue2.TextXAlignment = Enum.TextXAlignment.Left
+    eloValue2.Parent = eloFrame2
     
-    local regionValue = Instance.new("TextLabel")
-    regionValue.Size = UDim2.new(0.5, -15, 0, 40)
-    regionValue.Position = UDim2.new(0.5, 5, 0, 40)
-    regionValue.BackgroundTransparency = 1
-    regionValue.Text = "🌍 Khu vực: " .. region
-    regionValue.TextColor3 = Color3.fromRGB(200, 200, 230)
-    regionValue.TextSize = 14
-    regionValue.Font = Enum.Font.Gotham
-    regionValue.TextXAlignment = Enum.TextXAlignment.Left
-    regionValue.Parent = eloFrame
-    y = y + 105
+    local regionValue2 = Instance.new("TextLabel")
+    regionValue2.Size = UDim2.new(0.5, -15, 0, 30)
+    regionValue2.Position = UDim2.new(0.5, 5, 0, 32)
+    regionValue2.BackgroundTransparency = 1
+    regionValue2.Text = "🌍 " .. region
+    regionValue2.TextColor3 = Color3.fromRGB(200, 200, 230)
+    regionValue2.TextSize = 12
+    regionValue2.Font = Enum.Font.Gotham
+    regionValue2.TextXAlignment = Enum.TextXAlignment.Left
+    regionValue2.Parent = eloFrame2
+    
+    y = y + 85
     
     local keyFrame2 = Instance.new("Frame")
     keyFrame2.Size = UDim2.new(1, -10, 0, 55)
@@ -3879,43 +3581,44 @@ local function refreshInfoPanel()
     keyFrame2.BorderSizePixel = 0
     keyFrame2.Parent = infoPanel
     local keyCorner2 = Instance.new("UICorner")
-    keyCorner2.CornerRadius = UDim.new(0, 12)
+    keyCorner2.CornerRadius = UDim.new(0, 10)
     keyCorner2.Parent = keyFrame2
     
     local keyTitle2 = Instance.new("TextLabel")
-    keyTitle2.Size = UDim2.new(1, -20, 0, 25)
-    keyTitle2.Position = UDim2.new(0, 10, 0, 8)
+    keyTitle2.Size = UDim2.new(1, -20, 0, 22)
+    keyTitle2.Position = UDim2.new(0, 10, 0, 5)
     keyTitle2.BackgroundTransparency = 1
-    keyTitle2.Text = "🔑 KEY ĐANG SỬ DỤNG"
+    keyTitle2.Text = "🔑 KEY"
     keyTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
-    keyTitle2.TextSize = 12
+    keyTitle2.TextSize = 11
     keyTitle2.Font = Enum.Font.GothamBold
     keyTitle2.TextXAlignment = Enum.TextXAlignment.Left
     keyTitle2.Parent = keyFrame2
     
     local keyValue2 = Instance.new("TextLabel")
     keyValue2.Size = UDim2.new(1, -20, 0, 25)
-    keyValue2.Position = UDim2.new(0, 10, 0, 30)
+    keyValue2.Position = UDim2.new(0, 10, 0, 28)
     keyValue2.BackgroundTransparency = 1
     keyValue2.Text = currentKey
     keyValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
-    keyValue2.TextSize = 13
+    keyValue2.TextSize = 11
     keyValue2.Font = Enum.Font.GothamBold
     keyValue2.TextXAlignment = Enum.TextXAlignment.Left
     keyValue2.Parent = keyFrame2
-    y = y + 105
+    
+    y = y + 70
     
     local refreshBtn = Instance.new("TextButton")
-    refreshBtn.Size = UDim2.new(0.9, 0, 0, 45)
+    refreshBtn.Size = UDim2.new(0.9, 0, 0, 38)
     refreshBtn.Position = UDim2.new(0.05, 0, 0, y)
     refreshBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
     refreshBtn.Text = "🔄 LÀM MỚI"
     refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    refreshBtn.TextSize = 14
+    refreshBtn.TextSize = 12
     refreshBtn.Font = Enum.Font.GothamBold
     refreshBtn.Parent = infoPanel
     local refreshCorner = Instance.new("UICorner")
-    refreshCorner.CornerRadius = UDim.new(0, 10)
+    refreshCorner.CornerRadius = UDim.new(0, 8)
     refreshCorner.Parent = refreshBtn
     
     refreshBtn.MouseButton1Click:Connect(function()
@@ -3931,7 +3634,7 @@ local function refreshInfoPanel()
     end)
 end
 
--- ============ ADMIN PANEL ==========
+-- ADMIN PANEL
 local function refreshAdminPanel()
     for _, child in pairs(adminPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -3939,34 +3642,34 @@ local function refreshAdminPanel()
         end
     end
     
-    local y = 10
+    local y = 5
     
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, y)
     titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     titleFrame.BackgroundTransparency = 0.4
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = adminPanel
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleFrame
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 40)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -20, 0, 35)
+    titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "👑 QUẢN TRỊ / CHỦ SỞ HỮU"
+    titleLabel.Text = "👑 ADMIN"
     titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Center
     titleLabel.Parent = titleFrame
     
-    y = y + 70
+    y = y + 60
     
     local adminCard = Instance.new("Frame")
-    adminCard.Size = UDim2.new(1, -10, 0, 210)
+    adminCard.Size = UDim2.new(1, -10, 0, 180)
     adminCard.Position = UDim2.new(0, 5, 0, y)
     adminCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     adminCard.BackgroundTransparency = 0.4
@@ -3974,12 +3677,12 @@ local function refreshAdminPanel()
     adminCard.BorderColor3 = Color3.fromRGB(255, 215, 0)
     adminCard.Parent = adminPanel
     local adminCorner = Instance.new("UICorner")
-    adminCorner.CornerRadius = UDim.new(0, 12)
+    adminCorner.CornerRadius = UDim.new(0, 10)
     adminCorner.Parent = adminCard
     
     local adminAvatarFrame = Instance.new("Frame")
-    adminAvatarFrame.Size = UDim2.new(0, 100, 0, 100)
-    adminAvatarFrame.Position = UDim2.new(0.5, -50, 0, 15)
+    adminAvatarFrame.Size = UDim2.new(0, 80, 0, 80)
+    adminAvatarFrame.Position = UDim2.new(0.5, -40, 0, 12)
     adminAvatarFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
     adminAvatarFrame.BackgroundTransparency = 0.3
     adminAvatarFrame.BorderSizePixel = 3
@@ -3987,7 +3690,7 @@ local function refreshAdminPanel()
     adminAvatarFrame.Parent = adminCard
     
     local adminAvatarCorner = Instance.new("UICorner")
-    adminAvatarCorner.CornerRadius = UDim.new(0, 50)
+    adminAvatarCorner.CornerRadius = UDim.new(0, 40)
     adminAvatarCorner.Parent = adminAvatarFrame
     
     local adminAvatarImage = Instance.new("ImageLabel")
@@ -3996,7 +3699,7 @@ local function refreshAdminPanel()
     adminAvatarImage.BackgroundTransparency = 1
     adminAvatarImage.Parent = adminAvatarFrame
     local avatarImgCorner = Instance.new("UICorner")
-    avatarImgCorner.CornerRadius = UDim.new(0, 47)
+    avatarImgCorner.CornerRadius = UDim.new(0, 37)
     avatarImgCorner.Parent = adminAvatarImage
     
     task.spawn(function()
@@ -4011,48 +3714,48 @@ local function refreshAdminPanel()
     end)
     
     local adminNameLabel = Instance.new("TextLabel")
-    adminNameLabel.Size = UDim2.new(1, -20, 0, 35)
-    adminNameLabel.Position = UDim2.new(0, 10, 0, 125)
+    adminNameLabel.Size = UDim2.new(1, -20, 0, 30)
+    adminNameLabel.Position = UDim2.new(0, 10, 0, 102)
     adminNameLabel.BackgroundTransparency = 1
     adminNameLabel.Text = ADMIN_DISPLAY_NAME .. " (" .. ADMIN_NAME .. ")"
     adminNameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-    adminNameLabel.TextSize = 18
+    adminNameLabel.TextSize = 13
     adminNameLabel.Font = Enum.Font.GothamBold
     adminNameLabel.TextXAlignment = Enum.TextXAlignment.Center
     adminNameLabel.Parent = adminCard
     
     local adminStatus = Instance.new("TextLabel")
-    adminStatus.Size = UDim2.new(1, -20, 0, 30)
-    adminStatus.Position = UDim2.new(0, 10, 0, 165)
+    adminStatus.Size = UDim2.new(1, -20, 0, 25)
+    adminStatus.Position = UDim2.new(0, 10, 0, 138)
     adminStatus.BackgroundTransparency = 1
-    adminStatus.Text = isAdminOnline and "🟢 ĐANG TRUY CẬP" or "🔴 NGOẠI TUYẾN"
+    adminStatus.Text = isAdminOnline and "🟢 ONLINE" or "🔴 OFFLINE"
     adminStatus.TextColor3 = isAdminOnline and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    adminStatus.TextSize = 14
+    adminStatus.TextSize = 12
     adminStatus.Font = Enum.Font.GothamBold
     adminStatus.TextXAlignment = Enum.TextXAlignment.Center
     adminStatus.Parent = adminCard
     
-    y = y + 230
+    y = y + 195
     
     local joinBtn = Instance.new("TextButton")
-    joinBtn.Size = UDim2.new(0.9, 0, 0, 55)
+    joinBtn.Size = UDim2.new(0.9, 0, 0, 45)
     joinBtn.Position = UDim2.new(0.05, 0, 0, y)
     joinBtn.BackgroundColor3 = isAdminOnline and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(80, 80, 80)
-    joinBtn.Text = isAdminOnline and "🚀 VÀO SERVER CỦA ADMIN" or "⛔ ADMIN ĐANG OFFLINE"
+    joinBtn.Text = isAdminOnline and "🚀 VÀO SERVER ADMIN" or "⛔ ADMIN OFFLINE"
     joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    joinBtn.TextSize = 14
+    joinBtn.TextSize = 12
     joinBtn.Font = Enum.Font.GothamBold
     joinBtn.Parent = adminPanel
     local joinCorner = Instance.new("UICorner")
-    joinCorner.CornerRadius = UDim.new(0, 10)
+    joinCorner.CornerRadius = UDim.new(0, 8)
     joinCorner.Parent = joinBtn
     
     joinBtn.MouseButton1Click:Connect(function()
         playClickSound()
         if not isAdminOnline then
             local notif = Drawing.new("Text")
-            notif.Text = "❌ Admin hiện không trực tuyến!"
-            notif.Size = 14
+            notif.Text = "❌ Admin offline!"
+            notif.Size = 13
             notif.Color = Color3.fromRGB(255, 0, 0)
             notif.Center = true
             notif.Outline = true
@@ -4070,7 +3773,7 @@ local function refreshAdminPanel()
             joinBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
             local notif = Drawing.new("Text")
             notif.Text = msg
-            notif.Size = 14
+            notif.Size = 13
             notif.Color = Color3.fromRGB(255, 200, 0)
             notif.Center = true
             notif.Outline = true
@@ -4082,91 +3785,80 @@ local function refreshAdminPanel()
         end
     end)
     
-    joinBtn.MouseEnter:Connect(function()
-        if isAdminOnline then
-            TweenService:Create(joinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 170, 220)}):Play()
-        end
-    end)
-    joinBtn.MouseLeave:Connect(function()
-        if isAdminOnline then
-            TweenService:Create(joinBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 150, 200)}):Play()
-        end
-    end)
-    
-    y = y + 75
+    y = y + 60
     
     local infoCard = Instance.new("Frame")
-    infoCard.Size = UDim2.new(1, -10, 0, 130)
+    infoCard.Size = UDim2.new(1, -10, 0, 110)
     infoCard.Position = UDim2.new(0, 5, 0, y)
     infoCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     infoCard.BackgroundTransparency = 0.4
     infoCard.BorderSizePixel = 0
     infoCard.Parent = adminPanel
     local infoCorner = Instance.new("UICorner")
-    infoCorner.CornerRadius = UDim.new(0, 12)
+    infoCorner.CornerRadius = UDim.new(0, 10)
     infoCorner.Parent = infoCard
     
     local infoTitle = Instance.new("TextLabel")
-    infoTitle.Size = UDim2.new(1, -20, 0, 30)
-    infoTitle.Position = UDim2.new(0, 10, 0, 8)
+    infoTitle.Size = UDim2.new(1, -20, 0, 22)
+    infoTitle.Position = UDim2.new(0, 10, 0, 5)
     infoTitle.BackgroundTransparency = 1
-    infoTitle.Text = "ℹ️ THÔNG TIN VỀ ADMIN"
+    infoTitle.Text = "ℹ️ THÔNG TIN"
     infoTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-    infoTitle.TextSize = 13
+    infoTitle.TextSize = 11
     infoTitle.Font = Enum.Font.GothamBold
     infoTitle.TextXAlignment = Enum.TextXAlignment.Left
     infoTitle.Parent = infoCard
     
     local infoDesc = Instance.new("TextLabel")
-    infoDesc.Size = UDim2.new(1, -20, 0, 85)
-    infoDesc.Position = UDim2.new(0, 10, 0, 40)
+    infoDesc.Size = UDim2.new(1, -20, 0, 75)
+    infoDesc.Position = UDim2.new(0, 10, 0, 30)
     infoDesc.BackgroundTransparency = 1
-    infoDesc.Text = "👑 Chủ sở hữu & Phát triển: " .. ADMIN_NAME .. "\n🔧 Người tạo ra KHANHGD CHEAT\n⚡ Vào server cùng admin để chơi chung!\n💸 Bản cheat này được cung cấp miễn phí"
+    infoDesc.Text = "👑 Chủ sở hữu: " .. ADMIN_NAME .. "\n🔧 Nhà phát triển KHANHGD CHEAT\n⚡ Vào server cùng admin để chơi chung!"
     infoDesc.TextColor3 = Color3.fromRGB(180, 180, 210)
-    infoDesc.TextSize = 12
+    infoDesc.TextSize = 10
     infoDesc.Font = Enum.Font.Gotham
     infoDesc.TextXAlignment = Enum.TextXAlignment.Left
     infoDesc.Parent = infoCard
 end
 
--- ============ BUILD UI CÁC PANEL KHÁC ==========
+-- ============ BUILD UI CÁC PANEL ==========
 -- AIMBOT PANEL
-local y = 10
+local y = 5
 createModernToggle(aimbotPanel, y, "⚡ BẬT AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
-y = y + 60
+y = y + 55
 createModernToggle(aimbotPanel, y, "🤝 BỎ QUA ĐỒNG ĐỘI", function() return settings.aimbot.ignoreTeam end, function(v) settings.aimbot.ignoreTeam = v end)
-y = y + 60
+y = y + 55
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(1, -10, 0, 52)
+frame.Size = UDim2.new(1, -10, 0, 48)
 frame.Position = UDim2.new(0, 5, 0, y)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 frame.BackgroundTransparency = 0.4
 frame.BorderSizePixel = 0
 frame.Parent = aimbotPanel
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
+corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(0, 180, 0, 25)
-label.Position = UDim2.new(0, 15, 0, 14)
+label.Size = UDim2.new(0, 160, 0, 22)
+label.Position = UDim2.new(0, 15, 0, 13)
 label.BackgroundTransparency = 1
 label.Text = "🎯 CHẾ ĐỘ AIM"
 label.TextColor3 = Color3.fromRGB(230, 230, 255)
-label.TextSize = 13
-label.Font = Enum.Font.Gotham
+label.TextSize = 12
+label.Font = Enum.Font.GothamSemibold
 label.Parent = frame
 local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0, 120, 0, 32)
-btn.Position = UDim2.new(1, -135, 0, 10)
+btn.Size = UDim2.new(0, 100, 0, 30)
+btn.Position = UDim2.new(1, -115, 0, 9)
 btn.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
 btn.Text = settings.aimbot.aimMode
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.TextSize = 12
+btn.TextSize = 11
 btn.Font = Enum.Font.Gotham
 btn.Parent = frame
 local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.CornerRadius = UDim.new(0, 6)
 btnCorner.Parent = btn
 local options = {"Players", "NPCs", "Both"}
 local isOpen = false
@@ -4178,23 +3870,23 @@ btn.MouseButton1Click:Connect(function()
         isOpen = false
     else
         dropdownFrame = Instance.new("Frame")
-        dropdownFrame.Size = UDim2.new(0, 120, 0, #options * 34)
-        dropdownFrame.Position = UDim2.new(1, -135, 0, 42)
+        dropdownFrame.Size = UDim2.new(0, 100, 0, #options * 30)
+        dropdownFrame.Position = UDim2.new(1, -115, 0, 39)
         dropdownFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
         dropdownFrame.BorderSizePixel = 1
         dropdownFrame.BorderColor3 = Color3.fromRGB(80, 80, 120)
         dropdownFrame.Parent = frame
         local dropCorner = Instance.new("UICorner")
-        dropCorner.CornerRadius = UDim.new(0, 8)
+        dropCorner.CornerRadius = UDim.new(0, 6)
         dropCorner.Parent = dropdownFrame
         for i, opt in ipairs(options) do
             local optBtn = Instance.new("TextButton")
-            optBtn.Size = UDim2.new(1, 0, 0, 34)
-            optBtn.Position = UDim2.new(0, 0, 0, (i-1) * 34)
+            optBtn.Size = UDim2.new(1, 0, 0, 30)
+            optBtn.Position = UDim2.new(0, 0, 0, (i-1) * 30)
             optBtn.BackgroundTransparency = 1
             optBtn.Text = opt
             optBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-            optBtn.TextSize = 12
+            optBtn.TextSize = 11
             optBtn.Parent = dropdownFrame
             optBtn.MouseButton1Click:Connect(function()
                 playClickSound()
@@ -4214,19 +3906,19 @@ btn.MouseButton1Click:Connect(function()
     end
 end)
 
-y = y + 60
+y = y + 55
 createModernSlider(aimbotPanel, y, "🎯 BÁN KÍNH FOV", 50, 400, settings.aimbot.fovRadius, "px", function(v) settings.aimbot.fovRadius = v end)
-y = y + 80
+y = y + 75
 createModernSlider(aimbotPanel, y, "⚡ ĐỘ MỊN", 1, 15, settings.aimbot.smoothness, "", function(v) settings.aimbot.smoothness = v end)
-y = y + 80
-createModernSlider(aimbotPanel, y, "📏 KHOẢNG CÁCH TỐI ĐA", 50, 400, settings.aimbot.maxDistance, "m", function(v) settings.aimbot.maxDistance = v end)
-y = y + 80
+y = y + 75
+createModernSlider(aimbotPanel, y, "📏 KHOẢNG CÁCH", 50, 400, settings.aimbot.maxDistance, "m", function(v) settings.aimbot.maxDistance = v end)
+y = y + 75
 createModernToggle(aimbotPanel, y, "🔫 BẮN TỰ ĐỘNG", function() return settings.aimbot.autoShot end, function(v) settings.aimbot.autoShot = v end)
-y = y + 60
+y = y + 55
 createModernToggle(aimbotPanel, y, "👁️ HIỂN THỊ FOV", function() return settings.aimbot.showFOV end, function(v) settings.aimbot.showFOV = v end)
-y = y + 60
-createModernToggle(aimbotPanel, y, "📏 HIỂN THỊ ĐƯỜNG AIM", function() return settings.aimbot.showLine end, function(v) settings.aimbot.showLine = v end)
-y = y + 60
+y = y + 55
+createModernToggle(aimbotPanel, y, "📏 HIỂN THỊ LINE", function() return settings.aimbot.showLine end, function(v) settings.aimbot.showLine = v end)
+y = y + 55
 
 createColorPicker(aimbotPanel, y, "🎨 MÀU FOV", 
     function() return settings.aimbot.fovColorR or 0 end,
@@ -4238,8 +3930,8 @@ createColorPicker(aimbotPanel, y, "🎨 MÀU FOV",
     function() end
 )
 
-y = y + 140
-createColorPicker(aimbotPanel, y, "🎨 MÀU ĐƯỜNG AIM",
+y = y + 125
+createColorPicker(aimbotPanel, y, "🎨 MÀU LINE",
     function() return settings.aimbot.lineColorR or 255 end,
     function() return settings.aimbot.lineColorG or 0 end,
     function() return settings.aimbot.lineColorB or 0 end,
@@ -4250,19 +3942,19 @@ createColorPicker(aimbotPanel, y, "🎨 MÀU ĐƯỜNG AIM",
 )
 
 -- ESP PANEL
-y = 10
+y = 5
 createModernToggle(espPanel, y, "✨ BẬT ESP", function() return settings.esp.enabled end, function(v) settings.esp.enabled = v end)
-y = y + 60
-createModernToggle(espPanel, y, "📦 HIỂN THỊ KHUNG", function() return settings.esp.box end, function(v) settings.esp.box = v end)
-y = y + 60
-createModernSlider(espPanel, y, "📏 KHOẢNG CÁCH ESP", 50, 500, settings.esp.maxDistance, "m", function(v) settings.esp.maxDistance = v end)
-y = y + 80
-createModernToggle(espPanel, y, "🏷️ HIỂN THỊ TÊN", function() return settings.esp.name end, function(v) settings.esp.name = v end)
-y = y + 60
-createModernToggle(espPanel, y, "📐 HIỂN THỊ KHOẢNG CÁCH", function() return settings.esp.distance end, function(v) settings.esp.distance = v end)
-y = y + 60
-createModernToggle(espPanel, y, "💚 HIỂN THỊ MÁU", function() return settings.esp.health end, function(v) settings.esp.health = v end)
-y = y + 60
+y = y + 55
+createModernToggle(espPanel, y, "📦 KHUNG", function() return settings.esp.box end, function(v) settings.esp.box = v end)
+y = y + 55
+createModernSlider(espPanel, y, "📏 KHOẢNG CÁCH", 50, 500, settings.esp.maxDistance, "m", function(v) settings.esp.maxDistance = v end)
+y = y + 75
+createModernToggle(espPanel, y, "🏷️ TÊN", function() return settings.esp.name end, function(v) settings.esp.name = v end)
+y = y + 55
+createModernToggle(espPanel, y, "📐 KHOẢNG CÁCH", function() return settings.esp.distance end, function(v) settings.esp.distance = v end)
+y = y + 55
+createModernToggle(espPanel, y, "💚 MÁU", function() return settings.esp.health end, function(v) settings.esp.health = v end)
+y = y + 55
 
 createColorPicker(espPanel, y, "🎨 MÀU KHUNG",
     function() return settings.esp.boxColorR or 255 end,
@@ -4274,8 +3966,8 @@ createColorPicker(espPanel, y, "🎨 MÀU KHUNG",
     function() end
 )
 
-y = y + 140
-createColorPicker(espPanel, y, "🎨 MÀU BỘ XƯƠNG",
+y = y + 125
+createColorPicker(espPanel, y, "🎨 MÀU XƯƠNG",
     function() return settings.esp.skeletonColorR or 0 end,
     function() return settings.esp.skeletonColorG or 200 end,
     function() return settings.esp.skeletonColorB or 255 end,
@@ -4285,7 +3977,7 @@ createColorPicker(espPanel, y, "🎨 MÀU BỘ XƯƠNG",
     function() end
 )
 
-y = y + 140
+y = y + 125
 createColorPicker(espPanel, y, "🎨 MÀU NPC",
     function() return settings.esp.npcColorR or 255 end,
     function() return settings.esp.npcColorG or 200 end,
@@ -4297,197 +3989,197 @@ createColorPicker(espPanel, y, "🎨 MÀU NPC",
 )
 
 -- SKELETON PANEL
-y = 10
-createModernToggle(skeletonPanel, y, "🦴 BẬT BỘ XƯƠNG", function() return settings.esp.skeleton end, function(v) settings.esp.skeleton = v end)
+y = 5
+createModernToggle(skeletonPanel, y, "🦴 BẬT XƯƠNG", function() return settings.esp.skeleton end, function(v) settings.esp.skeleton = v end)
 
--- VALUE PANEL
-local y = 10
+-- VALUE PANEL (Streak, ELO, Level)
+y = 5
 
 local winStreakFrame = Instance.new("Frame")
-winStreakFrame.Size = UDim2.new(1, -10, 0, 80)
+winStreakFrame.Size = UDim2.new(1, -10, 0, 75)
 winStreakFrame.Position = UDim2.new(0, 5, 0, y)
 winStreakFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 winStreakFrame.BackgroundTransparency = 0.4
 winStreakFrame.BorderSizePixel = 0
 winStreakFrame.Parent = setValuePanel
 local winStreakCorner = Instance.new("UICorner")
-winStreakCorner.CornerRadius = UDim.new(0, 12)
+winStreakCorner.CornerRadius = UDim.new(0, 10)
 winStreakCorner.Parent = winStreakFrame
 
 local winStreakTitle = Instance.new("TextLabel")
-winStreakTitle.Size = UDim2.new(1, -20, 0, 25)
-winStreakTitle.Position = UDim2.new(0, 10, 0, 8)
+winStreakTitle.Size = UDim2.new(1, -20, 0, 22)
+winStreakTitle.Position = UDim2.new(0, 10, 0, 5)
 winStreakTitle.BackgroundTransparency = 1
 winStreakTitle.Text = "🏆 CHUỖI THẮNG"
 winStreakTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-winStreakTitle.TextSize = 13
+winStreakTitle.TextSize = 11
 winStreakTitle.Font = Enum.Font.GothamBold
 winStreakTitle.TextXAlignment = Enum.TextXAlignment.Left
 winStreakTitle.Parent = winStreakFrame
 
 local winStreakValue = Instance.new("TextLabel")
-winStreakValue.Size = UDim2.new(0.5, -15, 0, 30)
-winStreakValue.Position = UDim2.new(0, 10, 0, 38)
+winStreakValue.Size = UDim2.new(0.4, -15, 0, 28)
+winStreakValue.Position = UDim2.new(0, 10, 0, 32)
 winStreakValue.BackgroundTransparency = 1
 winStreakValue.Text = tostring(getCurrentWinStreak())
 winStreakValue.TextColor3 = Color3.fromRGB(255, 215, 0)
-winStreakValue.TextSize = 18
+winStreakValue.TextSize = 16
 winStreakValue.Font = Enum.Font.GothamBold
 winStreakValue.TextXAlignment = Enum.TextXAlignment.Left
 winStreakValue.Parent = winStreakFrame
 
 local winStreakInput = Instance.new("TextBox")
-winStreakInput.Size = UDim2.new(0.4, -15, 0, 35)
-winStreakInput.Position = UDim2.new(0.6, 0, 0, 38)
+winStreakInput.Size = UDim2.new(0.35, -15, 0, 32)
+winStreakInput.Position = UDim2.new(0.5, 5, 0, 32)
 winStreakInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
 winStreakInput.PlaceholderText = "Nhập số..."
 winStreakInput.Text = ""
 winStreakInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-winStreakInput.TextSize = 13
+winStreakInput.TextSize = 11
 winStreakInput.Font = Enum.Font.Gotham
 winStreakInput.TextXAlignment = Enum.TextXAlignment.Center
 winStreakInput.Parent = winStreakFrame
 local winStreakInputCorner = Instance.new("UICorner")
-winStreakInputCorner.CornerRadius = UDim.new(0, 8)
+winStreakInputCorner.CornerRadius = UDim.new(0, 6)
 winStreakInputCorner.Parent = winStreakInput
 
 local winStreakBtn = Instance.new("TextButton")
-winStreakBtn.Size = UDim2.new(0, 55, 0, 35)
-winStreakBtn.Position = UDim2.new(1, -65, 0, 38)
+winStreakBtn.Size = UDim2.new(0, 50, 0, 32)
+winStreakBtn.Position = UDim2.new(1, -60, 0, 32)
 winStreakBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
 winStreakBtn.Text = "ĐẶT"
 winStreakBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-winStreakBtn.TextSize = 12
+winStreakBtn.TextSize = 11
 winStreakBtn.Font = Enum.Font.GothamBold
 winStreakBtn.Parent = winStreakFrame
 local winStreakBtnCorner = Instance.new("UICorner")
-winStreakBtnCorner.CornerRadius = UDim.new(0, 8)
+winStreakBtnCorner.CornerRadius = UDim.new(0, 6)
 winStreakBtnCorner.Parent = winStreakBtn
 
-y = y + 90
+y = y + 85
 
 local eloFrame2 = Instance.new("Frame")
-eloFrame2.Size = UDim2.new(1, -10, 0, 80)
+eloFrame2.Size = UDim2.new(1, -10, 0, 75)
 eloFrame2.Position = UDim2.new(0, 5, 0, y)
 eloFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 eloFrame2.BackgroundTransparency = 0.4
 eloFrame2.BorderSizePixel = 0
 eloFrame2.Parent = setValuePanel
 local eloCorner2 = Instance.new("UICorner")
-eloCorner2.CornerRadius = UDim.new(0, 12)
+eloCorner2.CornerRadius = UDim.new(0, 10)
 eloCorner2.Parent = eloFrame2
 
 local eloTitle2 = Instance.new("TextLabel")
-eloTitle2.Size = UDim2.new(1, -20, 0, 25)
-eloTitle2.Position = UDim2.new(0, 10, 0, 8)
+eloTitle2.Size = UDim2.new(1, -20, 0, 22)
+eloTitle2.Position = UDim2.new(0, 10, 0, 5)
 eloTitle2.BackgroundTransparency = 1
-eloTitle2.Text = "⭐ CURRENT ELO"
+eloTitle2.Text = "⭐ ELO"
 eloTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
-eloTitle2.TextSize = 13
+eloTitle2.TextSize = 11
 eloTitle2.Font = Enum.Font.GothamBold
 eloTitle2.TextXAlignment = Enum.TextXAlignment.Left
 eloTitle2.Parent = eloFrame2
 
 local eloValue2 = Instance.new("TextLabel")
-eloValue2.Size = UDim2.new(0.5, -15, 0, 30)
-eloValue2.Position = UDim2.new(0, 10, 0, 38)
+eloValue2.Size = UDim2.new(0.4, -15, 0, 28)
+eloValue2.Position = UDim2.new(0, 10, 0, 32)
 eloValue2.BackgroundTransparency = 1
 eloValue2.Text = tostring(getPlayerELO())
 eloValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
-eloValue2.TextSize = 18
+eloValue2.TextSize = 16
 eloValue2.Font = Enum.Font.GothamBold
 eloValue2.TextXAlignment = Enum.TextXAlignment.Left
 eloValue2.Parent = eloFrame2
 
 local eloInput2 = Instance.new("TextBox")
-eloInput2.Size = UDim2.new(0.4, -15, 0, 35)
-eloInput2.Position = UDim2.new(0.6, 0, 0, 38)
+eloInput2.Size = UDim2.new(0.35, -15, 0, 32)
+eloInput2.Position = UDim2.new(0.5, 5, 0, 32)
 eloInput2.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
 eloInput2.PlaceholderText = "Nhập số..."
 eloInput2.Text = ""
 eloInput2.TextColor3 = Color3.fromRGB(255, 255, 255)
-eloInput2.TextSize = 13
+eloInput2.TextSize = 11
 eloInput2.Font = Enum.Font.Gotham
 eloInput2.TextXAlignment = Enum.TextXAlignment.Center
 eloInput2.Parent = eloFrame2
 local eloInputCorner2 = Instance.new("UICorner")
-eloInputCorner2.CornerRadius = UDim.new(0, 8)
+eloInputCorner2.CornerRadius = UDim.new(0, 6)
 eloInputCorner2.Parent = eloInput2
 
 local eloBtn2 = Instance.new("TextButton")
-eloBtn2.Size = UDim2.new(0, 55, 0, 35)
-eloBtn2.Position = UDim2.new(1, -65, 0, 38)
+eloBtn2.Size = UDim2.new(0, 50, 0, 32)
+eloBtn2.Position = UDim2.new(1, -60, 0, 32)
 eloBtn2.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
 eloBtn2.Text = "ĐẶT"
 eloBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
-eloBtn2.TextSize = 12
+eloBtn2.TextSize = 11
 eloBtn2.Font = Enum.Font.GothamBold
 eloBtn2.Parent = eloFrame2
 local eloBtnCorner2 = Instance.new("UICorner")
-eloBtnCorner2.CornerRadius = UDim.new(0, 8)
+eloBtnCorner2.CornerRadius = UDim.new(0, 6)
 eloBtnCorner2.Parent = eloBtn2
 
-y = y + 90
+y = y + 85
 
 local levelFrame2 = Instance.new("Frame")
-levelFrame2.Size = UDim2.new(1, -10, 0, 80)
+levelFrame2.Size = UDim2.new(1, -10, 0, 75)
 levelFrame2.Position = UDim2.new(0, 5, 0, y)
 levelFrame2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 levelFrame2.BackgroundTransparency = 0.4
 levelFrame2.BorderSizePixel = 0
 levelFrame2.Parent = setValuePanel
 local levelCorner2 = Instance.new("UICorner")
-levelCorner2.CornerRadius = UDim.new(0, 12)
+levelCorner2.CornerRadius = UDim.new(0, 10)
 levelCorner2.Parent = levelFrame2
 
 local levelTitle2 = Instance.new("TextLabel")
-levelTitle2.Size = UDim2.new(1, -20, 0, 25)
-levelTitle2.Position = UDim2.new(0, 10, 0, 8)
+levelTitle2.Size = UDim2.new(1, -20, 0, 22)
+levelTitle2.Position = UDim2.new(0, 10, 0, 5)
 levelTitle2.BackgroundTransparency = 1
 levelTitle2.Text = "📊 LEVEL"
 levelTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
-levelTitle2.TextSize = 13
+levelTitle2.TextSize = 11
 levelTitle2.Font = Enum.Font.GothamBold
 levelTitle2.TextXAlignment = Enum.TextXAlignment.Left
 levelTitle2.Parent = levelFrame2
 
 local levelValue2 = Instance.new("TextLabel")
-levelValue2.Size = UDim2.new(0.5, -15, 0, 30)
-levelValue2.Position = UDim2.new(0, 10, 0, 38)
+levelValue2.Size = UDim2.new(0.4, -15, 0, 28)
+levelValue2.Position = UDim2.new(0, 10, 0, 32)
 levelValue2.BackgroundTransparency = 1
 levelValue2.Text = tostring(getPlayerLevel())
 levelValue2.TextColor3 = Color3.fromRGB(255, 215, 0)
-levelValue2.TextSize = 18
+levelValue2.TextSize = 16
 levelValue2.Font = Enum.Font.GothamBold
 levelValue2.TextXAlignment = Enum.TextXAlignment.Left
 levelValue2.Parent = levelFrame2
 
 local levelInput2 = Instance.new("TextBox")
-levelInput2.Size = UDim2.new(0.4, -15, 0, 35)
-levelInput2.Position = UDim2.new(0.6, 0, 0, 38)
+levelInput2.Size = UDim2.new(0.35, -15, 0, 32)
+levelInput2.Position = UDim2.new(0.5, 5, 0, 32)
 levelInput2.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
 levelInput2.PlaceholderText = "Nhập số..."
 levelInput2.Text = ""
 levelInput2.TextColor3 = Color3.fromRGB(255, 255, 255)
-levelInput2.TextSize = 13
+levelInput2.TextSize = 11
 levelInput2.Font = Enum.Font.Gotham
 levelInput2.TextXAlignment = Enum.TextXAlignment.Center
 levelInput2.Parent = levelFrame2
 local levelInputCorner2 = Instance.new("UICorner")
-levelInputCorner2.CornerRadius = UDim.new(0, 8)
+levelInputCorner2.CornerRadius = UDim.new(0, 6)
 levelInputCorner2.Parent = levelInput2
 
 local levelBtn2 = Instance.new("TextButton")
-levelBtn2.Size = UDim2.new(0, 55, 0, 35)
-levelBtn2.Position = UDim2.new(1, -65, 0, 38)
+levelBtn2.Size = UDim2.new(0, 50, 0, 32)
+levelBtn2.Position = UDim2.new(1, -60, 0, 32)
 levelBtn2.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
 levelBtn2.Text = "ĐẶT"
 levelBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
-levelBtn2.TextSize = 12
+levelBtn2.TextSize = 11
 levelBtn2.Font = Enum.Font.GothamBold
 levelBtn2.Parent = levelFrame2
 local levelBtnCorner2 = Instance.new("UICorner")
-levelBtnCorner2.CornerRadius = UDim.new(0, 8)
+levelBtnCorner2.CornerRadius = UDim.new(0, 6)
 levelBtnCorner2.Parent = levelBtn2
 
 local function refreshStreakPanel()
@@ -4543,8 +4235,8 @@ winStreakBtn.MouseButton1Click:Connect(function()
             refreshLocalPlayerUI()
             winStreakInput.Text = ""
             local notif = Drawing.new("Text")
-            notif.Text = "✅ Đã đặt chuỗi thắng thành " .. newValue
-            notif.Size = 14
+            notif.Text = "✅ Đã đặt streak: " .. newValue
+            notif.Size = 13
             notif.Color = Color3.fromRGB(0, 255, 0)
             notif.Center = true
             notif.Outline = true
@@ -4555,8 +4247,8 @@ winStreakBtn.MouseButton1Click:Connect(function()
             notif:Remove()
         else
             local notif = Drawing.new("Text")
-            notif.Text = "❌ Không tìm thấy chuỗi thắng!"
-            notif.Size = 14
+            notif.Text = "❌ Không tìm thấy!"
+            notif.Size = 13
             notif.Color = Color3.fromRGB(255, 0, 0)
             notif.Center = true
             notif.Outline = true
@@ -4579,8 +4271,8 @@ eloBtn2.MouseButton1Click:Connect(function()
             refreshLocalPlayerUI()
             eloInput2.Text = ""
             local notif = Drawing.new("Text")
-            notif.Text = "✅ Đã đặt ELO thành " .. newValue
-            notif.Size = 14
+            notif.Text = "✅ Đã đặt ELO: " .. newValue
+            notif.Size = 13
             notif.Color = Color3.fromRGB(0, 255, 0)
             notif.Center = true
             notif.Outline = true
@@ -4591,8 +4283,8 @@ eloBtn2.MouseButton1Click:Connect(function()
             notif:Remove()
         else
             local notif = Drawing.new("Text")
-            notif.Text = "❌ Không tìm thấy ELO!"
-            notif.Size = 14
+            notif.Text = "❌ Không tìm thấy!"
+            notif.Size = 13
             notif.Color = Color3.fromRGB(255, 0, 0)
             notif.Center = true
             notif.Outline = true
@@ -4615,8 +4307,8 @@ levelBtn2.MouseButton1Click:Connect(function()
             refreshLocalPlayerUI()
             levelInput2.Text = ""
             local notif = Drawing.new("Text")
-            notif.Text = "✅ Đã đặt Level thành " .. newValue
-            notif.Size = 14
+            notif.Text = "✅ Đã đặt Level: " .. newValue
+            notif.Size = 13
             notif.Color = Color3.fromRGB(0, 255, 0)
             notif.Center = true
             notif.Outline = true
@@ -4627,8 +4319,8 @@ levelBtn2.MouseButton1Click:Connect(function()
             notif:Remove()
         else
             local notif = Drawing.new("Text")
-            notif.Text = "❌ Không tìm thấy Level!"
-            notif.Size = 14
+            notif.Text = "❌ Không tìm thấy!"
+            notif.Size = 13
             notif.Color = Color3.fromRGB(255, 0, 0)
             notif.Center = true
             notif.Outline = true
@@ -4642,65 +4334,65 @@ levelBtn2.MouseButton1Click:Connect(function()
 end)
 
 -- DEVICE PANEL
-y = 10
+y = 5
 local deviceTitle = Instance.new("TextLabel")
-deviceTitle.Size = UDim2.new(1, -20, 0, 40)
+deviceTitle.Size = UDim2.new(1, -20, 0, 35)
 deviceTitle.Position = UDim2.new(0, 10, 0, y)
 deviceTitle.BackgroundTransparency = 1
-deviceTitle.Text = "🎮 CHỌN THIẾT BỊ"
+deviceTitle.Text = "🎮 THIẾT BỊ"
 deviceTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-deviceTitle.TextSize = 14
+deviceTitle.TextSize = 12
 deviceTitle.Font = Enum.Font.GothamBold
 deviceTitle.TextXAlignment = Enum.TextXAlignment.Center
 deviceTitle.Parent = devicePanel
 
-y = y + 50
+y = y + 45
 createDeviceButton(devicePanel, y, "🖱️ CHUỘT & BÀN PHÍM", "MouseKeyboard", Color3.fromRGB(45, 45, 65))
-y = y + 55
+y = y + 52
 createDeviceButton(devicePanel, y, "🎮 TAY CẦM", "Gamepad", Color3.fromRGB(45, 65, 45))
-y = y + 55
+y = y + 52
 createDeviceButton(devicePanel, y, "📱 CẢM ỨNG", "Touch", Color3.fromRGB(65, 45, 65))
-y = y + 55
+y = y + 52
 createDeviceButton(devicePanel, y, "🥽 VR", "VR", Color3.fromRGB(65, 65, 45))
 
-y = y + 65
+y = y + 60
 local infoText = Instance.new("TextLabel")
-infoText.Size = UDim2.new(1, -20, 0, 50)
+infoText.Size = UDim2.new(1, -20, 0, 45)
 infoText.Position = UDim2.new(0, 10, 0, y)
 infoText.BackgroundTransparency = 1
-infoText.Text = "⚠️ Lưu ý: Spoof thiết bị sẽ thay đổi cách\ntrò chơi nhận diện phương thức nhập"
+infoText.Text = "⚠️ Spoof thiết bị thay đổi cách nhập"
 infoText.TextColor3 = Color3.fromRGB(150, 150, 200)
-infoText.TextSize = 11
+infoText.TextSize = 10
 infoText.Font = Enum.Font.Gotham
 infoText.TextXAlignment = Enum.TextXAlignment.Center
 infoText.Parent = devicePanel
 
 -- TP PANEL
-y = 10
-createModernToggle(tpPanel, y, "🌀 BẬT DỊCH CHUYỂN", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
-y = y + 70
+y = 5
+createModernToggle(tpPanel, y, "🌀 DỊCH CHUYỂN", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
+y = y + 60
 local guideCard = Instance.new("Frame")
-guideCard.Size = UDim2.new(1, -10, 0, 100)
+guideCard.Size = UDim2.new(1, -10, 0, 90)
 guideCard.Position = UDim2.new(0, 5, 0, y)
 guideCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 guideCard.BackgroundTransparency = 0.4
 guideCard.BorderSizePixel = 0
 guideCard.Parent = tpPanel
 local guideCorner = Instance.new("UICorner")
-guideCorner.CornerRadius = UDim.new(0, 12)
+guideCorner.CornerRadius = UDim.new(0, 10)
 guideCorner.Parent = guideCard
 local guideLabel = Instance.new("TextLabel")
-guideLabel.Size = UDim2.new(1, -20, 0, 80)
+guideLabel.Size = UDim2.new(1, -20, 0, 70)
 guideLabel.Position = UDim2.new(0, 10, 0, 10)
 guideLabel.BackgroundTransparency = 1
-guideLabel.Text = "📌 CÁCH DÙNG DỊCH CHUYỂN:\n\n   Nhấn [X] để dịch chuyển đến nơi bạn đang nhìn\n   Đảm bảo có tầm nhìn rõ xuống đất"
+guideLabel.Text = "📌 CÁCH DÙNG:\n\n   Nhấn [X] để dịch chuyển đến nơi bạn nhìn\n   Đảm bảo có tầm nhìn rõ xuống đất"
 guideLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
-guideLabel.TextSize = 12
+guideLabel.TextSize = 10
 guideLabel.TextXAlignment = Enum.TextXAlignment.Center
 guideLabel.Parent = guideCard
 
 -- AFK PANEL
-y = 10
+y = 5
 createModernToggle(afkPanel, y, "💤 BẬT AFK", 
     function() return settings.afk.enabled end, 
     function(v) 
@@ -4709,7 +4401,7 @@ createModernToggle(afkPanel, y, "💤 BẬT AFK",
     end
 )
 
-y = y + 70
+y = y + 60
 createModernSlider(afkPanel, y, "⏱️ KHOẢNG THỜI GIAN", 10, 300, settings.afk.interval, "s", 
     function(v) 
         settings.afk.interval = v 
@@ -4717,55 +4409,43 @@ createModernSlider(afkPanel, y, "⏱️ KHOẢNG THỜI GIAN", 10, 300, settings
     end
 )
 
-y = y + 90
+y = y + 80
 local statusCard = Instance.new("Frame")
-statusCard.Size = UDim2.new(1, -10, 0, 100)
+statusCard.Size = UDim2.new(1, -10, 0, 80)
 statusCard.Position = UDim2.new(0, 5, 0, y)
 statusCard.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 statusCard.BackgroundTransparency = 0.4
 statusCard.BorderSizePixel = 0
 statusCard.Parent = afkPanel
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 12)
+statusCorner.CornerRadius = UDim.new(0, 10)
 statusCorner.Parent = statusCard
 
 local statusTitle = Instance.new("TextLabel")
-statusTitle.Size = UDim2.new(1, -20, 0, 30)
-statusTitle.Position = UDim2.new(0, 10, 0, 8)
+statusTitle.Size = UDim2.new(1, -20, 0, 25)
+statusTitle.Position = UDim2.new(0, 10, 0, 5)
 statusTitle.BackgroundTransparency = 1
-statusTitle.Text = "📊 TRẠNG THÁI AFK"
+statusTitle.Text = "📊 TRẠNG THÁI"
 statusTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-statusTitle.TextSize = 13
+statusTitle.TextSize = 11
 statusTitle.Font = Enum.Font.GothamBold
 statusTitle.TextXAlignment = Enum.TextXAlignment.Left
 statusTitle.Parent = statusCard
 
 local statusValue = Instance.new("TextLabel")
-statusValue.Size = UDim2.new(1, -20, 0, 30)
-statusValue.Position = UDim2.new(0, 10, 0, 40)
+statusValue.Size = UDim2.new(1, -20, 0, 25)
+statusValue.Position = UDim2.new(0, 10, 0, 32)
 statusValue.BackgroundTransparency = 1
-statusValue.Text = settings.afk.enabled and "✅ ĐANG BẬT" or "❌ ĐANG TẮT"
+statusValue.Text = settings.afk.enabled and "✅ BẬT" or "❌ TẮT"
 statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-statusValue.TextSize = 14
+statusValue.TextSize = 12
 statusValue.Font = Enum.Font.GothamBold
 statusValue.TextXAlignment = Enum.TextXAlignment.Left
 statusValue.Parent = statusCard
 
-local intervalValue = Instance.new("TextLabel")
-intervalValue.Size = UDim2.new(1, -20, 0, 30)
-intervalValue.Position = UDim2.new(0, 10, 0, 65)
-intervalValue.BackgroundTransparency = 1
-intervalValue.Text = "⏱️ Khoảng: " .. settings.afk.interval .. " giây"
-intervalValue.TextColor3 = Color3.fromRGB(200, 200, 230)
-intervalValue.TextSize = 12
-intervalValue.Font = Enum.Font.Gotham
-intervalValue.TextXAlignment = Enum.TextXAlignment.Left
-intervalValue.Parent = statusCard
-
 local function updateAFKStatus()
-    statusValue.Text = settings.afk.enabled and "✅ ĐANG BẬT" or "❌ ĐANG TẮT"
+    statusValue.Text = settings.afk.enabled and "✅ BẬT" or "❌ TẮT"
     statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    intervalValue.Text = "⏱️ Khoảng: " .. settings.afk.interval .. " giây"
 end
 
 local originalUpdateAFK = updateAFK
@@ -4774,43 +4454,43 @@ updateAFK = function()
     updateAFKStatus()
 end
 
-y = y + 115
+y = y + 95
 local infoCard2 = Instance.new("Frame")
-infoCard2.Size = UDim2.new(1, -10, 0, 120)
+infoCard2.Size = UDim2.new(1, -10, 0, 100)
 infoCard2.Position = UDim2.new(0, 5, 0, y)
 infoCard2.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 infoCard2.BackgroundTransparency = 0.4
 infoCard2.BorderSizePixel = 0
 infoCard2.Parent = afkPanel
 local infoCorner2 = Instance.new("UICorner")
-infoCorner2.CornerRadius = UDim.new(0, 12)
+infoCorner2.CornerRadius = UDim.new(0, 10)
 infoCorner2.Parent = infoCard2
 
 local infoTitle2 = Instance.new("TextLabel")
-infoTitle2.Size = UDim2.new(1, -20, 0, 30)
-infoTitle2.Position = UDim2.new(0, 10, 0, 8)
+infoTitle2.Size = UDim2.new(1, -20, 0, 25)
+infoTitle2.Position = UDim2.new(0, 10, 0, 5)
 infoTitle2.BackgroundTransparency = 1
-infoTitle2.Text = "ℹ️ CÁCH AFK HOẠT ĐỘNG"
+infoTitle2.Text = "ℹ️ HƯỚNG DẪN"
 infoTitle2.TextColor3 = Color3.fromRGB(0, 200, 255)
-infoTitle2.TextSize = 13
+infoTitle2.TextSize = 11
 infoTitle2.Font = Enum.Font.GothamBold
 infoTitle2.TextXAlignment = Enum.TextXAlignment.Left
 infoTitle2.Parent = infoCard2
 
 local infoDesc2 = Instance.new("TextLabel")
-infoDesc2.Size = UDim2.new(1, -20, 0, 80)
-infoDesc2.Position = UDim2.new(0, 10, 0, 35)
+infoDesc2.Size = UDim2.new(1, -20, 0, 65)
+infoDesc2.Position = UDim2.new(0, 10, 0, 30)
 infoDesc2.BackgroundTransparency = 1
-infoDesc2.Text = "• Mô phỏng các thao tác ngẫu nhiên mỗi khoảng\n• Ngăn game đá bạn vì không hoạt động\n• Hoạt động với: Di chuột, nhảy nhẹ,\n  lắc camera, nhấn phím,..."
+infoDesc2.Text = "• Mô phỏng thao tác ngẫu nhiên\n• Ngăn game đá khi AFK\n• Hoạt động: Di chuột, nhảy nhẹ, lắc camera"
 infoDesc2.TextColor3 = Color3.fromRGB(180, 180, 210)
-infoDesc2.TextSize = 11
+infoDesc2.TextSize = 9
 infoDesc2.Font = Enum.Font.Gotham
 infoDesc2.TextXAlignment = Enum.TextXAlignment.Left
 infoDesc2.Parent = infoCard2
 
 updateAFKStatus()
 
--- PLAYERS PANEL
+-- PLAYERS PANEL (ĐÃ THAY NÚT SPEC THÀNH TP)
 local function refreshPlayersList()
     for _, child in pairs(playersPanel:GetChildren()) do
         if child:IsA("Frame") or child:IsA("ScrollingFrame") or child:IsA("TextButton") or child:IsA("TextBox") then
@@ -4818,41 +4498,41 @@ local function refreshPlayersList()
         end
     end
     
-    local yPos = 10
+    local yPos = 5
     
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, yPos)
     titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     titleFrame.BackgroundTransparency = 0.4
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = playersPanel
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleFrame
     
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 40)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -20, 0, 35)
+    titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "👥 Player TRONG SERVER"
+    titleLabel.Text = "👥 PLAYERS"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Center
     titleLabel.Parent = titleFrame
     
-    yPos = yPos + 70
+    yPos = yPos + 60
     
     local statsFrame = Instance.new("Frame")
-    statsFrame.Size = UDim2.new(1, -10, 0, 40)
+    statsFrame.Size = UDim2.new(1, -10, 0, 36)
     statsFrame.Position = UDim2.new(0, 5, 0, yPos)
     statsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     statsFrame.BackgroundTransparency = 0.4
     statsFrame.BorderSizePixel = 0
     statsFrame.Parent = playersPanel
     local statsCorner = Instance.new("UICorner")
-    statsCorner.CornerRadius = UDim.new(0, 12)
+    statsCorner.CornerRadius = UDim.new(0, 10)
     statsCorner.Parent = statsFrame
     
     local playerCount = #Players:GetPlayers()
@@ -4864,70 +4544,70 @@ local function refreshPlayersList()
     end
     
     local statsLabel = Instance.new("TextLabel")
-    statsLabel.Size = UDim2.new(1, -20, 0, 30)
+    statsLabel.Size = UDim2.new(1, -20, 0, 26)
     statsLabel.Position = UDim2.new(0, 10, 0, 5)
     statsLabel.BackgroundTransparency = 1
-    statsLabel.Text = "📊 Tổng: " .. playerCount .. " người  |  🤝 Đồng đội: " .. teamCount .. " người"
+    statsLabel.Text = "📊 Tổng: " .. playerCount .. "  |  🤝 Team: " .. teamCount
     statsLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
-    statsLabel.TextSize = 13
+    statsLabel.TextSize = 11
     statsLabel.Font = Enum.Font.Gotham
     statsLabel.TextXAlignment = Enum.TextXAlignment.Center
     statsLabel.Parent = statsFrame
     
-    yPos = yPos + 55
+    yPos = yPos + 50
     
     local searchFrame = Instance.new("Frame")
-    searchFrame.Size = UDim2.new(1, -10, 0, 45)
+    searchFrame.Size = UDim2.new(1, -10, 0, 42)
     searchFrame.Position = UDim2.new(0, 5, 0, yPos)
     searchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     searchFrame.BackgroundTransparency = 0.4
     searchFrame.BorderSizePixel = 0
     searchFrame.Parent = playersPanel
     local searchCorner = Instance.new("UICorner")
-    searchCorner.CornerRadius = UDim.new(0, 10)
+    searchCorner.CornerRadius = UDim.new(0, 8)
     searchCorner.Parent = searchFrame
     
     local searchIcon = Instance.new("TextLabel")
-    searchIcon.Size = UDim2.new(0, 35, 0, 35)
-    searchIcon.Position = UDim2.new(0, 8, 0, 5)
+    searchIcon.Size = UDim2.new(0, 30, 0, 30)
+    searchIcon.Position = UDim2.new(0, 8, 0, 6)
     searchIcon.BackgroundTransparency = 1
     searchIcon.Text = "🔍"
     searchIcon.TextColor3 = Color3.fromRGB(150, 150, 200)
-    searchIcon.TextSize = 18
+    searchIcon.TextSize = 16
     searchIcon.Font = Enum.Font.Gotham
     searchIcon.TextXAlignment = Enum.TextXAlignment.Center
     searchIcon.Parent = searchFrame
     
     local searchBox = Instance.new("TextBox")
-    searchBox.Size = UDim2.new(1, -55, 0, 35)
-    searchBox.Position = UDim2.new(0, 48, 0, 5)
+    searchBox.Size = UDim2.new(1, -50, 0, 32)
+    searchBox.Position = UDim2.new(0, 42, 0, 5)
     searchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     searchBox.BackgroundTransparency = 0.2
-    searchBox.PlaceholderText = "🔎 Tìm kiếm Player..."
+    searchBox.PlaceholderText = "🔎 Tìm kiếm..."
     searchBox.Text = ""
     searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    searchBox.TextSize = 12
+    searchBox.TextSize = 11
     searchBox.Font = Enum.Font.Gotham
     searchBox.TextXAlignment = Enum.TextXAlignment.Left
     searchBox.ClearTextOnFocus = true
     searchBox.Parent = searchFrame
     local searchBoxCorner = Instance.new("UICorner")
-    searchBoxCorner.CornerRadius = UDim.new(0, 8)
+    searchBoxCorner.CornerRadius = UDim.new(0, 6)
     searchBoxCorner.Parent = searchBox
     
-    yPos = yPos + 60
+    yPos = yPos + 55
     
     local clearTeamBtn = Instance.new("TextButton")
-    clearTeamBtn.Size = UDim2.new(0.9, 0, 0, 40)
+    clearTeamBtn.Size = UDim2.new(0.9, 0, 0, 36)
     clearTeamBtn.Position = UDim2.new(0.05, 0, 0, yPos)
     clearTeamBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearTeamBtn.Text = "🗑️ XÓA TẤT CẢ ĐỒNG ĐỘI"
+    clearTeamBtn.Text = "🗑️ XÓA TEAM"
     clearTeamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    clearTeamBtn.TextSize = 13
+    clearTeamBtn.TextSize = 11
     clearTeamBtn.Font = Enum.Font.GothamBold
     clearTeamBtn.Parent = playersPanel
     local clearCorner = Instance.new("UICorner")
-    clearCorner.CornerRadius = UDim.new(0, 10)
+    clearCorner.CornerRadius = UDim.new(0, 8)
     clearCorner.Parent = clearTeamBtn
     
     clearTeamBtn.MouseButton1Click:Connect(function()
@@ -4935,8 +4615,8 @@ local function refreshPlayersList()
         clearAllTeammates()
         refreshPlayersList()
         local notif = Drawing.new("Text")
-        notif.Text = "✅ Đã xóa tất cả đồng đội!"
-        notif.Size = 14
+        notif.Text = "✅ Đã xóa team!"
+        notif.Size = 13
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
         notif.Outline = true
@@ -4947,23 +4627,23 @@ local function refreshPlayersList()
         notif:Remove()
     end)
     
-    yPos = yPos + 55
+    yPos = yPos + 50
     
     local listTitle = Instance.new("TextLabel")
-    listTitle.Size = UDim2.new(1, -20, 0, 30)
+    listTitle.Size = UDim2.new(1, -20, 0, 25)
     listTitle.Position = UDim2.new(0, 10, 0, yPos)
     listTitle.BackgroundTransparency = 1
-    listTitle.Text = "👥 DANH SÁCH Player"
+    listTitle.Text = "👥 DANH SÁCH"
     listTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-    listTitle.TextSize = 14
+    listTitle.TextSize = 12
     listTitle.Font = Enum.Font.GothamBold
     listTitle.TextXAlignment = Enum.TextXAlignment.Left
     listTitle.Parent = playersPanel
     
-    yPos = yPos + 40
+    yPos = yPos + 35
     
     local playerScrollFrame = Instance.new("ScrollingFrame")
-    playerScrollFrame.Size = UDim2.new(1, -10, 0, 400)
+    playerScrollFrame.Size = UDim2.new(1, -10, 0, 360)
     playerScrollFrame.Position = UDim2.new(0, 5, 0, yPos)
     playerScrollFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
     playerScrollFrame.BackgroundTransparency = 0.3
@@ -4974,7 +4654,7 @@ local function refreshPlayersList()
     playerScrollFrame.ClipsDescendants = true
     playerScrollFrame.Parent = playersPanel
     local scrollCorner = Instance.new("UICorner")
-    scrollCorner.CornerRadius = UDim.new(0, 12)
+    scrollCorner.CornerRadius = UDim.new(0, 10)
     scrollCorner.Parent = playerScrollFrame
     
     local scrollContainer = Instance.new("Frame")
@@ -5011,60 +4691,60 @@ local function refreshPlayersList()
             local isTeam = isTeammate(player)
             
             local playerFrame = Instance.new("Frame")
-            playerFrame.Size = UDim2.new(1, -10, 0, 55)
+            playerFrame.Size = UDim2.new(1, -10, 0, 50)
             playerFrame.Position = UDim2.new(0, 5, 0, scrollY)
             playerFrame.BackgroundColor3 = isTeam and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(35, 35, 55)
             playerFrame.BackgroundTransparency = 0.3
             playerFrame.BorderSizePixel = 0
             playerFrame.Parent = scrollContainer
             local playerCorner = Instance.new("UICorner")
-            playerCorner.CornerRadius = UDim.new(0, 10)
+            playerCorner.CornerRadius = UDim.new(0, 8)
             playerCorner.Parent = playerFrame
             
             local iconLabel = Instance.new("TextLabel")
-            iconLabel.Size = UDim2.new(0, 40, 0, 40)
-            iconLabel.Position = UDim2.new(0, 10, 0, 8)
+            iconLabel.Size = UDim2.new(0, 35, 0, 35)
+            iconLabel.Position = UDim2.new(0, 8, 0, 8)
             iconLabel.BackgroundTransparency = 1
             iconLabel.Text = isTeam and "🤝" or "👤"
             iconLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(200, 200, 200)
-            iconLabel.TextSize = 24
+            iconLabel.TextSize = 22
             iconLabel.Font = Enum.Font.GothamBold
             iconLabel.TextXAlignment = Enum.TextXAlignment.Center
             iconLabel.Parent = playerFrame
             
             local nameLabel = Instance.new("TextLabel")
-            nameLabel.Size = UDim2.new(0, 150, 0, 25)
-            nameLabel.Position = UDim2.new(0, 60, 0, 8)
+            nameLabel.Size = UDim2.new(0, 130, 0, 22)
+            nameLabel.Position = UDim2.new(0, 52, 0, 6)
             nameLabel.BackgroundTransparency = 1
             nameLabel.Text = player.Name
             nameLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 255, 255)
-            nameLabel.TextSize = 14
+            nameLabel.TextSize = 12
             nameLabel.Font = Enum.Font.GothamBold
             nameLabel.TextXAlignment = Enum.TextXAlignment.Left
             nameLabel.Parent = playerFrame
             
             local statusLabel = Instance.new("TextLabel")
-            statusLabel.Size = UDim2.new(0, 80, 0, 20)
-            statusLabel.Position = UDim2.new(0, 60, 0, 30)
+            statusLabel.Size = UDim2.new(0, 70, 0, 18)
+            statusLabel.Position = UDim2.new(0, 52, 0, 26)
             statusLabel.BackgroundTransparency = 1
-            statusLabel.Text = isTeam and "🤝 ĐỒNG ĐỘI" or "⚔️ KẺ ĐỊCH"
+            statusLabel.Text = isTeam and "TEAM" or "ENEMY"
             statusLabel.TextColor3 = isTeam and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 100, 100)
-            statusLabel.TextSize = 10
+            statusLabel.TextSize = 9
             statusLabel.Font = Enum.Font.Gotham
             statusLabel.TextXAlignment = Enum.TextXAlignment.Left
             statusLabel.Parent = playerFrame
             
             local teamBtn = Instance.new("TextButton")
-            teamBtn.Size = UDim2.new(0, 100, 0, 36)
-            teamBtn.Position = UDim2.new(1, -215, 0, 10)
+            teamBtn.Size = UDim2.new(0, 70, 0, 32)
+            teamBtn.Position = UDim2.new(1, -150, 0, 9)
             teamBtn.BackgroundColor3 = isTeam and Color3.fromRGB(100, 60, 60) or Color3.fromRGB(0, 150, 200)
-            teamBtn.Text = isTeam and "❌ XÓA" or "🤝 THÊM"
+            teamBtn.Text = isTeam and "❌ XÓA" or "➕ TEAM"
             teamBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            teamBtn.TextSize = 11
+            teamBtn.TextSize = 10
             teamBtn.Font = Enum.Font.GothamBold
             teamBtn.Parent = playerFrame
             local teamCorner = Instance.new("UICorner")
-            teamCorner.CornerRadius = UDim.new(0, 8)
+            teamCorner.CornerRadius = UDim.new(0, 6)
             teamCorner.Parent = teamBtn
             
             teamBtn.MouseButton1Click:Connect(function()
@@ -5077,28 +4757,44 @@ local function refreshPlayersList()
                 refreshPlayersList()
             end)
             
-            local specBtn = Instance.new("TextButton")
-            specBtn.Size = UDim2.new(0, 80, 0, 36)
-            specBtn.Position = UDim2.new(1, -110, 0, 10)
-            specBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-            specBtn.Text = "👁️ QUAN SÁT"
-            specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            specBtn.TextSize = 11
-            specBtn.Font = Enum.Font.GothamBold
-            specBtn.Parent = playerFrame
-            local specCorner = Instance.new("UICorner")
-            specCorner.CornerRadius = UDim.new(0, 8)
-            specCorner.Parent = specBtn
+            -- NÚT TP (Teleport) - ĐÃ THAY THẾ NÚT SPEC
+            local tpBtn = Instance.new("TextButton")
+            tpBtn.Size = UDim2.new(0, 65, 0, 32)
+            tpBtn.Position = UDim2.new(1, -75, 0, 9)
+            tpBtn.BackgroundColor3 = Color3.fromRGB(100, 80, 40)
+            tpBtn.Text = "🌀 TP"
+            tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            tpBtn.TextSize = 10
+            tpBtn.Font = Enum.Font.GothamBold
+            tpBtn.Parent = playerFrame
+            local tpCorner = Instance.new("UICorner")
+            tpCorner.CornerRadius = UDim.new(0, 6)
+            tpCorner.Parent = tpBtn
             
-            specBtn.MouseButton1Click:Connect(function()
+            tpBtn.MouseButton1Click:Connect(function()
                 playClickSound()
-                if player.Character and player.Character:FindFirstChild("Humanoid") then
-                    Camera.CameraSubject = player.Character.Humanoid
-                    Camera.CameraType = Enum.CameraType.Attach
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPos = player.Character.HumanoidRootPart.Position
+                    local myChar = LocalPlayer.Character
+                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                        myChar.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+                        local notif = Drawing.new("Text")
+                        notif.Text = "🌀 Teleport to: " .. player.Name
+                        notif.Size = 12
+                        notif.Color = Color3.fromRGB(0, 200, 255)
+                        notif.Center = true
+                        notif.Outline = true
+                        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+                        notif.Visible = true
+                        task.wait(1.5)
+                        notif.Visible = false
+                        notif:Remove()
+                    end
+                else
                     local notif = Drawing.new("Text")
-                    notif.Text = "👁️ Đang quan sát: " .. player.Name
-                    notif.Size = 14
-                    notif.Color = Color3.fromRGB(0, 200, 255)
+                    notif.Text = "❌ Không thể TP đến " .. player.Name
+                    notif.Size = 12
+                    notif.Color = Color3.fromRGB(255, 0, 0)
                     notif.Center = true
                     notif.Outline = true
                     notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
@@ -5109,55 +4805,55 @@ local function refreshPlayersList()
                 end
             end)
             
-            scrollY = scrollY + 65
+            scrollY = scrollY + 58
         end
         
         local localFrame = Instance.new("Frame")
-        localFrame.Size = UDim2.new(1, -10, 0, 55)
+        localFrame.Size = UDim2.new(1, -10, 0, 50)
         localFrame.Position = UDim2.new(0, 5, 0, scrollY)
         localFrame.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
         localFrame.BackgroundTransparency = 0.3
         localFrame.BorderSizePixel = 0
         localFrame.Parent = scrollContainer
         local localCorner = Instance.new("UICorner")
-        localCorner.CornerRadius = UDim.new(0, 10)
+        localCorner.CornerRadius = UDim.new(0, 8)
         localCorner.Parent = localFrame
         
         local localIcon = Instance.new("TextLabel")
-        localIcon.Size = UDim2.new(0, 40, 0, 40)
-        localIcon.Position = UDim2.new(0, 10, 0, 8)
+        localIcon.Size = UDim2.new(0, 35, 0, 35)
+        localIcon.Position = UDim2.new(0, 8, 0, 8)
         localIcon.BackgroundTransparency = 1
         localIcon.Text = "👑"
         localIcon.TextColor3 = Color3.fromRGB(255, 215, 0)
-        localIcon.TextSize = 24
+        localIcon.TextSize = 22
         localIcon.Font = Enum.Font.GothamBold
         localIcon.TextXAlignment = Enum.TextXAlignment.Center
         localIcon.Parent = localFrame
         
         local localNameLabel = Instance.new("TextLabel")
-        localNameLabel.Size = UDim2.new(0, 150, 0, 25)
-        localNameLabel.Position = UDim2.new(0, 60, 0, 8)
+        localNameLabel.Size = UDim2.new(0, 150, 0, 22)
+        localNameLabel.Position = UDim2.new(0, 52, 0, 6)
         localNameLabel.BackgroundTransparency = 1
-        localNameLabel.Text = LocalPlayer.Name .. " (BẠN)"
+        localNameLabel.Text = LocalPlayer.Name .. " (YOU)"
         localNameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-        localNameLabel.TextSize = 14
+        localNameLabel.TextSize = 12
         localNameLabel.Font = Enum.Font.GothamBold
         localNameLabel.TextXAlignment = Enum.TextXAlignment.Left
         localNameLabel.Parent = localFrame
         
         local localStatus = Instance.new("TextLabel")
-        localStatus.Size = UDim2.new(0, 80, 0, 20)
-        localStatus.Position = UDim2.new(0, 60, 0, 30)
+        localStatus.Size = UDim2.new(0, 70, 0, 18)
+        localStatus.Position = UDim2.new(0, 52, 0, 26)
         localStatus.BackgroundTransparency = 1
-        localStatus.Text = "👑 BẠN"
+        localStatus.Text = "YOU"
         localStatus.TextColor3 = Color3.fromRGB(255, 215, 0)
-        localStatus.TextSize = 10
+        localStatus.TextSize = 9
         localStatus.Font = Enum.Font.Gotham
         localStatus.TextXAlignment = Enum.TextXAlignment.Left
         localStatus.Parent = localFrame
         
-        scrollY = scrollY + 65
-        playerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 400))
+        scrollY = scrollY + 58
+        playerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 360))
         scrollContainer.Size = UDim2.new(1, 0, 0, scrollY)
     end
     
@@ -5178,87 +4874,87 @@ local function refreshConfigList()
         end
     end
     
-    local yPos = 10
+    local yPos = 5
     
     local titleFrame = Instance.new("Frame")
-    titleFrame.Size = UDim2.new(1, -10, 0, 60)
+    titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, yPos)
     titleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     titleFrame.BackgroundTransparency = 0.4
     titleFrame.BorderSizePixel = 0
     titleFrame.Parent = configPanel
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 12)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleFrame
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 40)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.Size = UDim2.new(1, -20, 0, 35)
+    titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "⚙️ QUẢN LÝ CẤU HÌNH"
+    titleLabel.Text = "⚙️ CONFIG"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Center
     titleLabel.Parent = titleFrame
     
-    yPos = yPos + 70
+    yPos = yPos + 60
     
     local autoLoadFrame = Instance.new("Frame")
-    autoLoadFrame.Size = UDim2.new(1, -10, 0, 100)
+    autoLoadFrame.Size = UDim2.new(1, -10, 0, 90)
     autoLoadFrame.Position = UDim2.new(0, 5, 0, yPos)
     autoLoadFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     autoLoadFrame.BackgroundTransparency = 0.4
     autoLoadFrame.BorderSizePixel = 0
     autoLoadFrame.Parent = configPanel
     local autoLoadCorner = Instance.new("UICorner")
-    autoLoadCorner.CornerRadius = UDim.new(0, 12)
+    autoLoadCorner.CornerRadius = UDim.new(0, 10)
     autoLoadCorner.Parent = autoLoadFrame
     
     local autoLoadLabel = Instance.new("TextLabel")
-    autoLoadLabel.Size = UDim2.new(1, -20, 0, 25)
-    autoLoadLabel.Position = UDim2.new(0, 10, 0, 8)
+    autoLoadLabel.Size = UDim2.new(1, -20, 0, 22)
+    autoLoadLabel.Position = UDim2.new(0, 10, 0, 5)
     autoLoadLabel.BackgroundTransparency = 1
-    autoLoadLabel.Text = "🔄 TỰ ĐỘNG TẢI CẤU HÌNH"
+    autoLoadLabel.Text = "🔄 AUTO LOAD"
     autoLoadLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-    autoLoadLabel.TextSize = 13
+    autoLoadLabel.TextSize = 11
     autoLoadLabel.Font = Enum.Font.GothamBold
     autoLoadLabel.TextXAlignment = Enum.TextXAlignment.Left
     autoLoadLabel.Parent = autoLoadFrame
     
     local currentAutoLoad = getAutoLoadConfig()
     local autoLoadStatus = Instance.new("TextLabel")
-    autoLoadStatus.Size = UDim2.new(1, -20, 0, 25)
-    autoLoadStatus.Position = UDim2.new(0, 10, 0, 35)
+    autoLoadStatus.Size = UDim2.new(1, -20, 0, 22)
+    autoLoadStatus.Position = UDim2.new(0, 10, 0, 32)
     autoLoadStatus.BackgroundTransparency = 1
-    autoLoadStatus.Text = currentAutoLoad and "📌 Tự động tải: " .. currentAutoLoad or "📌 Chưa cài đặt auto-load"
+    autoLoadStatus.Text = currentAutoLoad and "📌 " .. currentAutoLoad or "📌 Chưa cài"
     autoLoadStatus.TextColor3 = currentAutoLoad and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 200, 100)
-    autoLoadStatus.TextSize = 12
+    autoLoadStatus.TextSize = 10
     autoLoadStatus.Font = Enum.Font.Gotham
     autoLoadStatus.TextXAlignment = Enum.TextXAlignment.Left
     autoLoadStatus.Parent = autoLoadFrame
     
     local clearAutoLoadBtn = Instance.new("TextButton")
-    clearAutoLoadBtn.Size = UDim2.new(0, 100, 0, 32)
-    clearAutoLoadBtn.Position = UDim2.new(1, -110, 0, 55)
+    clearAutoLoadBtn.Size = UDim2.new(0, 80, 0, 28)
+    clearAutoLoadBtn.Position = UDim2.new(1, -90, 0, 50)
     clearAutoLoadBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-    clearAutoLoadBtn.Text = "🗑️ XÓA"
+    clearAutoLoadBtn.Text = "XÓA"
     clearAutoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    clearAutoLoadBtn.TextSize = 11
+    clearAutoLoadBtn.TextSize = 10
     clearAutoLoadBtn.Font = Enum.Font.GothamBold
     clearAutoLoadBtn.Parent = autoLoadFrame
     local clearCorner = Instance.new("UICorner")
-    clearCorner.CornerRadius = UDim.new(0, 8)
+    clearCorner.CornerRadius = UDim.new(0, 6)
     clearCorner.Parent = clearAutoLoadBtn
     
     clearAutoLoadBtn.MouseButton1Click:Connect(function()
         playClickSound()
         clearAutoLoadConfig()
-        autoLoadStatus.Text = "📌 Chưa cài đặt auto-load"
+        autoLoadStatus.Text = "📌 Chưa cài"
         autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
         refreshConfigList()
         local notif = Drawing.new("Text")
         notif.Text = "✅ Đã xóa auto-load!"
-        notif.Size = 14
+        notif.Size = 13
         notif.Color = Color3.fromRGB(0, 255, 0)
         notif.Center = true
         notif.Outline = true
@@ -5269,55 +4965,55 @@ local function refreshConfigList()
         notif:Remove()
     end)
     
-    yPos = yPos + 110
+    yPos = yPos + 100
     
     local createFrame = Instance.new("Frame")
-    createFrame.Size = UDim2.new(1, -10, 0, 100)
+    createFrame.Size = UDim2.new(1, -10, 0, 90)
     createFrame.Position = UDim2.new(0, 5, 0, yPos)
     createFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     createFrame.BackgroundTransparency = 0.4
     createFrame.BorderSizePixel = 0
     createFrame.Parent = configPanel
     local createCorner = Instance.new("UICorner")
-    createCorner.CornerRadius = UDim.new(0, 12)
+    createCorner.CornerRadius = UDim.new(0, 10)
     createCorner.Parent = createFrame
     local createLabel = Instance.new("TextLabel")
-    createLabel.Size = UDim2.new(1, -20, 0, 25)
-    createLabel.Position = UDim2.new(0, 10, 0, 8)
+    createLabel.Size = UDim2.new(1, -20, 0, 22)
+    createLabel.Position = UDim2.new(0, 10, 0, 5)
     createLabel.BackgroundTransparency = 1
-    createLabel.Text = "📝 TẠO CẤU HÌNH MỚI"
+    createLabel.Text = "📝 TẠO MỚI"
     createLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
-    createLabel.TextSize = 13
+    createLabel.TextSize = 11
     createLabel.Font = Enum.Font.GothamBold
     createLabel.TextXAlignment = Enum.TextXAlignment.Left
     createLabel.Parent = createFrame
     local configNameInput = Instance.new("TextBox")
-    configNameInput.Size = UDim2.new(0.6, -10, 0, 38)
-    configNameInput.Position = UDim2.new(0, 10, 0, 40)
+    configNameInput.Size = UDim2.new(0.6, -10, 0, 34)
+    configNameInput.Position = UDim2.new(0, 10, 0, 35)
     configNameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    configNameInput.PlaceholderText = "Nhập tên config..."
+    configNameInput.PlaceholderText = "Nhập tên..."
     configNameInput.Text = ""
     configNameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    configNameInput.TextSize = 13
+    configNameInput.TextSize = 11
     configNameInput.Font = Enum.Font.Gotham
     configNameInput.Parent = createFrame
     local nameCorner = Instance.new("UICorner")
-    nameCorner.CornerRadius = UDim.new(0, 8)
+    nameCorner.CornerRadius = UDim.new(0, 6)
     nameCorner.Parent = configNameInput
     local createConfigBtn = Instance.new("TextButton")
-    createConfigBtn.Size = UDim2.new(0.35, -10, 0, 38)
-    createConfigBtn.Position = UDim2.new(0.65, 0, 0, 40)
+    createConfigBtn.Size = UDim2.new(0.35, -10, 0, 34)
+    createConfigBtn.Position = UDim2.new(0.65, 0, 0, 35)
     createConfigBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
-    createConfigBtn.Text = "💾 TẠO & LƯU"
+    createConfigBtn.Text = "💾 LƯU"
     createConfigBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     createConfigBtn.TextSize = 11
     createConfigBtn.Font = Enum.Font.GothamBold
     createConfigBtn.Parent = createFrame
     local createCorner2 = Instance.new("UICorner")
-    createCorner2.CornerRadius = UDim.new(0, 8)
+    createCorner2.CornerRadius = UDim.new(0, 6)
     createCorner2.Parent = createConfigBtn
     
-    yPos = yPos + 110
+    yPos = yPos + 100
     
     local listFrame = Instance.new("Frame")
     listFrame.Size = UDim2.new(1, -10, 0, 250)
@@ -5327,35 +5023,35 @@ local function refreshConfigList()
     listFrame.BorderSizePixel = 0
     listFrame.Parent = configPanel
     local listCorner = Instance.new("UICorner")
-    listCorner.CornerRadius = UDim.new(0, 12)
+    listCorner.CornerRadius = UDim.new(0, 10)
     listCorner.Parent = listFrame
     local listLabel = Instance.new("TextLabel")
-    listLabel.Size = UDim2.new(0.6, -10, 0, 25)
-    listLabel.Position = UDim2.new(0, 10, 0, 8)
+    listLabel.Size = UDim2.new(0.6, -10, 0, 22)
+    listLabel.Position = UDim2.new(0, 10, 0, 5)
     listLabel.BackgroundTransparency = 1
-    listLabel.Text = "📋 CẤU HÌNH ĐÃ LƯU"
+    listLabel.Text = "📋 DANH SÁCH"
     listLabel.TextColor3 = Color3.fromRGB(230, 230, 255)
-    listLabel.TextSize = 13
+    listLabel.TextSize = 11
     listLabel.Font = Enum.Font.GothamBold
     listLabel.TextXAlignment = Enum.TextXAlignment.Left
     listLabel.Parent = listFrame
     
     local refreshBtn = Instance.new("TextButton")
-    refreshBtn.Size = UDim2.new(0, 80, 0, 28)
-    refreshBtn.Position = UDim2.new(1, -90, 0, 6)
+    refreshBtn.Size = UDim2.new(0, 70, 0, 26)
+    refreshBtn.Position = UDim2.new(1, -80, 0, 4)
     refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-    refreshBtn.Text = "🔄 LÀM MỚI"
+    refreshBtn.Text = "🔄 REFRESH"
     refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    refreshBtn.TextSize = 11
+    refreshBtn.TextSize = 9
     refreshBtn.Font = Enum.Font.GothamBold
     refreshBtn.Parent = listFrame
     local refreshCorner = Instance.new("UICorner")
-    refreshCorner.CornerRadius = UDim.new(0, 6)
+    refreshCorner.CornerRadius = UDim.new(0, 5)
     refreshCorner.Parent = refreshBtn
     
     local configListScrolling = Instance.new("ScrollingFrame")
-    configListScrolling.Size = UDim2.new(1, -10, 1, -45)
-    configListScrolling.Position = UDim2.new(0, 5, 0, 40)
+    configListScrolling.Size = UDim2.new(1, -10, 1, -40)
+    configListScrolling.Position = UDim2.new(0, 5, 0, 35)
     configListScrolling.BackgroundTransparency = 1
     configListScrolling.BorderSizePixel = 0
     configListScrolling.CanvasSize = UDim2.new(0, 0, 0, 200)
@@ -5375,35 +5071,35 @@ local function refreshConfigList()
         
         for _, cfgName in pairs(configs) do
             local cfgFrame = Instance.new("Frame")
-            cfgFrame.Size = UDim2.new(1, -10, 0, 55)
+            cfgFrame.Size = UDim2.new(1, -10, 0, 50)
             cfgFrame.Position = UDim2.new(0, 5, 0, scrollY)
             cfgFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
             cfgFrame.BackgroundTransparency = 0.3
             cfgFrame.BorderSizePixel = 0
             cfgFrame.Parent = configListScrolling
             local cfgCorner = Instance.new("UICorner")
-            cfgCorner.CornerRadius = UDim.new(0, 8)
+            cfgCorner.CornerRadius = UDim.new(0, 6)
             cfgCorner.Parent = cfgFrame
             
             local cfgNameLabel = Instance.new("TextLabel")
-            cfgNameLabel.Size = UDim2.new(0.4, -10, 0, 25)
-            cfgNameLabel.Position = UDim2.new(0, 10, 0, 8)
+            cfgNameLabel.Size = UDim2.new(0.4, -10, 0, 22)
+            cfgNameLabel.Position = UDim2.new(0, 10, 0, 6)
             cfgNameLabel.BackgroundTransparency = 1
             cfgNameLabel.Text = cfgName
             cfgNameLabel.TextColor3 = (autoLoadName == cfgName) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(0, 200, 255)
-            cfgNameLabel.TextSize = 12
+            cfgNameLabel.TextSize = 11
             cfgNameLabel.Font = Enum.Font.GothamBold
             cfgNameLabel.TextXAlignment = Enum.TextXAlignment.Left
             cfgNameLabel.Parent = cfgFrame
             
             if autoLoadName == cfgName then
                 local autoBadge = Instance.new("TextLabel")
-                autoBadge.Size = UDim2.new(0, 60, 0, 18)
-                autoBadge.Position = UDim2.new(0.4, 10, 0, 10)
+                autoBadge.Size = UDim2.new(0, 50, 0, 16)
+                autoBadge.Position = UDim2.new(0.4, 10, 0, 8)
                 autoBadge.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
                 autoBadge.Text = "AUTO"
                 autoBadge.TextColor3 = Color3.fromRGB(255, 255, 255)
-                autoBadge.TextSize = 10
+                autoBadge.TextSize = 9
                 autoBadge.Font = Enum.Font.GothamBold
                 autoBadge.Parent = cfgFrame
                 local badgeCorner = Instance.new("UICorner")
@@ -5412,42 +5108,42 @@ local function refreshConfigList()
             end
             
             local loadCfgBtn = Instance.new("TextButton")
-            loadCfgBtn.Size = UDim2.new(0, 70, 0, 32)
-            loadCfgBtn.Position = UDim2.new(0.5, -95, 0, 12)
+            loadCfgBtn.Size = UDim2.new(0, 60, 0, 30)
+            loadCfgBtn.Position = UDim2.new(0.5, -95, 0, 10)
             loadCfgBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
             loadCfgBtn.Text = "📂 TẢI"
             loadCfgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            loadCfgBtn.TextSize = 11
+            loadCfgBtn.TextSize = 10
             loadCfgBtn.Font = Enum.Font.GothamBold
             loadCfgBtn.Parent = cfgFrame
             local loadCorner = Instance.new("UICorner")
-            loadCorner.CornerRadius = UDim.new(0, 6)
+            loadCorner.CornerRadius = UDim.new(0, 5)
             loadCorner.Parent = loadCfgBtn
             
             local autoLoadBtn = Instance.new("TextButton")
-            autoLoadBtn.Size = UDim2.new(0, 85, 0, 32)
-            autoLoadBtn.Position = UDim2.new(0.5, -15, 0, 12)
+            autoLoadBtn.Size = UDim2.new(0, 75, 0, 30)
+            autoLoadBtn.Position = UDim2.new(0.5, -25, 0, 10)
             autoLoadBtn.BackgroundColor3 = (autoLoadName == cfgName) and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(60, 60, 85)
-            autoLoadBtn.Text = (autoLoadName == cfgName) and "✅ AUTO" or "⭐ ĐẶT AUTO"
+            autoLoadBtn.Text = (autoLoadName == cfgName) and "✅ AUTO" or "⭐ AUTO"
             autoLoadBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            autoLoadBtn.TextSize = 10
+            autoLoadBtn.TextSize = 9
             autoLoadBtn.Font = Enum.Font.GothamBold
             autoLoadBtn.Parent = cfgFrame
             local autoCorner = Instance.new("UICorner")
-            autoCorner.CornerRadius = UDim.new(0, 6)
+            autoCorner.CornerRadius = UDim.new(0, 5)
             autoCorner.Parent = autoLoadBtn
             
             local delCfgBtn = Instance.new("TextButton")
-            delCfgBtn.Size = UDim2.new(0, 55, 0, 32)
-            delCfgBtn.Position = UDim2.new(1, -65, 0, 12)
+            delCfgBtn.Size = UDim2.new(0, 50, 0, 30)
+            delCfgBtn.Position = UDim2.new(1, -60, 0, 10)
             delCfgBtn.BackgroundColor3 = Color3.fromRGB(100, 40, 40)
             delCfgBtn.Text = "🗑️"
             delCfgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            delCfgBtn.TextSize = 12
+            delCfgBtn.TextSize = 11
             delCfgBtn.Font = Enum.Font.GothamBold
             delCfgBtn.Parent = cfgFrame
             local delCorner = Instance.new("UICorner")
-            delCorner.CornerRadius = UDim.new(0, 6)
+            delCorner.CornerRadius = UDim.new(0, 5)
             delCorner.Parent = delCfgBtn
             
             loadCfgBtn.MouseButton1Click:Connect(function()
@@ -5462,7 +5158,7 @@ local function refreshConfigList()
                 end
                 local notif = Drawing.new("Text")
                 notif.Text = msg
-                notif.Size = 14
+                notif.Size = 12
                 notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
                 notif.Center = true
                 notif.Outline = true
@@ -5477,25 +5173,13 @@ local function refreshConfigList()
                 playClickSound()
                 local success = saveAutoLoadConfig(cfgName)
                 if success then
-                    autoLoadStatus.Text = "📌 Tự động tải: " .. cfgName
+                    autoLoadStatus.Text = "📌 " .. cfgName
                     autoLoadStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
                     updateConfigList()
                     local notif = Drawing.new("Text")
-                    notif.Text = "✅ Đã đặt auto-load: " .. cfgName
-                    notif.Size = 14
+                    notif.Text = "✅ Auto-load: " .. cfgName
+                    notif.Size = 12
                     notif.Color = Color3.fromRGB(0, 255, 0)
-                    notif.Center = true
-                    notif.Outline = true
-                    notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
-                    notif.Visible = true
-                    task.wait(1.5)
-                    notif.Visible = false
-                    notif:Remove()
-                else
-                    local notif = Drawing.new("Text")
-                    notif.Text = "❌ Không thể đặt auto-load"
-                    notif.Size = 14
-                    notif.Color = Color3.fromRGB(255, 0, 0)
                     notif.Center = true
                     notif.Outline = true
                     notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
@@ -5512,14 +5196,14 @@ local function refreshConfigList()
                 if success then
                     if autoLoadName == cfgName then
                         clearAutoLoadConfig()
-                        autoLoadStatus.Text = "📌 Chưa cài đặt auto-load"
+                        autoLoadStatus.Text = "📌 Chưa cài"
                         autoLoadStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
                     end
                     updateConfigList()
                 end
             end)
             
-            scrollY = scrollY + 65
+            scrollY = scrollY + 58
         end
         
         configListScrolling.CanvasSize = UDim2.new(0, 0, 0, math.max(scrollY, 200))
@@ -5542,7 +5226,7 @@ local function refreshConfigList()
         
         local notif = Drawing.new("Text")
         notif.Text = msg
-        notif.Size = 14
+        notif.Size = 12
         notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
         notif.Center = true
         notif.Outline = true
@@ -5588,13 +5272,28 @@ Players.PlayerRemoving:Connect(function()
 end)
 
 local panels = {aimbotPanel, espPanel, skeletonPanel, skinPanel, setValuePanel, devicePanel, tpPanel, afkPanel, playersPanel, infoPanel, adminPanel, configPanel}
-local function switchTab(tabIndex, panel, btn)
-    TweenService:Create(contentArea, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-    task.wait(0.1)
+local function switchTab(tabIndex)
     for _, p in pairs(panels) do
         if p then p.Visible = false end
     end
-    panel.Visible = true
+    panels[tabIndex].Visible = true
+    
+    -- Update tab button styles
+    for i, btn in ipairs(tabButtons) do
+        local isActive = (i == tabIndex)
+        TweenService:Create(btn, TweenInfo.new(0.15), {
+            BackgroundTransparency = isActive and 0.1 or 0.5,
+            TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 220)
+        }):Play()
+        
+        local glow = btn:FindFirstChildOfClass("Frame")
+        if glow then
+            TweenService:Create(glow, TweenInfo.new(0.15), {BackgroundTransparency = isActive and 0.5 or 1}):Play()
+        end
+        
+        activeTab = tabIndex
+    end
+    
     if tabIndex == 5 then refreshStreakPanel() end
     if tabIndex == 8 then updateAFKStatus() end
     if tabIndex == 9 then refreshPlayersList() end
@@ -5605,20 +5304,17 @@ local function switchTab(tabIndex, panel, btn)
     end
     if tabIndex == 12 then refreshConfigList() end
     if tabIndex == 4 then refreshSkinPanel() end
-    for i, b in ipairs(tabs) do
-        TweenService:Create(b, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 160, 200), Font = Enum.Font.GothamSemibold}):Play()
-    end
-    TweenService:Create(btn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold}):Play()
-    TweenService:Create(indicator, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, (tabIndex-1) * tabWidth, 1, -3)}):Play()
-    TweenService:Create(contentArea, TweenInfo.new(0.15), {BackgroundTransparency = 0}):Play()
 end
 
-for i, btn in ipairs(tabs) do
+for i, btn in ipairs(tabButtons) do
     btn.MouseButton1Click:Connect(function()
         playClickSound()
-        switchTab(i, panels[i], btn)
+        switchTab(i)
     end)
 end
+
+-- Mặc định active tab đầu
+switchTab(1)
 
 local menuVisible = false
 local function openMenu()
@@ -5629,8 +5325,8 @@ local function openMenu()
     menu.Size = UDim2.new(0, 0, 0, 0)
     menu.Position = UDim2.new(0.5, 0, 0.5, 0)
     TweenService:Create(menu, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 750, 0, 950),
-        Position = UDim2.new(0.5, -375, 0.5, -475)
+        Size = UDim2.new(0,1100, 0, 720),
+        Position = UDim2.new(0.5, -550, 0.5, -360)
     }):Play()
     TweenService:Create(blur, TweenInfo.new(0.3), {Size = 12}):Play()
 end
@@ -5683,18 +5379,9 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
-task.spawn(function()
-    while true do
-        if menuVisible and particle then
-            TweenService:Create(particle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true), {Position = UDim2.new(1, 2, 0.5, -2)}):Play()
-        end
-        task.wait(0.5)
-    end
-end)
-
 local successNotif = Drawing.new("Text")
-successNotif.Text = "✅ Chào mừng " .. playerName .. "!"
-successNotif.Size = 18
+successNotif.Text = "✅ Welcome " .. playerName .. "!"
+successNotif.Size = 16
 successNotif.Color = Color3.fromRGB(0, 255, 0)
 successNotif.Center = true
 successNotif.Outline = true
@@ -5703,7 +5390,7 @@ successNotif.Visible = true
 
 local subNotif = Drawing.new("Text")
 subNotif.Text = "Key: " .. currentKey
-subNotif.Size = 12
+subNotif.Size = 11
 subNotif.Color = Color3.fromRGB(0, 200, 255)
 subNotif.Center = true
 subNotif.Outline = true
@@ -5711,8 +5398,8 @@ subNotif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y
 subNotif.Visible = true
 
 local deviceNotif = Drawing.new("Text")
-deviceNotif.Text = "🎮 Spoof Thiết Bị | 🔫 Aimbot (NHANH) | 📏 Line Luôn Bật | ⚡ Auto Shot | 💤 AFK | 👥 Team System | 👑 Quản Trị | ℹ️ Thông Tin | 🎨 Skin Changer (Auto Save + Auto Clear)"
-deviceNotif.Size = 12
+deviceNotif.Text = "⚡ Aimbot (Fast) | 🎮 Device Spoof | 💤 AFK | 👥 Team | 🎨 Skin | 🌀 TP Players"
+deviceNotif.Size = 10
 deviceNotif.Color = Color3.fromRGB(200, 200, 100)
 deviceNotif.Center = true
 deviceNotif.Outline = true
@@ -5728,29 +5415,23 @@ subNotif:Remove()
 deviceNotif:Remove()
 
 print("========================================")
-print("     ✦ KHANHGD CHEAT v15.0 ✦")
+print("     ✦ KHANHGD CHEAT v16.0 ✦")
 print("========================================")
-print("  KEY ĐÃ XÁC THỰC: " .. currentKey)
+print("  KEY: " .. currentKey)
 print("  Player: " .. playerName)
 print("========================================")
-print("  RIGHT SHIFT = MỞ MENU")
-print("  GIỮ CHUỘT PHẢI = AIMBOT (NHANH HƠN)")
-print("  X = DỊCH CHUYỂN")
+print("  RIGHT SHIFT = MENU")
+print("  RIGHT CLICK = AIMBOT")
+print("  X = TELEPORT")
 print("========================================")
-print("  📏 LINE LUÔN HIỆN (CÓ THỂ TẮT/BẬT)")
-print("  ⚡ AUTO SHOT BẮN NGAY KHI TÂM CHẠM ĐẦU")
-print("  💤 AFK TỰ ĐỘNG (CÀI TRONG TAB AFK)")
-print("  👥 TEAM SYSTEM - ĐÁNH DẤU ĐỒNG ĐỘI KHÔNG AIM")
-print("  🔍 TÌM KIẾM Player - LỌC DANH SÁCH THEO TÊN")
-print("  ℹ️ INFO TAB - XEM TẤT CẢ THÔNG TIN + AVATAR THẬT")
-print("  👑 QUẢN TRỊ TAB - THÔNG TIN VÀ VÀO SERVER CỦA ADMIN")
-print("  🎨 SKIN TAB - AUTO SAVE + AUTO CLEAR SAU KHI APPLY")
+print("  UI NANG CAP: TAB DOC, GIAO DIEN NHO GON")
+print("  PLAYERS TAB: DA THAY NUT SPEC THANH TP")
 print("========================================")
 local autoCfg = getAutoLoadConfig()
 if autoCfg then
-    print("  🔄 TỰ ĐỘNG TẢI: " .. autoCfg)
+    print("  AUTO-LOAD: " .. autoCfg)
 else
-    print("  🔄 TỰ ĐỘNG TẢI: Chưa cài đặt")
+    print("  AUTO-LOAD: NONE")
 end
 print("========================================")
 end
@@ -5761,4 +5442,4 @@ end
 
 updateAFK()
 
-print("✅ Anti AFK Persistent đã chạy!")
+print("✅ Anti AFK Running")
