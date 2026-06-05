@@ -1,6 +1,7 @@
 -- ESP + SKELETON + AIMBOT + SET VALUE + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB + ADMIN TAB + SKIN TAB (FULL)
 -- UI NANG CAP: TAB DOC BEN TRAI, GIAO DIEN NHO GON, HIEN DAI
 -- DA THAY NUT SPEC THANH NUT TP TRONG PLAYERS TAB
+-- DA FIX LOI SKIN CHANGER: AUTO RESET SAU KHI APPLY
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -37,10 +38,8 @@ local selectedWeapon = nil
 local allSkins = {}
 local allWeapons = {}
 
--- ============ HỆ THỐNG LƯU NHIỀU SKIN (AUTO SAVE) ==========
-local savedSkinList = {} -- {[weaponName] = skinName}
-local lastAppliedWeapon = nil
-local lastAppliedSkin = nil
+-- ============ HỆ THỐNG LƯU NHIỀU SKIN ==========
+local savedSkinList = {}
 
 local function shouldIgnore(name)
     for _, ignore in ipairs(IgnoreNames) do
@@ -84,7 +83,6 @@ local function ScanWeapons()
     return allWeapons
 end
 
--- APPLY SKIN VÀ TỰ ĐỘNG LƯU
 local function ApplySkinAndAutoSave(skin, weapon)
     if not skin or not weapon then return false, "Thiếu dữ liệu" end
     
@@ -97,8 +95,6 @@ local function ApplySkinAndAutoSave(skin, weapon)
     
     if success then
         savedSkinList[weapon.name] = skin.name
-        lastAppliedWeapon = weapon.name
-        lastAppliedSkin = skin.name
     end
     
     return success, err
@@ -111,7 +107,6 @@ local function AutoApplySkin()
     return false, "Chưa chọn đủ"
 end
 
--- ÁP DỤNG TẤT CẢ SKIN ĐÃ LƯU
 local function ApplyAllSavedSkins()
     local count = 0
     for weaponName, skinName in pairs(savedSkinList) do
@@ -2047,7 +2042,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -80, 0, 30)
 title.Position = UDim2.new(0, 20, 0, 12)
 title.BackgroundTransparency = 1
-title.Text = "✦ KHANHGD CHEAT ✦"
+title.Text = "→KHANHGD CHEAT←"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 20
 title.Font = Enum.Font.GothamBold
@@ -2115,7 +2110,6 @@ local tabLayout = Instance.new("UIListLayout")
 tabLayout.Padding = UDim.new(0, 5)
 tabLayout.Parent = tabList
 
--- Danh sách tab với icon
 local tabItems = {
     {name = "AIMBOT", icon = "🎯", color = Color3.fromRGB(0, 200, 255)},
     {name = "ESP", icon = "👁️", color = Color3.fromRGB(0, 200, 255)},
@@ -2181,7 +2175,7 @@ for i, item in ipairs(tabItems) do
     tabButtons[i] = btn
 end
 
--- Content Area (bên phải)
+-- Content Area
 local contentArea = Instance.new("Frame")
 contentArea.Size = UDim2.new(1, -200, 1, -90)
 contentArea.Position = UDim2.new(0, 190, 0, 85)
@@ -2303,8 +2297,8 @@ skinPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 skinPanel.Parent = contentArea
 skinPanel.Visible = false
 
--- Helper Functions cho UI mới
-local function createModernToggle(parent, y, name, getValue, setValue, category)
+-- Helper Functions
+local function createModernToggle(parent, y, name, getValue, setValue)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 48)
     frame.Position = UDim2.new(0, 5, 0, y)
@@ -2634,7 +2628,7 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
--- ============ SKIN PANEL UI ==========
+-- ============ SKIN PANEL UI MỚI - AUTO RESET SAU KHI APPLY ==========
 local function refreshSkinPanel()
     for _, child in pairs(skinPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -2644,6 +2638,7 @@ local function refreshSkinPanel()
     
     local y = 5
     
+    -- Title
     local titleFrame = Instance.new("Frame")
     titleFrame.Size = UDim2.new(1, -10, 0, 50)
     titleFrame.Position = UDim2.new(0, 5, 0, y)
@@ -2659,7 +2654,7 @@ local function refreshSkinPanel()
     titleLabel.Size = UDim2.new(1, -20, 0, 35)
     titleLabel.Position = UDim2.new(0, 10, 0, 8)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "🎨 SKIN CHANGER - AUTO SAVE"
+    titleLabel.Text = "🎨 SKIN CHANGER - SAU KHI SKIN ĐƯỢC APPLY VUI LÒNG BẤM NÚT BỎ CHỌN Ở DƯỚI ↓"
     titleLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
@@ -2668,6 +2663,7 @@ local function refreshSkinPanel()
     
     y = y + 60
     
+    -- Selected display
     local selectedFrame = Instance.new("Frame")
     selectedFrame.Size = UDim2.new(1, -10, 0, 60)
     selectedFrame.Position = UDim2.new(0, 5, 0, y)
@@ -2756,6 +2752,7 @@ local function refreshSkinPanel()
     
     y = y + 75
     
+    -- Skin list
     local sourceFrame = Instance.new("Frame")
     sourceFrame.Size = UDim2.new(0.5, -10, 0, 220)
     sourceFrame.Position = UDim2.new(0, 5, 0, y)
@@ -2810,6 +2807,7 @@ local function refreshSkinPanel()
     sourceLayout.Padding = UDim.new(0, 3)
     sourceLayout.Parent = sourceScroll
     
+    -- Weapon list
     local weaponFrame = Instance.new("Frame")
     weaponFrame.Size = UDim2.new(0.5, -10, 0, 220)
     weaponFrame.Position = UDim2.new(0.5, 5, 0, y)
@@ -2866,6 +2864,7 @@ local function refreshSkinPanel()
     
     y = y + 235
     
+    -- Saved skins
     local savedFrame = Instance.new("Frame")
     savedFrame.Size = UDim2.new(1, -10, 0, 140)
     savedFrame.Position = UDim2.new(0, 5, 0, y)
@@ -2933,6 +2932,7 @@ local function refreshSkinPanel()
     
     y = y + 155
     
+    -- Status
     local infoFrame = Instance.new("Frame")
     infoFrame.Size = UDim2.new(1, -10, 0, 40)
     infoFrame.Position = UDim2.new(0, 5, 0, y)
@@ -2947,13 +2947,32 @@ local function refreshSkinPanel()
     local skinStatus = Instance.new("TextLabel")
     skinStatus.Size = UDim2.new(1, -10, 1, 0)
     skinStatus.Position = UDim2.new(0, 5, 0, 0)
-    skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY VÀ LƯU"
+    skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → RESET LỰA CHỌN"
     skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
     skinStatus.TextSize = 9
     skinStatus.TextWrapped = true
     skinStatus.BackgroundTransparency = 1
     skinStatus.Parent = infoFrame
     
+    -- Hàm reset toàn bộ lựa chọn
+    local function fullReset()
+        selectedSkin = nil
+        selectedWeapon = nil
+        updateSelectedDisplay()
+        
+        for _, child in pairs(sourceScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+        for _, child in pairs(weaponScroll:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            end
+        end
+    end
+    
+    -- ========== HIỂN THỊ SKIN ==========
     local function displaySkins(searchText)
         for _, child in pairs(sourceScroll:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
@@ -2987,7 +3006,7 @@ local function refreshSkinPanel()
             btn.TextSize = 10
             btn.Font = Enum.Font.Gotham
             btn.TextXAlignment = Enum.TextXAlignment.Left
-            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            btn.BackgroundColor3 = (selectedSkin and selectedSkin.name == skin.name) and Color3.fromRGB(80, 130, 80) or Color3.fromRGB(60, 60, 90)
             btn.BorderSizePixel = 1
             btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
             btn.Parent = sourceScroll
@@ -3007,17 +3026,6 @@ local function refreshSkinPanel()
             btnCorner.Parent = btn
             
             btn.MouseButton1Click:Connect(function()
-                if selectedWeapon then
-                    selectedWeapon = nil
-                    for _, child in pairs(weaponScroll:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                        end
-                    end
-                    skinStatus.Text = "🔄 Đã bỏ chọn vũ khí cũ"
-                    skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
-                end
-                
                 selectedSkin = skin
                 updateSelectedDisplay()
                 
@@ -3038,21 +3046,10 @@ local function refreshSkinPanel()
                         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                         displaySavedSkins()
                         savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-                        task.wait(0.8)
-                        selectedSkin = nil
-                        selectedWeapon = nil
-                        updateSelectedDisplay()
-                        for _, child in pairs(sourceScroll:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                            end
-                        end
-                        for _, child in pairs(weaponScroll:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                            end
-                        end
-                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng"
+                        -- RESET TRIỆT ĐỂ
+                        fullReset()
+                        skinStatus.Text = "✅ Apply xong! Đã xóa lựa chọn, sẵn sàng chọn cái mới"
+                        return
                     else
                         skinStatus.Text = "❌ Lỗi: " .. tostring(err)
                         skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -3072,6 +3069,7 @@ local function refreshSkinPanel()
         updateCanvas()
     end
     
+    -- ========== HIỂN THỊ VŨ KHÍ ==========
     local function displayWeapons(searchText)
         for _, child in pairs(weaponScroll:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
@@ -3105,7 +3103,7 @@ local function refreshSkinPanel()
             btn.TextSize = 10
             btn.Font = Enum.Font.Gotham
             btn.TextXAlignment = Enum.TextXAlignment.Left
-            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+            btn.BackgroundColor3 = (selectedWeapon and selectedWeapon.name == weapon.name) and Color3.fromRGB(80, 130, 80) or Color3.fromRGB(60, 60, 90)
             btn.BorderSizePixel = 1
             btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
             btn.Parent = weaponScroll
@@ -3115,17 +3113,6 @@ local function refreshSkinPanel()
             btnCorner.Parent = btn
             
             btn.MouseButton1Click:Connect(function()
-                if selectedSkin then
-                    selectedSkin = nil
-                    for _, child in pairs(sourceScroll:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                        end
-                    end
-                    skinStatus.Text = "🔄 Đã bỏ chọn skin cũ"
-                    skinStatus.TextColor3 = Color3.fromRGB(255, 200, 100)
-                end
-                
                 selectedWeapon = weapon
                 updateSelectedDisplay()
                 
@@ -3146,21 +3133,10 @@ local function refreshSkinPanel()
                         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                         displaySavedSkins()
                         savedLabel.Text = "📋 SKIN ĐÃ LƯU (" .. tablelength(savedSkinList) .. ")"
-                        task.wait(0.8)
-                        selectedSkin = nil
-                        selectedWeapon = nil
-                        updateSelectedDisplay()
-                        for _, child in pairs(sourceScroll:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                            end
-                        end
-                        for _, child in pairs(weaponScroll:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                child.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
-                            end
-                        end
-                        skinStatus.Text = "✅ Đã xóa lựa chọn - Sẵn sàng"
+                        -- RESET TRIỆT ĐỂ
+                        fullReset()
+                        skinStatus.Text = "✅ Apply xong! Đã xóa lựa chọn, sẵn sàng chọn cái mới"
+                        return
                     else
                         skinStatus.Text = "❌ Lỗi: " .. tostring(err)
                         skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -3180,6 +3156,7 @@ local function refreshSkinPanel()
         updateCanvas()
     end
     
+    -- ========== HIỂN THỊ SKIN ĐÃ LƯU ==========
     local function displaySavedSkins()
         for _, child in pairs(savedScroll:GetChildren()) do
             if child:IsA("Frame") then child:Destroy() end
@@ -3209,6 +3186,19 @@ local function refreshSkinPanel()
             infoLabel.TextXAlignment = Enum.TextXAlignment.Left
             infoLabel.Parent = itemFrame
             
+            local applyBtnLocal = Instance.new("TextButton")
+            applyBtnLocal.Size = UDim2.new(0, 50, 0, 24)
+            applyBtnLocal.Position = UDim2.new(0.55, 0, 0, 4)
+            applyBtnLocal.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+            applyBtnLocal.Text = "APPLY"
+            applyBtnLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
+            applyBtnLocal.TextSize = 8
+            applyBtnLocal.Font = Enum.Font.GothamBold
+            applyBtnLocal.Parent = itemFrame
+            local applyLocalCorner = Instance.new("UICorner")
+            applyLocalCorner.CornerRadius = UDim.new(0, 4)
+            applyLocalCorner.Parent = applyBtnLocal
+            
             local removeBtn = Instance.new("TextButton")
             removeBtn.Size = UDim2.new(0, 45, 0, 24)
             removeBtn.Position = UDim2.new(1, -50, 0, 4)
@@ -3222,6 +3212,30 @@ local function refreshSkinPanel()
             removeCorner.CornerRadius = UDim.new(0, 4)
             removeCorner.Parent = removeBtn
             
+            applyBtnLocal.MouseButton1Click:Connect(function()
+                playClickSound()
+                local targetWeapon = nil
+                local targetSkin = nil
+                for _, w in ipairs(allWeapons) do
+                    if w.name == weaponName then targetWeapon = w; break end
+                end
+                for _, s in ipairs(allSkins) do
+                    if s.name == skinName then targetSkin = s; break end
+                end
+                if targetWeapon and targetSkin then
+                    local success, err = ApplySkinAndAutoSave(targetSkin, targetWeapon)
+                    if success then
+                        skinStatus.Text = "✅ Đã apply: " .. skinName .. " → " .. weaponName
+                        skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
+                        task.wait(1.5)
+                        skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → RESET LỰA CHỌN"
+                    else
+                        skinStatus.Text = "❌ Lỗi: " .. tostring(err)
+                        skinStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    end
+                end
+            end)
+            
             removeBtn.MouseButton1Click:Connect(function()
                 playClickSound()
                 savedSkinList[weaponName] = nil
@@ -3230,7 +3244,7 @@ local function refreshSkinPanel()
                 skinStatus.Text = "✅ Đã xóa: " .. weaponName
                 skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
                 task.wait(1.5)
-                skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
+                skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → RESET LỰA CHỌN"
             end)
             
             scrollY = scrollY + 38
@@ -3245,7 +3259,7 @@ local function refreshSkinPanel()
         skinStatus.Text = "✅ Đã apply lại " .. count .. " skin"
         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
         task.wait(2)
-        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
+        skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → RESET LỰA CHỌN"
     end)
     
     clearAllSavedBtn.MouseButton1Click:Connect(function()
@@ -3256,7 +3270,7 @@ local function refreshSkinPanel()
         skinStatus.Text = "✅ Đã xóa tất cả skin đã lưu"
         skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
         task.wait(2)
-        skinStatus.Text = "✅ Chọn skin + vũ khí → TỰ ĐỘNG APPLY"
+        skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → RESET LỰA CHỌN"
     end)
     
     sourceSearch:GetPropertyChangedSignal("Text"):Connect(function()
@@ -3305,14 +3319,13 @@ local function refreshSkinPanel()
         notif:Remove()
     end)
 end
-
 task.spawn(function()
     task.wait(1)
     ScanAllSkins()
     ScanWeapons()
 end)
 
--- INFO PANEL
+-- ============ INFO PANEL ==========
 local function refreshInfoPanel()
     for _, child in pairs(infoPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -3634,7 +3647,7 @@ local function refreshInfoPanel()
     end)
 end
 
--- ADMIN PANEL
+-- ============ ADMIN PANEL ==========
 local function refreshAdminPanel()
     for _, child in pairs(adminPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -4490,7 +4503,7 @@ infoDesc2.Parent = infoCard2
 
 updateAFKStatus()
 
--- PLAYERS PANEL (ĐÃ THAY NÚT SPEC THÀNH TP)
+-- PLAYERS PANEL
 local function refreshPlayersList()
     for _, child in pairs(playersPanel:GetChildren()) do
         if child:IsA("Frame") or child:IsA("ScrollingFrame") or child:IsA("TextButton") or child:IsA("TextBox") then
@@ -4757,7 +4770,6 @@ local function refreshPlayersList()
                 refreshPlayersList()
             end)
             
-            -- NÚT TP (Teleport) - ĐÃ THAY THẾ NÚT SPEC
             local tpBtn = Instance.new("TextButton")
             tpBtn.Size = UDim2.new(0, 65, 0, 32)
             tpBtn.Position = UDim2.new(1, -75, 0, 9)
@@ -5278,7 +5290,6 @@ local function switchTab(tabIndex)
     end
     panels[tabIndex].Visible = true
     
-    -- Update tab button styles
     for i, btn in ipairs(tabButtons) do
         local isActive = (i == tabIndex)
         TweenService:Create(btn, TweenInfo.new(0.15), {
@@ -5313,7 +5324,6 @@ for i, btn in ipairs(tabButtons) do
     end)
 end
 
--- Mặc định active tab đầu
 switchTab(1)
 
 local menuVisible = false
@@ -5442,4 +5452,4 @@ end
 
 updateAFK()
 
-print("✅ Anti AFK Running")
+print("✅ Anti AFK Running - Skin Changer da duoc fix loi va auto reset sau khi apply!")
