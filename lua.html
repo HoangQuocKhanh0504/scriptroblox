@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lọc ID Emote - Chính Xác</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0f;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ffd700;
+            text-align: center;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .col {
+            flex: 1;
+            min-width: 400px;
+        }
+        textarea {
+            width: 100%;
+            height: 500px;
+            background: #1a1a2a;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 15px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        button {
+            background: #ffd700;
+            color: #0a0a0f;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #ffaa00;
+        }
+        .result {
+            background: #1a1a2a;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 500px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .info {
+            color: #888;
+            font-size: 12px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .copy-btn {
+            background: #00aa00;
+            margin-top: 10px;
+        }
+        .copy-name-btn {
+            background: #aa6600;
+            margin-top: 10px;
+        }
+        .success {
+            color: #0f0;
+        }
+        .error {
+            color: #ff6b6b;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .button-group button {
+            flex: 1;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 EMOTE TO LUA FORMAT</h1>
+        <div class="info">Paste script emote → Tự động lấy Tên, ID Animation, Sound, Loop</div>
+        
+        <div class="row">
+            <div class="col">
+                <h3>📝 Paste Script Emote:</h3>
+                <textarea id="inputScript" placeholder="Paste script emote vào đây..."></textarea>
+                <button onclick="extractEmote()">🔍 LỌC & TẠO FORMAT</button>
+            </div>
+            
+            <div class="col">
+                <h3>📋 Kết quả (Format Lua):</h3>
+                <div class="result" id="result">Chưa có dữ liệu</div>
+                <div class="button-group">
+                    <button class="copy-btn" onclick="copyResult()">📋 COPY FULL LINE</button>
+                    <button class="copy-name-btn" onclick="copyNameOnly()">📝 COPY ,"TÊN"</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentName = "";
+        let currentFullLine = "";
+
+        function getEmoteName(text) {
+            // Cách 1: Từ đường dẫn comment ở đầu file
+            let match = text.match(/Modules\.Emotes\.(\w+)/);
+            if (match) return match[1];
+            
+            // Cách 2: Từ script.Name trong code
+            match = text.match(/script\.Name\s*,\s*"([^"]+)"/);
+            if (match) return match[1];
+            
+            // Cách 3: Từ Emotes["Tên"]
+            match = text.match(/Emotes\["([^"]+)"\]/);
+            if (match) return match[1];
+            
+            // Cách 4: Từ return v1 (lấy từ tên file trong comment)
+            match = text.match(/-- Đường dẫn Script:.*\.(\w+)\s*--/);
+            if (match) return match[1];
+            
+            return "UnknownEmote";
+        }
+
+        function getAnimationIDs(text) {
+            let ids = [];
+            
+            // Tìm trong _PlayAnimation("rbxassetid://xxx")
+            let matches = text.matchAll(/_PlayAnimation\(["']rbxassetid:\/\/(\d+)["']/g);
+            for (const match of matches) {
+                if (!ids.includes(match[1])) ids.push(match[1]);
+            }
+            
+            // Nếu không tìm thấy, lấy tất cả rbxassetid:// không phải sound
+            if (ids.length === 0) {
+                const allMatches = text.matchAll(/rbxassetid:\/\/(\d+)/g);
+                for (const match of allMatches) {
+                    const beforeText = text.substring(Math.max(0, match.index - 30), match.index);
+                    if (!beforeText.includes("CreateSound") && !ids.includes(match[1])) {
+                        ids.push(match[1]);
+                    }
+                }
+            }
+            
+            return ids;
+        }
+
+        function getSoundIDs(text) {
+            let ids = [];
+            
+            // Tìm CreateSound("rbxassetid://xxx")
+            let matches = text.matchAll(/CreateSound\(["']rbxassetid:\/\/(\d+)["']/g);
+            for (const match of matches) {
+                if (!ids.includes(match[1])) ids.push(match[1]);
+            }
+            
+            // Tìm sound ID trong CreateSound (tham số cuối hoặc gần cuối)
+            matches = text.matchAll(/CreateSound\([^,]+,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[^,]*\s*,\s*[^,)]+/g);
+            for (const match of matches) {
+                const soundMatch = match[0].match(/(\d{15})/);
+                if (soundMatch && !ids.includes(soundMatch[1])) {
+                    ids.push(soundMatch[1]);
+                }
+            }
+            
+            return ids;
+        }
+
+        function getLoopSound(text) {
+            if (text.match(/\.Looped\s*=\s*true/)) return true;
+            if (text.match(/CreateSound\([^,]+,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[^,]*\s*,\s*true/)) return true;
+            if (text.match(/LOOPSOUNDS\s*=\s*true/)) return true;
+            return false;
+        }
+
+        function getDuration(text) {
+            // Tham số thứ 4 của _PlayAnimation (fadeTime)
+            const match = text.match(/_PlayAnimation\([^,]+,\s*[^,]+,\s*[^,]+,\s*([\d.]+)\)/);
+            if (match) return parseFloat(match[1]);
+            
+            // Tham số thứ 3 nếu có
+            const match2 = text.match(/_PlayAnimation\([^,]+,\s*[^,]+,\s*([\d.]+)\)/);
+            if (match2 && !match2[1].includes('nil')) return parseFloat(match2[1]);
+            
+            return null;
+        }
+
+        function extractEmote() {
+            const input = document.getElementById('inputScript').value;
+            
+            if (!input.trim()) {
+                document.getElementById('result').innerHTML = '<span class="error">❌ Vui lòng paste script emote!</span>';
+                return;
+            }
+            
+            const name = getEmoteName(input);
+            const animIds = getAnimationIDs(input);
+            const soundIds = getSoundIDs(input);
+            const loopSound = getLoopSound(input);
+            const duration = getDuration(input);
+            
+            currentName = name;
+            
+            // Tạo kết quả
+            let result = `["${name}"] = { `;
+            
+            if (animIds.length === 0) {
+                result += `ID = nil`;
+            } else if (animIds.length === 1) {
+                result += `ID = ${animIds[0]}`;
+            } else {
+                result += `ID = {${animIds.join(', ')}}`;
+            }
+            
+            result += `, SOUNDS = {${soundIds.join(', ')}}`;
+            result += `, LOOPSOUNDS = ${loopSound}`;
+            
+            if (duration) {
+                result += `, DURATION = ${duration}`;
+            }
+            
+            result += ` }`;
+            
+            currentFullLine = result;
+            
+            // Hiển thị
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+<div style="margin-bottom: 15px; padding: 10px; background: #0a0a0f; border-radius: 5px;">
+    <div style="color: #ffd700;">📌 Thông tin extract:</div>
+    <div>📝 Tên: <span class="success">${name}</span></div>
+    <div>🎬 Animation IDs: <span class="success">${animIds.length > 0 ? animIds.join(', ') : 'Không tìm thấy'}</span></div>
+    <div>🔊 Sound IDs: <span class="success">${soundIds.length > 0 ? soundIds.join(', ') : 'Không tìm thấy'}</span></div>
+    <div>🔄 Loop: <span class="success">${loopSound}</span></div>
+    ${duration ? `<div>⏱️ Duration: <span class="success">${duration}s</span></div>` : ''}
+</div>
+<div style="border-top: 1px solid #ffd70033; padding-top: 15px; margin-top: 10px;">
+    <div style="color: #ffd700; margin-bottom: 10px;">📋 Format Lua (copy dòng này):</div>
+    <code style="background: #0a0a0f; padding: 10px; display: block; border-radius: 5px; word-break: break-all;">${result}</code>
+</div>
+<div style="margin-top: 15px; padding: 10px; background: #0a0a0f; border-radius: 5px;">
+    <div style="color: #ffd700; margin-bottom: 10px;">📝 Copy tên dạng ,"tên":</div>
+    <code style="background: #1a1a2a; padding: 8px; display: block; border-radius: 5px;">, "${name}"</code>
+</div>
+            `;
+        }
+        
+        function copyResult() {
+            if (currentFullLine) {
+                navigator.clipboard.writeText(currentFullLine).then(() => {
+                    alert('✅ Đã copy full line!');
+                }).catch(() => {
+                    alert('❌ Copy thất bại');
+                });
+            } else {
+                alert('❌ Chưa có kết quả để copy');
+            }
+        }
+
+        function copyNameOnly() {
+            if (currentName) {
+                const nameText = `, "${currentName}"`;
+                navigator.clipboard.writeText(nameText).then(() => {
+                    alert('✅ Đã copy: ' + nameText);
+                }).catch(() => {
+                    alert('❌ Copy thất bại');
+                });
+            } else {
+                alert('❌ Chưa có tên để copy');
+            }
+        }
+    </script>
+</body>
+</html>
