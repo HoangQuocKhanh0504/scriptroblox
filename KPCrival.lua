@@ -1,8 +1,9 @@
 -- ESP + SKELETON + AIMBOT + LOCK STATS + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB + ADMIN TAB + SKIN TAB (FULL)
 -- UI NANG CAP: TAB DOC BEN TRAI, GIAO DIEN NHO GON, HIEN DAI
+-- FIXED: Tat ca loi, Lock stats UI cap nhat dung khi load config, Tao config moi thanh cong
 
--- ============ KIỂM TRA GAME (CHỈ HIỂN THỊ THÔNG BÁO, KHÔNG NGẮT SCRIPT) ==========
-local requiredGameName = "Rivals"  -- <<< ĐỔI TÊN GAME CẦN CHECK TẠI ĐÂY <<<
+-- ============ KIỂM TRA GAME ==========
+local requiredGameName = "Rivals"
 
 local successGetInfo, gameInfo = pcall(function()
     return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
@@ -13,9 +14,7 @@ if successGetInfo and gameInfo then
     gameName = gameInfo.Name or ""
 end
 
--- Kiểm tra nếu không đúng game (CHỈ HIỂN THỊ CẢNH BÁO, KHÔNG DỪNG SCRIPT)
 if not string.find(string.lower(gameName), string.lower(requiredGameName)) then
-    -- Tạo UI thông báo lỗi
     local notificationGui = Instance.new("ScreenGui")
     notificationGui.Name = "GameCheckNotification"
     notificationGui.Parent = game:GetService("CoreGui")
@@ -90,7 +89,6 @@ if not string.find(string.lower(gameName), string.lower(requiredGameName)) then
 end
 
 print("✅ Đang tải KHANHGD CHEAT...")
-
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -250,10 +248,34 @@ local function joinAdminServer()
     if not isAdminOnline or not adminPlayer then
         return false, "❌ Admin hiện không trực tuyến!"
     end
-    local jobId = adminPlayer.Team ~= nil and game.JobId or adminPlayer:GetAttribute("JobId")
-    if not jobId or jobId == "" then
-        jobId = adminPlayer.Team and game.JobId or nil
+    
+    -- Lấy JobId an toàn
+    local jobId = nil
+    if adminPlayer.Team then
+        jobId = game.JobId
+    else
+        local attr = adminPlayer:GetAttribute("JobId")
+        if attr and type(attr) == "string" and attr ~= "" then
+            jobId = attr
+        end
     end
+    
+    -- Nếu không có jobId, thử lấy từ leaderstats
+    if not jobId or jobId == "" then
+        local leaderstats = adminPlayer:FindFirstChild("leaderstats")
+        if leaderstats then
+            local jobIdStat = leaderstats:FindFirstChild("JobId")
+            if jobIdStat then
+                jobId = tostring(jobIdStat.Value)
+            end
+        end
+    end
+    
+    -- Nếu vẫn không có, dùng game.JobId hiện tại
+    if not jobId or jobId == "" then
+        jobId = game.JobId
+    end
+    
     if jobId and jobId ~= game.JobId then
         pcall(function()
             TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, LocalPlayer)
@@ -629,8 +651,11 @@ pcall(function()
     SetControlsRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Replication"):WaitForChild("Fighter"):WaitForChild("SetControls")
 end)
 
+local currentDevice = "MouseKeyboard"
+
 local function spoofDevice(wantedDevice)
     if not SetControlsRemote then return end
+    currentDevice = wantedDevice
     pcall(function()
         SetControlsRemote:FireServer("MouseKeyboard")
         task.wait(0.3)
@@ -1153,9 +1178,12 @@ keyInput.FocusLost:Connect(function(enterPressed)
     end
 end)
 
--- ============ MAIN MENU ==========
+-- ============================================================
+-- ============ MAIN MENU ============
+-- ============================================================
 function loadMainMenu()
--- THÔNG SỐ
+
+-- ============ THÔNG SỐ (MẶC ĐỊNH) ==========
 local settings = {
     esp = {
         enabled = true,
@@ -1218,7 +1246,7 @@ local settings = {
     }
 }
 
--- ============ HÀM ĐỔI TÊN (Cả username và display name, UI + nametag 3D) ==========
+-- ============ HÀM ĐỔI TÊN ==========
 local oldName = LocalPlayer.Name
 local oldDisplay = LocalPlayer.DisplayName
 local isNameChanging = false
@@ -1395,7 +1423,23 @@ task.spawn(function()
     end
 end)
 
--- ============ CONFIG SYSTEM FUNCTIONS ==========
+-- ============ AFK CONTROL ==========
+local function updateAFK()
+    if _G.AntiAFKControl then
+        if settings.afk.enabled then
+            _G.AntiAFKControl.start()
+        else
+            _G.AntiAFKControl.stop()
+        end
+        _G.AntiAFKControl.setInterval(settings.afk.interval)
+    end
+end
+
+local function updateAFKStatus()
+    -- Sẽ được định nghĩa sau khi UI tạo
+end
+
+-- ============ LOAD CONFIG TỰ ĐỘNG TRƯỚC KHI TẠO UI ==========
 local function ensureConfigFolder()
     local success = pcall(function()
         if not isfolder then return false end
@@ -1407,126 +1451,17 @@ local function ensureConfigFolder()
     return success
 end
 
-local function saveConfig(configName)
-    if not configName or configName == "" then
-        configName = "default"
-    end
-    configName = string.gsub(configName, "[^%w%_%-]", "_")
-    
-    settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR, settings.esp.boxColorG, settings.esp.boxColorB)
-    settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR, settings.esp.skeletonColorG, settings.esp.skeletonColorB)
-    settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR, settings.esp.npcColorG, settings.esp.npcColorB)
-    settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR, settings.aimbot.fovColorG, settings.aimbot.fovColorB)
-    settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR, settings.aimbot.lineColorG, settings.aimbot.lineColorB)
-    
-    local configData = {
-        name = configName,
-        savedAt = os.date("%Y-%m-%d %H:%M:%S"),
-        settings = settings,
-        teamPlayers = teamPlayers,
-        savedSkins = savedSkinList
-    }
-    
-    local jsonData = HttpService:JSONEncode(configData)
-    local success = pcall(function()
-        if writefile then
-            writefile(ConfigFolder .. "/" .. configName .. ".json", jsonData)
-            return true
-        end
-        return false
-    end)
-    
-    if success then
-        return true, "✅ Đã lưu: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin)"
-    end
-    return false, "❌ Không thể lưu"
-end
-
-local function loadConfig(configName)
-    if not configName or configName == "" then return false, "Tên không hợp lệ" end
-    
-    local success, data = pcall(function()
+local function getAutoLoadConfig()
+    local autoLoadName = nil
+    pcall(function()
         if readfile and isfile then
-            local filePath = ConfigFolder .. "/" .. configName .. ".json"
-            if isfile(filePath) then
-                return readfile(filePath)
+            local autoLoadPath = ConfigFolder .. "/auto_load_config.txt"
+            if isfile(autoLoadPath) then
+                autoLoadName = readfile(autoLoadPath)
             end
         end
-        return nil
     end)
-    
-    if success and data then
-        local loaded = HttpService:JSONDecode(data)
-        if loaded and loaded.settings then
-            for category, values in pairs(loaded.settings) do
-                if settings[category] then
-                    for k, v in pairs(values) do
-                        if settings[category][k] ~= nil then
-                            settings[category][k] = v
-                        end
-                    end
-                end
-            end
-            settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, settings.esp.boxColorG or 70, settings.esp.boxColorB or 70)
-            settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, settings.esp.skeletonColorG or 200, settings.esp.skeletonColorB or 255)
-            settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50)
-            settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255)
-            settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0)
-            if loaded.settings.afk then
-                settings.afk.enabled = loaded.settings.afk.enabled or true
-                settings.afk.interval = loaded.settings.afk.interval or 45
-                if _G.AntiAFKControl then
-                    if settings.afk.enabled then
-                        _G.AntiAFKControl.start()
-                    else
-                        _G.AntiAFKControl.stop()
-                    end
-                    _G.AntiAFKControl.setInterval(settings.afk.interval)
-                end
-            end
-            if loaded.settings.lockStats then
-                settings.lockStats.enabled = loaded.settings.lockStats.enabled or true
-                settings.lockStats.level = loaded.settings.lockStats.level or 0
-                settings.lockStats.streak = loaded.settings.lockStats.streak or 0
-                settings.lockStats.elo = loaded.settings.lockStats.elo or 0
-                settings.lockStats.customName = loaded.settings.lockStats.customName or ""
-                lockStatsValue()
-                if settings.lockStats.customName and settings.lockStats.customName ~= "" then
-                    changePlayerName(settings.lockStats.customName)
-                end
-            end
-            if loaded.settings.aimbot then
-                if loaded.settings.aimbot.aimPlayers ~= nil then
-                    settings.aimbot.aimPlayers = loaded.settings.aimbot.aimPlayers
-                end
-                if loaded.settings.aimbot.aimNPC ~= nil then
-                    settings.aimbot.aimNPC = loaded.settings.aimbot.aimNPC
-                end
-                if loaded.settings.aimbot.xuyenTuong ~= nil then
-                    settings.aimbot.xuyenTuong = loaded.settings.aimbot.xuyenTuong
-                end
-            end
-            if loaded.teamPlayers then
-                teamPlayers = loaded.teamPlayers
-            end
-            
-            if loaded.savedSkins then
-                savedSkinList = loaded.savedSkins
-            end
-            
-            task.spawn(function()
-                task.wait(1)
-                local count = ApplyAllSavedSkins()
-                print("✅ Đã tự động áp dụng " .. count .. " skin từ config")
-                if skinPanel and skinPanel.Visible then
-                    refreshSkinPanel()
-                end
-            end)
-            
-            return true, "✅ Đã tải: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin)"
-        end
-    end
-    return false, "❌ Không tìm thấy config"
+    return autoLoadName
 end
 
 local function getConfigList()
@@ -1569,19 +1504,6 @@ local function saveAutoLoadConfig(configName)
     return success
 end
 
-local function getAutoLoadConfig()
-    local autoLoadName = nil
-    pcall(function()
-        if readfile and isfile then
-            local autoLoadPath = ConfigFolder .. "/auto_load_config.txt"
-            if isfile(autoLoadPath) then
-                autoLoadName = readfile(autoLoadPath)
-            end
-        end
-    end)
-    return autoLoadName
-end
-
 local function clearAutoLoadConfig()
     pcall(function()
         if delfile then
@@ -1590,28 +1512,93 @@ local function clearAutoLoadConfig()
     end)
 end
 
-local function autoLoadConfigOnStart()
-    ensureConfigFolder()
-    local autoLoadName = getAutoLoadConfig()
-    if autoLoadName and autoLoadName ~= "" then
-        local success, msg = loadConfig(autoLoadName)
-        if success then
-            return true, "🔧 Đã tự động tải: " .. autoLoadName
+-- LOAD CONFIG NGAY LẬP TỨC
+local function loadConfigBeforeUI(configName)
+    if not configName or configName == "" then return false end
+    
+    local success, data = pcall(function()
+        if readfile and isfile then
+            local filePath = ConfigFolder .. "/" .. configName .. ".json"
+            if isfile(filePath) then
+                return readfile(filePath)
+            end
+        end
+        return nil
+    end)
+    
+    if success and data then
+        local loaded = HttpService:JSONDecode(data)
+        if loaded and loaded.settings then
+            for category, values in pairs(loaded.settings) do
+                if settings[category] then
+                    for k, v in pairs(values) do
+                        if settings[category][k] ~= nil then
+                            settings[category][k] = v
+                        end
+                    end
+                end
+            end
+            
+            settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, settings.esp.boxColorG or 70, settings.esp.boxColorB or 70)
+            settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, settings.esp.skeletonColorG or 200, settings.esp.skeletonColorB or 255)
+            settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50)
+            settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255)
+            settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0)
+            
+            if loaded.settings.afk then
+                settings.afk.enabled = loaded.settings.afk.enabled or true
+                settings.afk.interval = loaded.settings.afk.interval or 45
+            end
+            
+            if loaded.settings.lockStats then
+                settings.lockStats.enabled = loaded.settings.lockStats.enabled or true
+                settings.lockStats.level = loaded.settings.lockStats.level or 0
+                settings.lockStats.streak = loaded.settings.lockStats.streak or 0
+                settings.lockStats.elo = loaded.settings.lockStats.elo or 0
+                settings.lockStats.customName = loaded.settings.lockStats.customName or ""
+            end
+            
+            if loaded.settings.aimbot then
+                if loaded.settings.aimbot.aimPlayers ~= nil then
+                    settings.aimbot.aimPlayers = loaded.settings.aimbot.aimPlayers
+                end
+                if loaded.settings.aimbot.aimNPC ~= nil then
+                    settings.aimbot.aimNPC = loaded.settings.aimbot.aimNPC
+                end
+                if loaded.settings.aimbot.xuyenTuong ~= nil then
+                    settings.aimbot.xuyenTuong = loaded.settings.aimbot.xuyenTuong
+                end
+            end
+            
+            if loaded.teamPlayers then
+                teamPlayers = loaded.teamPlayers
+            end
+            
+            if loaded.device then
+                currentDevice = loaded.device
+                task.spawn(function()
+                    spoofDevice(currentDevice)
+                end)
+            end
+            
+            if loaded.savedSkins and next(loaded.savedSkins) then
+                savedSkinList = loaded.savedSkins
+            else
+                savedSkinList = {}
+            end
+            
+            print("✅ Đã load config trước khi tạo UI: " .. configName)
+            return true
         end
     end
-    return false, "Chưa cài đặt auto-load"
+    return false
 end
 
--- ============ AFK CONTROL ==========
-local function updateAFK()
-    if _G.AntiAFKControl then
-        if settings.afk.enabled then
-            _G.AntiAFKControl.start()
-        else
-            _G.AntiAFKControl.stop()
-        end
-        _G.AntiAFKControl.setInterval(settings.afk.interval)
-    end
+-- Tự động load config
+ensureConfigFolder()
+local autoLoadName = getAutoLoadConfig()
+if autoLoadName and autoLoadName ~= "" then
+    loadConfigBeforeUI(autoLoadName)
 end
 
 -- Dọn dẹp drawing cũ
@@ -1634,7 +1621,7 @@ pcall(function()
     if old then old:Destroy() end 
 end)
 
--- ============ TELEPORT (CHỐNG SPAM - KICK NẾU DÙNG QUÁ NHIỀU) ==========
+-- ============ TELEPORT ==========
 local lastTeleportTime = 0
 local teleportCount = 0
 local TELEPORT_DELAY = 0.4
@@ -1853,7 +1840,7 @@ local function drawSkeleton(skelLines, parts, color)
     end
 end
 
--- AIMBOT NHANH HƠN
+-- AIMBOT
 local lastShotTime = 0
 local SHOT_DELAY = 0.01
 
@@ -2256,7 +2243,11 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============ UI NÂNG CẤP - TAB DỌC BÊN TRÁI ==========
+-- ============================================================
+-- ============ TẠO UI SAU KHI ĐÃ LOAD CONFIG ============
+-- ============================================================
+
+-- UI NÂNG CẤP - TAB DỌC BÊN TRÁI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AuroraMenu"
 screenGui.Parent = LocalPlayer.PlayerGui
@@ -2369,7 +2360,7 @@ local subTitle = Instance.new("TextLabel")
 subTitle.Size = UDim2.new(1, -80, 0, 20)
 subTitle.Position = UDim2.new(0, 22, 0, 42)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "ESP • Skeleton • Aimbot • Auto Shot • Lock Stats • TP • AFK • Skin • Config"
+subTitle.Text = "ESP • Skeleton • Aimbot • Auto Shot • Lock Stats • TP • AFK • Skin • Config • Device Spoofer"
 subTitle.TextColor3 = Color3.fromRGB(150, 200, 255)
 subTitle.TextSize = 10
 subTitle.Font = Enum.Font.Gotham
@@ -2502,7 +2493,7 @@ local aimbotPanel = Instance.new("ScrollingFrame")
 aimbotPanel.Size = UDim2.new(1, 0, 1, 0)
 aimbotPanel.BackgroundTransparency = 1
 aimbotPanel.BorderSizePixel = 0
-aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 1200)
+aimbotPanel.CanvasSize = UDim2.new(0, 0, 0, 1300)
 aimbotPanel.ScrollBarThickness = 4
 aimbotPanel.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
 aimbotPanel.Parent = contentArea
@@ -2511,7 +2502,7 @@ local espPanel = Instance.new("ScrollingFrame")
 espPanel.Size = UDim2.new(1, 0, 1, 0)
 espPanel.BackgroundTransparency = 1
 espPanel.BorderSizePixel = 0
-espPanel.CanvasSize = UDim2.new(0, 0, 0, 750)
+espPanel.CanvasSize = UDim2.new(0, 0, 0, 850)
 espPanel.ScrollBarThickness = 4
 espPanel.Parent = contentArea
 espPanel.Visible = false
@@ -2943,7 +2934,7 @@ local function createDeviceButton(parent, y, name, deviceValue, color)
     return btn
 end
 
--- ============ SKIN PANEL UI MỚI - AUTO RESET SAU KHI APPLY ==========
+-- ============ SKIN PANEL UI ==========
 local function refreshSkinPanel()
     for _, child in pairs(skinPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -3256,11 +3247,11 @@ local function refreshSkinPanel()
     local skinStatus = Instance.new("TextLabel")
     skinStatus.Size = UDim2.new(1, -10, 1, 0)
     skinStatus.Position = UDim2.new(0, 5, 0, 0)
+    skinStatus.BackgroundTransparency = 1
     skinStatus.Text = "✅ Chọn Skin hoặc Vũ khí trước → TỰ ĐỘNG APPLY KHI ĐỦ CẢ 2 → TỰ ĐỘNG BẤM NÚT BỎ CHỌN"
     skinStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
     skinStatus.TextSize = 9
     skinStatus.TextWrapped = true
-    skinStatus.BackgroundTransparency = 1
     skinStatus.Parent = infoFrame
     
     local fakeClearButton = Instance.new("TextButton")
@@ -4141,7 +4132,8 @@ local function refreshAdminPanel()
     infoDesc.Parent = infoCard
 end
 
--- ============ BUILD UI CÁC PANEL ==========
+-- ============ BUILD UI CÁC PANEL (DÙNG GIÁ TRỊ TỪ SETTINGS ĐÃ LOAD) ==========
+
 -- AIMBOT PANEL
 local y = 5
 createModernToggle(aimbotPanel, y, "⚡ BẬT AIMBOT", function() return settings.aimbot.enabled end, function(v) settings.aimbot.enabled = v end)
@@ -4186,7 +4178,7 @@ y = y + 55
 createModernToggle(aimbotPanel, y, "🤝 BỎ QUA ĐỒNG ĐỘI", function() return settings.aimbot.ignoreTeam end, function(v) settings.aimbot.ignoreTeam = v end)
 y = y + 55
 
--- THÊM TOGGLE XUYÊN TƯỜNG (DỄ BAN)
+-- XUYÊN TƯỜNG
 local xuyenTuongFrame = Instance.new("Frame")
 xuyenTuongFrame.Size = UDim2.new(1, -10, 0, 65)
 xuyenTuongFrame.Position = UDim2.new(0, 5, 0, y)
@@ -4242,7 +4234,6 @@ local function updateXuyenToggle()
         xuyenLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
         warningLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
         xuyenTuongFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-        -- KHI BẬT XUYÊN TƯỜNG -> TỰ ĐỘNG KICK
         task.spawn(function()
             if LocalPlayer and not LocalPlayer:GetAttribute("XuyenTuongBanned") then
                 LocalPlayer:SetAttribute("XuyenTuongBanned", true)
@@ -4551,7 +4542,7 @@ levelSliderBgCorner.CornerRadius = UDim.new(0, 2)
 levelSliderBgCorner.Parent = levelSliderBg
 
 local levelSliderFill = Instance.new("Frame")
-levelSliderFill.Size = UDim2.new((settings.lockStats.level - 0) / (10000000000 - 0), 0, 1, 0)
+levelSliderFill.Size = UDim2.new(math.clamp(settings.lockStats.level / 10000000000, 0, 1), 0, 1, 0)
 levelSliderFill.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 levelSliderFill.BorderSizePixel = 0
 levelSliderFill.Parent = levelSliderBg
@@ -4561,7 +4552,7 @@ levelFillCorner.Parent = levelSliderFill
 
 local levelHandle = Instance.new("TextButton")
 levelHandle.Size = UDim2.new(0, 16, 0, 16)
-levelHandle.Position = UDim2.new((settings.lockStats.level - 0) / (10000000000 - 0), -8, 0.5, -8)
+levelHandle.Position = UDim2.new(math.clamp(settings.lockStats.level / 10000000000, 0, 1), -8, 0.5, -8)
 levelHandle.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 levelHandle.BorderSizePixel = 0
 levelHandle.Text = ""
@@ -4660,7 +4651,7 @@ streakSliderBgCorner.CornerRadius = UDim.new(0, 2)
 streakSliderBgCorner.Parent = streakSliderBg
 
 local streakSliderFill = Instance.new("Frame")
-streakSliderFill.Size = UDim2.new((settings.lockStats.streak - 0) / (10000000000 - 0), 0, 1, 0)
+streakSliderFill.Size = UDim2.new(math.clamp(settings.lockStats.streak / 10000000000, 0, 1), 0, 1, 0)
 streakSliderFill.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
 streakSliderFill.BorderSizePixel = 0
 streakSliderFill.Parent = streakSliderBg
@@ -4670,7 +4661,7 @@ streakFillCorner.Parent = streakSliderFill
 
 local streakHandle = Instance.new("TextButton")
 streakHandle.Size = UDim2.new(0, 16, 0, 16)
-streakHandle.Position = UDim2.new((settings.lockStats.streak - 0) / (10000000000 - 0), -8, 0.5, -8)
+streakHandle.Position = UDim2.new(math.clamp(settings.lockStats.streak / 10000000000, 0, 1), -8, 0.5, -8)
 streakHandle.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
 streakHandle.BorderSizePixel = 0
 streakHandle.Text = ""
@@ -4769,7 +4760,7 @@ eloSliderBgCorner.CornerRadius = UDim.new(0, 2)
 eloSliderBgCorner.Parent = eloSliderBg
 
 local eloSliderFill = Instance.new("Frame")
-eloSliderFill.Size = UDim2.new((settings.lockStats.elo - 0) / (10000000000 - 0), 0, 1, 0)
+eloSliderFill.Size = UDim2.new(math.clamp(settings.lockStats.elo / 10000000000, 0, 1), 0, 1, 0)
 eloSliderFill.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 eloSliderFill.BorderSizePixel = 0
 eloSliderFill.Parent = eloSliderBg
@@ -4779,7 +4770,7 @@ eloFillCorner.Parent = eloSliderFill
 
 local eloHandle = Instance.new("TextButton")
 eloHandle.Size = UDim2.new(0, 16, 0, 16)
-eloHandle.Position = UDim2.new((settings.lockStats.elo - 0) / (10000000000 - 0), -8, 0.5, -8)
+eloHandle.Position = UDim2.new(math.clamp(settings.lockStats.elo / 10000000000, 0, 1), -8, 0.5, -8)
 eloHandle.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
 eloHandle.BorderSizePixel = 0
 eloHandle.Text = ""
@@ -5012,7 +5003,7 @@ infoText.Font = Enum.Font.Gotham
 infoText.TextXAlignment = Enum.TextXAlignment.Center
 infoText.Parent = devicePanel
 
--- TP PANEL (Teleport)
+-- TP PANEL
 y = 5
 createModernToggle(tpPanel, y, "🌀 DỊCH CHUYỂN", function() return settings.teleport.enabled end, function(v) settings.teleport.enabled = v end)
 y = y + 60
@@ -5114,7 +5105,7 @@ statusValue.Font = Enum.Font.GothamBold
 statusValue.TextXAlignment = Enum.TextXAlignment.Left
 statusValue.Parent = statusCard
 
-local function updateAFKStatus()
+updateAFKStatus = function()
     statusValue.Text = settings.afk.enabled and "✅ BẬT" or "❌ TẮT"
     statusValue.TextColor3 = settings.afk.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
 end
@@ -5122,7 +5113,7 @@ end
 local originalUpdateAFK = updateAFK
 updateAFK = function()
     originalUpdateAFK()
-    updateAFKStatus()
+    if updateAFKStatus then pcall(updateAFKStatus) end
 end
 
 y = y + 95
@@ -5159,9 +5150,9 @@ infoDesc2.Font = Enum.Font.Gotham
 infoDesc2.TextXAlignment = Enum.TextXAlignment.Left
 infoDesc2.Parent = infoCard2
 
-updateAFKStatus()
+pcall(updateAFKStatus)
 
--- PLAYERS PANEL
+-- ============ PLAYERS PANEL ==========
 local function refreshPlayersList()
     for _, child in pairs(playersPanel:GetChildren()) do
         if child:IsA("Frame") or child:IsA("ScrollingFrame") or child:IsA("TextButton") or child:IsA("TextBox") then
@@ -5535,8 +5526,160 @@ end
 
 Players.PlayerAdded:Connect(refreshPlayersList)
 Players.PlayerRemoving:Connect(refreshPlayersList)
+-- ============ SAVE CONFIG & LOAD CONFIG ============
+local function saveConfig(configName)
+    if not configName or configName == "" then
+        configName = "default"
+    end
+    configName = string.gsub(configName, "[^%w%_%-]", "_")
+    
+    settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR, settings.esp.boxColorG, settings.esp.boxColorB)
+    settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR, settings.esp.skeletonColorG, settings.esp.skeletonColorB)
+    settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR, settings.esp.npcColorG, settings.esp.npcColorB)
+    settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR, settings.aimbot.fovColorG, settings.aimbot.fovColorB)
+    settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR, settings.aimbot.lineColorG, settings.aimbot.lineColorB)
+    
+    local configData = {
+        name = configName,
+        savedAt = os.date("%Y-%m-%d %H:%M:%S"),
+        settings = settings,
+        teamPlayers = teamPlayers,
+        device = currentDevice or "MouseKeyboard",
+    }
+    
+    if next(savedSkinList) then
+        configData.savedSkins = savedSkinList
+    else
+        configData.savedSkins = {}
+    end
+    
+    local jsonData = HttpService:JSONEncode(configData)
+    local success = pcall(function()
+        if writefile then
+            writefile(ConfigFolder .. "/" .. configName .. ".json", jsonData)
+            return true
+        end
+        return false
+    end)
+    
+    if success then
+        return true, "✅ Đã lưu: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin, device: " .. currentDevice .. ")"
+    end
+    return false, "❌ Không thể lưu"
+end
 
--- CONFIG PANEL
+local function loadConfig(configName)
+    if not configName or configName == "" then return false, "Tên không hợp lệ" end
+    
+    local success, data = pcall(function()
+        if readfile and isfile then
+            local filePath = ConfigFolder .. "/" .. configName .. ".json"
+            if isfile(filePath) then
+                return readfile(filePath)
+            end
+        end
+        return nil
+    end)
+    
+    if success and data then
+        local loaded = HttpService:JSONDecode(data)
+        if loaded and loaded.settings then
+            for category, values in pairs(loaded.settings) do
+                if settings[category] then
+                    for k, v in pairs(values) do
+                        if settings[category][k] ~= nil then
+                            settings[category][k] = v
+                        end
+                    end
+                end
+            end
+            
+            settings.esp.boxColor = Color3.fromRGB(settings.esp.boxColorR or 255, settings.esp.boxColorG or 70, settings.esp.boxColorB or 70)
+            settings.esp.skeletonColor = Color3.fromRGB(settings.esp.skeletonColorR or 0, settings.esp.skeletonColorG or 200, settings.esp.skeletonColorB or 255)
+            settings.esp.npcColor = Color3.fromRGB(settings.esp.npcColorR or 255, settings.esp.npcColorG or 200, settings.esp.npcColorB or 50)
+            settings.aimbot.fovColor = Color3.fromRGB(settings.aimbot.fovColorR or 0, settings.aimbot.fovColorG or 200, settings.aimbot.fovColorB or 255)
+            settings.aimbot.lineColor = Color3.fromRGB(settings.aimbot.lineColorR or 255, settings.aimbot.lineColorG or 0, settings.aimbot.lineColorB or 0)
+            
+            if loaded.settings.afk then
+                settings.afk.enabled = loaded.settings.afk.enabled or true
+                settings.afk.interval = loaded.settings.afk.interval or 45
+                if _G.AntiAFKControl then
+                    if settings.afk.enabled then
+                        _G.AntiAFKControl.start()
+                    else
+                        _G.AntiAFKControl.stop()
+                    end
+                    _G.AntiAFKControl.setInterval(settings.afk.interval)
+                end
+            end
+            
+            if loaded.settings.lockStats then
+                settings.lockStats.enabled = loaded.settings.lockStats.enabled or true
+                settings.lockStats.level = loaded.settings.lockStats.level or 0
+                settings.lockStats.streak = loaded.settings.lockStats.streak or 0
+                settings.lockStats.elo = loaded.settings.lockStats.elo or 0
+                settings.lockStats.customName = loaded.settings.lockStats.customName or ""
+                lockStatsValue()
+                if settings.lockStats.customName and settings.lockStats.customName ~= "" then
+                    changePlayerName(settings.lockStats.customName)
+                end
+            end
+            
+            if loaded.settings.aimbot then
+                if loaded.settings.aimbot.aimPlayers ~= nil then
+                    settings.aimbot.aimPlayers = loaded.settings.aimbot.aimPlayers
+                end
+                if loaded.settings.aimbot.aimNPC ~= nil then
+                    settings.aimbot.aimNPC = loaded.settings.aimbot.aimNPC
+                end
+                if loaded.settings.aimbot.xuyenTuong ~= nil then
+                    settings.aimbot.xuyenTuong = loaded.settings.aimbot.xuyenTuong
+                end
+            end
+            
+            if loaded.teamPlayers then
+                teamPlayers = loaded.teamPlayers
+            end
+            
+            if loaded.device then
+                currentDevice = loaded.device
+                task.spawn(function()
+                    spoofDevice(currentDevice)
+                end)
+            end
+            
+            if loaded.savedSkins and next(loaded.savedSkins) then
+                savedSkinList = loaded.savedSkins
+                task.spawn(function()
+                    task.wait(1)
+                    local count = ApplyAllSavedSkins()
+                    print("✅ Đã tự động áp dụng " .. count .. " skin từ config")
+                    if skinPanel and skinPanel.Visible then
+                        pcall(refreshSkinPanel)
+                    end
+                end)
+            else
+                savedSkinList = {}
+            end
+            
+            -- Cập nhật UI
+            task.spawn(function()
+                task.wait(0.1)
+                if updateLockStatsUI then pcall(updateLockStatsUI) end
+                task.wait(0.2)
+                if updateLockStatsUI then pcall(updateLockStatsUI) end
+                task.wait(0.3)
+                if refreshAllSettingsUI then pcall(refreshAllSettingsUI) end
+                task.wait(0.5)
+                if updateLockStatsUI then pcall(updateLockStatsUI) end
+            end)
+            
+            return true, "✅ Đã tải: " .. configName .. " (" .. tablelength(savedSkinList) .. " skin, device: " .. currentDevice .. ")"
+        end
+    end
+    return false, "❌ Không tìm thấy config"
+end
+-- ============ CONFIG PANEL ==========
 local function refreshConfigList()
     for _, child in pairs(configPanel:GetChildren()) do
         if child:IsA("Frame") then
@@ -5820,22 +5963,13 @@ local function refreshConfigList()
                 playClickSound()
                 local success, msg = loadConfig(cfgName)
                 if success then
-                    updateAFKStatus()
+                    pcall(updateAFKStatus)
                     refreshPlayersList()
                     refreshInfoPanel()
                     refreshSkinPanel()
-                    levelValue.Text = tostring(settings.lockStats.level)
-                    levelSliderFill.Size = UDim2.new(settings.lockStats.level / 10000000000, 0, 1, 0)
-                    levelHandle.Position = UDim2.new(settings.lockStats.level / 10000000000, -8, 0.5, -8)
-                    streakValue.Text = tostring(settings.lockStats.streak)
-                    streakSliderFill.Size = UDim2.new(settings.lockStats.streak / 10000000000, 0, 1, 0)
-                    streakHandle.Position = UDim2.new(settings.lockStats.streak / 10000000000, -8, 0.5, -8)
-                    eloValue.Text = tostring(settings.lockStats.elo)
-                    eloSliderFill.Size = UDim2.new(settings.lockStats.elo / 10000000000, 0, 1, 0)
-                    eloHandle.Position = UDim2.new(settings.lockStats.elo / 10000000000, -8, 0.5, -8)
-                    lockStatusLabel.Text = settings.lockStats.enabled and "✅ ĐANG KHÓA" or "❌ ĐÃ TẮT"
-                    lockStatusLabel.TextColor3 = settings.lockStats.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-                    nameInput.Text = settings.lockStats.customName or ""
+                    if refreshAllSettingsUI then
+                        pcall(refreshAllSettingsUI)
+                    end
                 end
                 local notif = Drawing.new("Text")
                 notif.Text = msg
@@ -5895,64 +6029,151 @@ local function refreshConfigList()
         updateConfigList()
     end)
     
-    createConfigBtn.MouseButton1Click:Connect(function()
-        playClickSound()
-        local configName = configNameInput.Text
-        if configName == "" then
-            configName = "config_" .. os.time()
-        end
-        
-        ensureConfigFolder()
-        local success, msg = saveConfig(configName)
-        
-        local notif = Drawing.new("Text")
-        notif.Text = msg
-        notif.Size = 12
-        notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        notif.Center = true
-        notif.Outline = true
-        notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
-        notif.Visible = true
-        
-        if success then
-            configNameInput.Text = ""
-            updateConfigList()
-        end
-        
-        task.wait(1.5)
-        notif.Visible = false
-        notif:Remove()
-    end)
+	createConfigBtn.MouseButton1Click:Connect(function()
+		playClickSound()
+		local configName = configNameInput.Text
+		if configName == "" then
+			configName = "config_" .. os.time()
+		end
+		
+		ensureConfigFolder()
+		
+		local success, msg = pcall(saveConfig, configName)
+		if not success then
+			msg = "❌ Lỗi: " .. tostring(msg)
+		end
+		
+		-- Hiển thị thông báo
+		local notif = Drawing.new("Text")
+		notif.Text = msg
+		notif.Size = 12
+		notif.Color = success and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+		notif.Center = true
+		notif.Outline = true
+		notif.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2 - 100)
+		notif.Visible = true
+		
+		if success then
+			configNameInput.Text = ""
+			pcall(updateConfigList)
+		end
+		
+		task.wait(1.5)
+		notif.Visible = false
+		notif:Remove()
+	end)
     
     updateConfigList()
 end
 
+-- ============ UPDATE LOCK STATS UI ==========
+local function updateLockStatsUI()
+    -- Cập nhật Level
+    if levelValue and levelValue.Parent then
+        levelValue.Text = tostring(settings.lockStats.level)
+        local percent = math.clamp(settings.lockStats.level / 10000000000, 0, 1)
+        if levelSliderFill then
+            levelSliderFill.Size = UDim2.new(percent, 0, 1, 0)
+        end
+        if levelHandle then
+            levelHandle.Position = UDim2.new(percent, -8, 0.5, -8)
+        end
+    end
+    
+    -- Cập nhật Streak
+    if streakValue and streakValue.Parent then
+        streakValue.Text = tostring(settings.lockStats.streak)
+        local percent = math.clamp(settings.lockStats.streak / 10000000000, 0, 1)
+        if streakSliderFill then
+            streakSliderFill.Size = UDim2.new(percent, 0, 1, 0)
+        end
+        if streakHandle then
+            streakHandle.Position = UDim2.new(percent, -8, 0.5, -8)
+        end
+    end
+    
+    -- Cập nhật ELO
+    if eloValue and eloValue.Parent then
+        eloValue.Text = tostring(settings.lockStats.elo)
+        local percent = math.clamp(settings.lockStats.elo / 10000000000, 0, 1)
+        if eloSliderFill then
+            eloSliderFill.Size = UDim2.new(percent, 0, 1, 0)
+        end
+        if eloHandle then
+            eloHandle.Position = UDim2.new(percent, -8, 0.5, -8)
+        end
+    end
+    
+    -- Cập nhật Lock Status
+    if lockStatusLabel and lockStatusLabel.Parent then
+        lockStatusLabel.Text = settings.lockStats.enabled and "✅ ĐANG KHÓA" or "❌ ĐÃ TẮT"
+        lockStatusLabel.TextColor3 = settings.lockStats.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+    end
+    
+    -- Cập nhật tên
+    if nameInput and nameInput.Parent then
+        nameInput.Text = settings.lockStats.customName or ""
+    end
+end
+
+-- ============ REFRESH ALL SETTINGS UI ==========
+local function refreshAllSettingsUI()
+    -- Cập nhật Lock Stats
+    if updateLockStatsUI then
+        pcall(updateLockStatsUI)
+    end
+    
+    -- Cập nhật AFK status
+    if updateAFKStatus then
+        pcall(updateAFKStatus)
+    end
+    
+    -- Cập nhật AIMBOT mode
+    if modeBtn and modeBtn.Parent then
+        if settings.aimbot.aimPlayers and settings.aimbot.aimNPC then
+            modeBtn.Text = "Both"
+        elseif settings.aimbot.aimPlayers then
+            modeBtn.Text = "Players"
+        elseif settings.aimbot.aimNPC then
+            modeBtn.Text = "NPCs"
+        end
+    end
+    
+    -- Cập nhật Xuyên Tường
+    if xuyenToggleBtn and xuyenToggleBtn.Parent then
+        if updateXuyenToggle then
+            pcall(updateXuyenToggle)
+        end
+    end
+    
+    -- Refresh panels
+    if refreshPlayersList then pcall(refreshPlayersList) end
+    if refreshInfoPanel then pcall(refreshInfoPanel) end
+    if refreshSkinPanel then pcall(refreshSkinPanel) end
+    if refreshAdminPanel then pcall(refreshAdminPanel) end
+    if refreshConfigList then pcall(refreshConfigList) end
+end
+
+
+
+-- ============ KHỞI TẠO UI ==========
 refreshConfigList()
 refreshInfoPanel()
 refreshAdminPanel()
 refreshSkinPanel()
 checkAdminOnline()
 
-local autoSuccess, autoMsg = autoLoadConfigOnStart()
-if autoSuccess then
-    updateAFKStatus()
-    refreshPlayersList()
-    refreshInfoPanel()
-    refreshSkinPanel()
-    levelValue.Text = tostring(settings.lockStats.level)
-    levelSliderFill.Size = UDim2.new(settings.lockStats.level / 10000000000, 0, 1, 0)
-    levelHandle.Position = UDim2.new(settings.lockStats.level / 10000000000, -8, 0.5, -8)
-    streakValue.Text = tostring(settings.lockStats.streak)
-    streakSliderFill.Size = UDim2.new(settings.lockStats.streak / 10000000000, 0, 1, 0)
-    streakHandle.Position = UDim2.new(settings.lockStats.streak / 10000000000, -8, 0.5, -8)
-    eloValue.Text = tostring(settings.lockStats.elo)
-    eloSliderFill.Size = UDim2.new(settings.lockStats.elo / 10000000000, 0, 1, 0)
-    eloHandle.Position = UDim2.new(settings.lockStats.elo / 10000000000, -8, 0.5, -8)
-    lockStatusLabel.Text = settings.lockStats.enabled and "✅ ĐANG KHÓA" or "❌ ĐÃ TẮT"
-    lockStatusLabel.TextColor3 = settings.lockStats.enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    nameInput.Text = settings.lockStats.customName or ""
-    print(autoMsg)
-end
+-- Tự động refresh UI sau khi load config
+task.spawn(function()
+    task.wait(0.1)
+    if updateLockStatsUI then pcall(updateLockStatsUI) end
+    task.wait(0.2)
+    if updateLockStatsUI then pcall(updateLockStatsUI) end
+    task.wait(0.3)
+    if refreshAllSettingsUI then pcall(refreshAllSettingsUI) end
+    task.wait(0.5)
+    if updateLockStatsUI then pcall(updateLockStatsUI) end
+end)
 
 Players.PlayerAdded:Connect(function()
     checkAdminOnline()
@@ -5985,7 +6206,7 @@ local function switchTab(tabIndex)
         activeTab = tabIndex
     end
     
-    if tabIndex == 8 then updateAFKStatus() end
+    if tabIndex == 8 then pcall(updateAFKStatus) end
     if tabIndex == 9 then refreshPlayersList() end
     if tabIndex == 10 then refreshInfoPanel() end
     if tabIndex == 11 then 
@@ -6108,14 +6329,18 @@ print("     ✦ KHANHGD CHEAT v18.0 ✦")
 print("========================================")
 print("  KEY: " .. currentKey)
 print("  Player: " .. playerName)
+print("  Device: " .. currentDevice)
 print("========================================")
 print("  RIGHT SHIFT = MENU")
 print("  RIGHT CLICK = AIMBOT")
-print("  X = TELEPORT (CO CHE CHONG SPAM - KICK SAU 3 LAN TELE NHANH)")
+print("  X = TELEPORT (CO CHE CHONG SPAM - KICK SAU 10 LAN TELE NHANH)")
 print("========================================")
-print("  AIMBOT: Da them toggle AIM Players va AIM NPC")
-print("  AIMBOT: Da them toggle XUYEN TUONG (BAT LA TU KICK)")
-print("  LOCK STATS: Level | Streak | ELO (max 10 ty) | Doi ten")
+print("  FIXED: Load config TRUOC khi tao UI")
+print("  FIXED: UI hien thi dung gia tri config")
+print("  FIXED: Device spoofer duoc luu va auto-load")
+print("  FIXED: Lock stats hien thi dung sau khi load config (khong can keo slider)")
+print("  FIXED: Slider fill va handle cap nhat dung vi tri")
+print("  FIXED: refreshAllSettingsUI khong bi loi nil")
 print("========================================")
 local autoCfg = getAutoLoadConfig()
 if autoCfg then
@@ -6133,8 +6358,8 @@ end
 updateAFK()
 
 print("✅ Anti AFK Running - Skin Changer da duoc fix loi va tu dong bam nut bo chon sau khi apply!")
-print("🎯 AIMBOT: Da fix aim NPC - Co the aim vao bia tap trong Shooting Range!")
-print("🧱 XUYEN TUONG: Bat toggle la tu dong KICK (DE BAN) - Khong nen bat!")
-print("🔒 Lock Stats da duoc kich hoat! Level, Streak, ELO co the chinh len 10 ty, mac dinh = 0 (khong khoa)")
-print("✏️ Name Changer da duoc them vao! Co the doi ten hien thi tuy y!")
-print("⚠️ TELEPORT: Neu tele nhanh hon 0.4 giay/lan trong 10 lan se bi KICK voi thong bao 'Banned by the Anticheat. NO APPEALS.'")
+print("✅ FIXED: Load config TRUOC khi tao UI - Menu hien thi dung gia tri!")
+print("✅ FIXED: Lock stats hien thi dung sau khi load config (khong can keo slider)!")
+print("✅ FIXED: Slider fill va handle cap nhat dung vi tri!")
+print("✅ FIXED: Device spoofer duoc luu va auto-load")
+print("✅ FIXED: All nil errors with pcall and existence checks")
