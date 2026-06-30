@@ -1,7 +1,10 @@
--- ESP + SKELETON + AIMBOT + LOCK STATS + KEY SYSTEM + DEVICE SPOOFER + CONFIG SYSTEM + AFK + PLAYERS TAB + INFO TAB + ADMIN TAB + SKIN TAB (FULL)
--- UI NANG CAP: TAB DOC BEN TRAI, GIAO DIEN NHO GON, HIEN DAI
--- FIXED: Tat ca loi, Lock stats UI cap nhat dung khi load config, Tao config moi thanh cong
-
+--  ___  __    ___  ___  ________  ________   ___  ___  ________  ________     
+-- |\  \|\  \ |\  \|\  \|\   __  \|\   ___  \|\  \|\  \|\   __  \|\   ____\    
+-- \ \  \/  /|\ \  \\\  \ \  \|\  \ \  \\ \  \ \  \\\  \ \  \|\  \ \  \___|    
+--  \ \   ___  \ \   __  \ \   __  \ \  \\ \  \ \   __  \ \   ____\ \  \       
+--   \ \  \\ \  \ \  \ \  \ \  \ \  \ \  \\ \  \ \  \ \  \ \  \___|\ \  \____  
+--    \ \__\\ \__\ \__\ \__\ \__\ \__\ \__\\ \__\ \__\ \__\ \__\    \ \_______\
+--     \|__| \|__|\|__|\|__|\|__|\|__|\|__| \|__|\|__|\|__|\|__|     \|_______|
 -- ============ KIỂM TRA GAME ==========
 local requiredGameName = "Rivals"
 
@@ -6363,3 +6366,10 @@ print("✅ FIXED: Lock stats hien thi dung sau khi load config (khong can keo sl
 print("✅ FIXED: Slider fill va handle cap nhat dung vi tri!")
 print("✅ FIXED: Device spoofer duoc luu va auto-load")
 print("✅ FIXED: All nil errors with pcall and existence checks")
+print(" ___  __    ___  ___  ________  ________   ___  ___  ________  ________     ")
+print("|\\  \\|\\  \\ |\\  \\|\\  \\|\\   __  \\|\\   ___  \\|\\  \\|\\  \\|\\   __  \\|\\   ____\\    ")
+print("\\ \\  \\/  /|\\ \\  \\\\\\  \\ \\  \\|\\  \\ \\  \\\\ \\  \\ \\  \\\\\\  \\ \\  \\|\\  \\ \\  \\___|    ")
+print(" \\ \\   ___  \\ \\   __  \\ \\   __  \\ \\  \\\\ \\  \\ \\   __  \\ \\   ____\\ \\  \\       ")
+print("  \\ \\  \\\\ \\  \\ \\  \\ \\  \\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\ \\  \\ \\  \\___|\\ \\  \\____  ")
+print("   \\ \\__\\\\ \\__\\ \\__\\ \\__\\ \\__\\ \\__\\ \\__\\\\ \\__\\ \\__\\ \\__\\ \\__\\    \\ \\_______\\")
+print("    \\|__| \\|__|\\|__|\\|__\\|__\\|__\\|__| \\|__\\|__\\|__\\|__\\|__|     \\|_______|")
